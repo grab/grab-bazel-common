@@ -16,28 +16,12 @@
 
 package com.grab.databinding.stub.rclass.parser
 
-import com.grab.databinding.stub.binding.parser.Binding
-import com.grab.databinding.stub.binding.parser.BindingType
-import com.grab.databinding.stub.binding.parser.LayoutBindingData
 import com.grab.databinding.stub.common.BaseBindingStubTest
-import com.grab.databinding.stub.rclass.parser.Type.*
-import com.grab.databinding.stub.rclass.parser.RFieldEntry
-import com.squareup.javapoet.ClassName
-import org.junit.Before
-import org.junit.Test
-import kotlin.test.assertTrue
-import com.grab.databinding.stub.rclass.parser.ResToRParser
-import com.grab.databinding.stub.rclass.parser.ResToRParserImpl
-import com.grab.databinding.stub.rclass.parser.Type
-import java.io.File
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
-import com.grab.databinding.stub.rclass.parser.ParserType
 import com.grab.databinding.stub.rclass.parser.xml.DeclareStyleableParser
 import com.grab.databinding.stub.rclass.parser.xml.DefaultXmlParser
+import org.junit.Before
+import org.junit.Test
+import kotlin.test.assertEquals
 
 class ResToRStyleableValueParserTest : BaseBindingStubTest() {
 
@@ -46,62 +30,90 @@ class ResToRStyleableValueParserTest : BaseBindingStubTest() {
 
     @Before
     fun setUp() {
-        val providedParsers = mapOf(ParserType.STYLEABLE_PARSER to DeclareStyleableParser(), 
-            ParserType.DEFAULT_PARSER to DefaultXmlParser())
+        val providedParsers = mapOf(
+            ParserType.STYLEABLE_PARSER to DeclareStyleableParser(),
+            ParserType.DEFAULT_PARSER to DefaultXmlParser()
+        )
         resToRParser = ResToRParserImpl(providedParsers)
     }
 
     @Test
     fun `assert styleable values are parsed correctly`() {
         val listTemp = testResFiles(
-                TestResFile("styleable.xml",
-                        contents = """
+            TestResFile(
+                "styleable.xml",
+                contents = """
                 <resources>
                     <declare-styleable name="StyleableView">
                         <attr name="colorAttr" />
                         <attr name="sizeAttr" />
                     </declare-styleable>
                 </resources>
-                """.trimIndent(), path = "/src/res/values/")
+                """.trimIndent(), path = "/src/res/values/"
+            )
         )
 
-        val result = resToRParser.parse(listTemp, emptyList<String>()) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val result = resToRParser.parse(
+            listTemp,
+            emptyList<String>()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
         val parentValue = "{ 0,0 }"
-        val exptectedStyleable = setOf(RFieldEntry(Type.STYLEABLE, "StyleableView", parentValue, isArray = true),
-                RFieldEntry(Type.STYLEABLE, "StyleableView_colorAttr", value),
-                RFieldEntry(Type.STYLEABLE, "StyleableView_sizeAttr", value))
+        val exptectedStyleable = setOf(
+            RFieldEntry(Type.STYLEABLE, "StyleableView", parentValue, isArray = true),
+            RFieldEntry(Type.STYLEABLE, "StyleableView_colorAttr", value),
+            RFieldEntry(Type.STYLEABLE, "StyleableView_sizeAttr", value)
+        )
 
-        val exptectedAttrs = setOf(RFieldEntry(Type.ATTR, "colorAttr", value),
-                RFieldEntry(Type.ATTR, "sizeAttr", value))        
+        val exptectedAttrs = setOf(
+            RFieldEntry(Type.ATTR, "colorAttr", value),
+            RFieldEntry(Type.ATTR, "sizeAttr", value)
+        )
 
-        assertEquals(mapOf(Type.STYLEABLE to exptectedStyleable,
-            Type.ATTR to exptectedAttrs), result)
+        assertEquals(
+            mapOf(
+                Type.STYLEABLE to exptectedStyleable,
+                Type.ATTR to exptectedAttrs
+            ), result
+        )
     }
 
     @Test
     fun `assert styleable values are parsed correctly (dot will be replaced with underscore)`() {
         val listTemp = testResFiles(
-                TestResFile("styleable.xml",
-                        contents = """
+            TestResFile(
+                "styleable.xml",
+                contents = """
                 <resources>
                     <declare-styleable name="Base.StyleableView">
                         <attr name="colorAttr" />
                         <attr name="sizeAttr" />
                     </declare-styleable>
                 </resources>
-                """.trimIndent(), path = "/src/res/values/")
+                """.trimIndent(), path = "/src/res/values/"
+            )
         )
 
-        val result = resToRParser.parse(listTemp, emptyList<String>()) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val result = resToRParser.parse(
+            listTemp,
+            emptyList()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
         val parentValue = "{ 0,0 }"
-        val exptectedStyleable = setOf(RFieldEntry(Type.STYLEABLE, "Base_StyleableView", parentValue, isArray = true),
-                RFieldEntry(Type.STYLEABLE, "Base_StyleableView_colorAttr", value),
-                RFieldEntry(Type.STYLEABLE, "Base_StyleableView_sizeAttr", value))
+        val exptectedStyleable = setOf(
+            RFieldEntry(Type.STYLEABLE, "Base_StyleableView", parentValue, isArray = true),
+            RFieldEntry(Type.STYLEABLE, "Base_StyleableView_colorAttr", value),
+            RFieldEntry(Type.STYLEABLE, "Base_StyleableView_sizeAttr", value)
+        )
 
-        val exptectedAttrs = setOf(RFieldEntry(Type.ATTR, "colorAttr", value),
-                RFieldEntry(Type.ATTR, "sizeAttr", value))
+        val exptectedAttrs = setOf(
+            RFieldEntry(Type.ATTR, "colorAttr", value),
+            RFieldEntry(Type.ATTR, "sizeAttr", value)
+        )
 
-        assertEquals(mapOf(Type.STYLEABLE to exptectedStyleable,
-                Type.ATTR to exptectedAttrs), result)
+        assertEquals(
+            mapOf(
+                Type.STYLEABLE to exptectedStyleable,
+                Type.ATTR to exptectedAttrs
+            ), result
+        )
     }
 }

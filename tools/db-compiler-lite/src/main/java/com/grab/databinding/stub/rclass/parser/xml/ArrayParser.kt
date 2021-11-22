@@ -16,15 +16,15 @@
 
 package com.grab.databinding.stub.rclass.parser.xml
 
-import com.grab.databinding.stub.rclass.parser.Type
+import com.grab.databinding.stub.common.XmlEntry
+import com.grab.databinding.stub.rclass.parser.ParserResult
 import com.grab.databinding.stub.rclass.parser.RFieldEntry
 import com.grab.databinding.stub.rclass.parser.ResourceFileParser
-import com.grab.databinding.stub.rclass.parser.ParserResult
-import com.grab.databinding.stub.common.XmlEntry
+import com.grab.databinding.stub.rclass.parser.Type
 import javax.inject.Inject
 
 /**
- * ArrayParser is supposed to parse all available array under nexted R class `array`
+ * ArrayParser is supposed to parse all available array under nested R class `array`
  * What should be covered:
  * - array
  * - string-array

@@ -16,12 +16,11 @@
 
 package com.grab.databinding.stub.rclass.parser.xml
 
-import com.grab.databinding.stub.rclass.parser.Type
-import com.grab.databinding.stub.rclass.parser.XmlTypeValues
+import com.grab.databinding.stub.common.XmlEntry
+import com.grab.databinding.stub.rclass.parser.ParserResult
 import com.grab.databinding.stub.rclass.parser.RFieldEntry
 import com.grab.databinding.stub.rclass.parser.ResourceFileParser
-import com.grab.databinding.stub.rclass.parser.ParserResult
-import com.grab.databinding.stub.common.XmlEntry
+import com.grab.databinding.stub.rclass.parser.Type
 import javax.inject.Inject
 
 /**
@@ -34,11 +33,7 @@ import javax.inject.Inject
 class StyleParser @Inject constructor() : ResourceFileParser {
 
     override fun parse(entry: XmlEntry): ParserResult {
-
         val styleName = entry.tagName.replace(".", "_")
-
-        return setOf(RFieldEntry(Type.STYLE, styleName, defaultResValue)).let {
-            ParserResult(it, Type.STYLE)
-        }
+        return ParserResult(setOf(RFieldEntry(Type.STYLE, styleName, defaultResValue)), Type.STYLE)
     }
 }

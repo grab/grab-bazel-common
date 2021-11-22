@@ -16,29 +16,10 @@
 
 package com.grab.databinding.stub.rclass.parser
 
-import com.grab.databinding.stub.binding.parser.Binding
-import com.grab.databinding.stub.binding.parser.BindingType
-import com.grab.databinding.stub.binding.parser.LayoutBindingData
 import com.grab.databinding.stub.common.BaseBindingStubTest
-import com.grab.databinding.stub.rclass.parser.Type.*
-import com.grab.databinding.stub.rclass.parser.RFieldEntry
-import com.squareup.javapoet.ClassName
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.assertTrue
-import com.grab.databinding.stub.rclass.parser.ResToRParser
-import com.grab.databinding.stub.rclass.parser.ResToRParserImpl
-import com.grab.databinding.stub.rclass.parser.Type
-import java.io.File
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
-import com.grab.databinding.stub.rclass.parser.ParserType
-import com.grab.databinding.stub.rclass.parser.xml.DefaultXmlParser
-import com.grab.databinding.stub.rclass.parser.xml.StyleParser
-
 
 class ResToRFileIDParserTest : BaseBindingStubTest() {
 
@@ -53,67 +34,89 @@ class ResToRFileIDParserTest : BaseBindingStubTest() {
     @Test
     fun `assert image file names are parsed correctly`() {
         val listTemp = testResFiles(
-                TestResFile("imagePNG.png", "", "/src/res/drawable/"),
-                TestResFile("imageVEC.svg", "", "/src/res/drawable/"),
-                TestResFile("animation.gif", "", "/src/res/anim/")
+            TestResFile("imagePNG.png", "", "/src/res/drawable/"),
+            TestResFile("imageVEC.svg", "", "/src/res/drawable/"),
+            TestResFile("animation.gif", "", "/src/res/anim/")
         )
 
-        val result = resToRParser.parse(listTemp, emptyList<String>()) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val result = resToRParser.parse(
+            listTemp,
+            emptyList()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
 
-        val expectedDrawable =
-                setOf(RFieldEntry(Type.DRAWABLE, "imagePNG", value),
-                        RFieldEntry(Type.DRAWABLE, "imageVEC", value))
+        val expectedDrawable = setOf(
+            RFieldEntry(Type.DRAWABLE, "imagePNG", value),
+            RFieldEntry(Type.DRAWABLE, "imageVEC", value)
+        )
 
         val expectedAnim = setOf(RFieldEntry(Type.ANIM, "animation", value))
 
-        assertEquals(mapOf(Type.DRAWABLE to expectedDrawable,
-                Type.ANIM to expectedAnim), result)
+        assertEquals(
+            mapOf(
+                Type.DRAWABLE to expectedDrawable,
+                Type.ANIM to expectedAnim
+            ), result
+        )
     }
 
     @Test
     fun `assert file names are parsed correctly`() {
         val listTemp = testResFiles(
-                TestResFile("activity_main.xml",
-                        contents = """
+            TestResFile(
+                "activity_main.xml",
+                contents = """
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent">
                     </LinearLayout>
-                    """.trimIndent(), path = "/src/res/layout/"),
+                    """.trimIndent(), path = "/src/res/layout/"
+            ),
 
-                TestResFile("game_menu.xml",
-                        contents = """
+            TestResFile(
+                "game_menu.xml",
+                contents = """
                 <?xml version="1.0" encoding="utf-8"?>
                 <menu xmlns:android="http://schemas.android.com/apk/res/android">
                         <item android:id="@android:id/mask"/>
                 </menu>
-                """.trimIndent(), path = "/src/res/menu/")
+                """.trimIndent(), path = "/src/res/menu/"
+            )
         )
 
-        val result = resToRParser.parse(listTemp, emptyList<String>()) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val result = resToRParser.parse(
+            listTemp,
+            emptyList()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
 
         val expectedLayout = setOf(RFieldEntry(Type.LAYOUT, "activity_main", value))
 
         val expectedMenu = setOf(RFieldEntry(Type.MENU, "game_menu", value))
 
-        assertEquals(mapOf(Type.LAYOUT to expectedLayout,
-                Type.MENU to expectedMenu), result)
+        assertEquals(
+            mapOf(
+                Type.LAYOUT to expectedLayout,
+                Type.MENU to expectedMenu
+            ), result
+        )
     }
 
     @Test
     fun `assert id name are parsed correctly along with file names`() {
         val listTemp = testResFiles(
-                TestResFile("activity_main.xml",
-                        contents = """
+            TestResFile(
+                "activity_main.xml",
+                contents = """
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:id="@+id/time_display"
                         android:layout_height="match_parent">
                     </LinearLayout>
-                    """.trimIndent(), path = "/src/res/layout/"),
+                    """.trimIndent(), path = "/src/res/layout/"
+            ),
 
-                TestResFile("game_menu.xml",
-                        contents = """
+            TestResFile(
+                "game_menu.xml",
+                contents = """
                 <?xml version="1.0" encoding="utf-8"?>
                 <menu xmlns:android="http://schemas.android.com/apk/res/android">
                     <item android:id="@+id/new_game"
@@ -121,21 +124,29 @@ class ResToRFileIDParserTest : BaseBindingStubTest() {
                     <item android:id="@+id/help"
                     android:title="@string/help"/>
                 </menu>
-                """.trimIndent(), path = "/src/res/menu/")
+                """.trimIndent(), path = "/src/res/menu/"
+            )
         )
 
-        val result = resToRParser.parse(listTemp, emptyList<String>()) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val result = resToRParser
+            .parse(listTemp, emptyList()) as MutableMap<Type, MutableSet<RFieldEntry>>
 
         val expectedLayout = setOf(RFieldEntry(Type.LAYOUT, "activity_main", value))
 
-        val expectedIDs = setOf(RFieldEntry(Type.ID, "time_display", value),
-                RFieldEntry(Type.ID, "new_game", value),
-                RFieldEntry(Type.ID, "help", value))
+        val expectedIDs = setOf(
+            RFieldEntry(Type.ID, "time_display", value),
+            RFieldEntry(Type.ID, "new_game", value),
+            RFieldEntry(Type.ID, "help", value)
+        )
 
         val expectedMenu = setOf(RFieldEntry(Type.MENU, "game_menu", value))
 
-        assertEquals(mapOf(Type.LAYOUT to expectedLayout,
+        assertEquals(
+            mapOf(
+                Type.LAYOUT to expectedLayout,
                 Type.ID to expectedIDs,
-                Type.MENU to expectedMenu), result)
+                Type.MENU to expectedMenu
+            ), result
+        )
     }
 }

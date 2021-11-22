@@ -29,7 +29,7 @@ data class RFieldEntry(
 
 /**
  * Reference https://developer.android.com/reference/android/R
- * 
+ *
  * Enum to collect all R types in R.java
  */
 enum class Type(val entry: String) {
@@ -124,12 +124,11 @@ constructor() : RTxtParser {
             // Parse format like
             // int[] styleable View { 0x00000000, 0x00000000, 0x00000000, 0x01010000, 0x010100da }
             tokens.subList(VALUE_INDEX + 1, tokens.size - 1)
-                .map { value -> value.trim { it == ',' } }
                 .joinToString(
                     separator = ", ",
                     prefix = "{ ",
                     postfix = " }"
-            )
+                ) { value -> value.trim { it == ',' } }
         }
         return RFieldEntry(
             type = types.first { it.entry == tokens[TYPE_INDEX] },

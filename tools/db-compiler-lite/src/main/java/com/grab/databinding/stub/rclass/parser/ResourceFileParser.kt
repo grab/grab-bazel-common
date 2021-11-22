@@ -16,11 +16,6 @@
 
 package com.grab.databinding.stub.rclass.parser
 
-import com.grab.databinding.stub.rclass.parser.XmlTypeValues
-import com.grab.databinding.stub.rclass.parser.Type
-import com.grab.databinding.stub.rclass.parser.RFieldEntry
-import org.xmlpull.v1.XmlPullParser
-import com.grab.databinding.stub.common.attributesNameValue
 import com.grab.databinding.stub.common.XmlEntry
 
 const val DEFAULT_VALUE = "0"
@@ -43,4 +38,7 @@ enum class ParserType {
     DEFAULT_PARSER
 }
 
-data class ParserResult(val rFields: Set<RFieldEntry>, val type: Type)
+data class ParserResult(
+    val rFields: Set<RFieldEntry>,
+    val type: Type
+)

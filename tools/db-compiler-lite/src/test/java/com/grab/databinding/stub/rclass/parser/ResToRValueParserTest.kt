@@ -16,28 +16,12 @@
 
 package com.grab.databinding.stub.rclass.parser
 
-import com.grab.databinding.stub.binding.parser.Binding
-import com.grab.databinding.stub.binding.parser.BindingType
-import com.grab.databinding.stub.binding.parser.LayoutBindingData
 import com.grab.databinding.stub.common.BaseBindingStubTest
-import com.grab.databinding.stub.rclass.parser.Type.*
-import com.grab.databinding.stub.rclass.parser.RFieldEntry
-import com.squareup.javapoet.ClassName
-import org.junit.Before
-import org.junit.Test
-import kotlin.test.assertTrue
-import com.grab.databinding.stub.rclass.parser.ResToRParser
-import com.grab.databinding.stub.rclass.parser.ResToRParserImpl
-import com.grab.databinding.stub.rclass.parser.Type
-import java.io.File
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
-import com.grab.databinding.stub.rclass.parser.ParserType
 import com.grab.databinding.stub.rclass.parser.xml.DefaultXmlParser
 import com.grab.databinding.stub.rclass.parser.xml.StyleParser
+import org.junit.Before
+import org.junit.Test
+import kotlin.test.assertEquals
 
 
 class ResToRValueParserTest : BaseBindingStubTest() {
@@ -47,25 +31,32 @@ class ResToRValueParserTest : BaseBindingStubTest() {
 
     @Before
     fun setUp() {
-        val providedParsers = mapOf(ParserType.DEFAULT_PARSER to DefaultXmlParser(),
-                ParserType.STYLE_PARSER to StyleParser())
+        val providedParsers = mapOf(
+            ParserType.DEFAULT_PARSER to DefaultXmlParser(),
+            ParserType.STYLE_PARSER to StyleParser()
+        )
         resToRParser = ResToRParserImpl(providedParsers)
     }
 
     @Test
     fun `assert style values are parsed correctly`() {
         val listTemp = testResFiles(
-                TestResFile("themes.xml",
-                        contents = """
+            TestResFile(
+                "themes.xml",
+                contents = """
                 <resources>
                     <style name="Theme.MyApplication" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
                         <item name="colorPrimary">@color/purple_500</item>
                     </style>
                 </resources>
-                """.trimIndent(), path = "/src/res/values/")
+                """.trimIndent(), path = "/src/res/values/"
+            )
         )
 
-        val result = resToRParser.parse(listTemp, emptyList<String>()) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val result = resToRParser.parse(
+            listTemp,
+            emptyList()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
         val expectedStyle = setOf(RFieldEntry(Type.STYLE, "Theme_MyApplication", value))
 
         assertEquals(mapOf(Type.STYLE to expectedStyle), result)
@@ -74,45 +65,61 @@ class ResToRValueParserTest : BaseBindingStubTest() {
     @Test
     fun `assert item values are parsed correctly`() {
         val listTemp = testResFiles(
-                // ITEMS
-                TestResFile("items.xml",
-                        contents = """
+            // ITEMS
+            TestResFile(
+                "items.xml",
+                contents = """
                 <resources>
                         <item name="item_fraction" type="fraction">5%</item>
                         <item name="item_string" type="string">Hello</item>
                         <item name="item_boolean" type="bool">true</item>
                 </resources>
-                """.trimIndent(), path = "/src/res/values/")
+                """.trimIndent(), path = "/src/res/values/"
+            )
         )
 
-        val result = resToRParser.parse(listTemp, emptyList<String>()) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val result = resToRParser.parse(
+            listTemp,
+            emptyList()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
         val expectedFraction = setOf(RFieldEntry(Type.FRACTION, "item_fraction", value))
         val expectedString = setOf(RFieldEntry(Type.STRING, "item_string", value))
         val expectedBool = setOf(RFieldEntry(Type.BOOL, "item_boolean", value))
 
-        assertEquals(mapOf(Type.STRING to expectedString,
+        assertEquals(
+            mapOf(
+                Type.STRING to expectedString,
                 Type.FRACTION to expectedFraction,
-                Type.BOOL to expectedBool), result)
+                Type.BOOL to expectedBool
+            ), result
+        )
 
     }
 
     @Test
     fun `assert color values are parsed correctly`() {
         val listTemp = testResFiles(
-                // COLORS
-                TestResFile("colors.xml",
-                        contents = """
+            // COLORS
+            TestResFile(
+                "colors.xml",
+                contents = """
                 <?xml version="1.0" encoding="utf-8"?>
                 <resources>
                     <color name="purple_200">#FFBB86FC</color>
                     <color name="purple_500">#FF6200EE</color>
                 </resources>
-                """.trimIndent(), path = "/src/res/values/")
+                """.trimIndent(), path = "/src/res/values/"
+            )
         )
 
-        val result = resToRParser.parse(listTemp, emptyList<String>()) as MutableMap<Type, MutableSet<RFieldEntry>>
-        val expectedColor = setOf(RFieldEntry(Type.COLOR, "purple_200", value),
-                RFieldEntry(Type.COLOR, "purple_500", value))
+        val result = resToRParser.parse(
+            listTemp,
+            emptyList()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val expectedColor = setOf(
+            RFieldEntry(Type.COLOR, "purple_200", value),
+            RFieldEntry(Type.COLOR, "purple_500", value)
+        )
 
         assertEquals(mapOf(Type.COLOR to expectedColor), result)
     }
@@ -120,17 +127,22 @@ class ResToRValueParserTest : BaseBindingStubTest() {
     @Test
     fun `assert dimen values are parsed correctly`() {
         val listTemp = testResFiles(
-                // COLORS
-                TestResFile("dimen.xml",
-                        contents = """
+            // COLORS
+            TestResFile(
+                "dimen.xml",
+                contents = """
                 <?xml version="1.0" encoding="utf-8"?>
                 <resources>
                     <dimen name="size_5dp">5dp</dimen>
                 </resources>
-                """.trimIndent(), path = "/src/res/values/")
+                """.trimIndent(), path = "/src/res/values/"
+            )
         )
 
-        val result = resToRParser.parse(listTemp, emptyList<String>()) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val result = resToRParser.parse(
+            listTemp,
+            emptyList()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
         val expectedDimen = setOf(RFieldEntry(Type.DIMEN, "size_5dp", value))
 
         assertEquals(mapOf(Type.DIMEN to expectedDimen), result)
@@ -139,17 +151,22 @@ class ResToRValueParserTest : BaseBindingStubTest() {
     @Test
     fun `assert plurals values are parsed correctly`() {
         val listTemp = testResFiles(
-                // COLORS
-                TestResFile("plurals.xml",
-                        contents = """
+            // COLORS
+            TestResFile(
+                "plurals.xml",
+                contents = """
                 <?xml version="1.0" encoding="utf-8"?>
                 <plurals name="proposal_plurals">
                         <item quantity="zero">No proposals</item>
                 </plurals>
-                """.trimIndent(), path = "/src/res/values/")
+                """.trimIndent(), path = "/src/res/values/"
+            )
         )
 
-        val result = resToRParser.parse(listTemp, emptyList<String>()) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val result = resToRParser.parse(
+            listTemp,
+            emptyList()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
         val expectedPlural = setOf(RFieldEntry(Type.PLURALS, "proposal_plurals", value))
 
         assertEquals(mapOf(Type.PLURALS to expectedPlural), result)
@@ -158,17 +175,22 @@ class ResToRValueParserTest : BaseBindingStubTest() {
     @Test
     fun `assert attr values are parsed correctly`() {
         val listTemp = testResFiles(
-                // COLORS
-                TestResFile("attrs.xml",
-                        contents = """
+            // COLORS
+            TestResFile(
+                "attrs.xml",
+                contents = """
                 <?xml version="1.0" encoding="utf-8"?>
                 <resources>
                         <attr name="value" format="string"/>
                 </resources>
-                """.trimIndent(), path = "/src/res/values/")
+                """.trimIndent(), path = "/src/res/values/"
+            )
         )
 
-        val result = resToRParser.parse(listTemp, emptyList<String>()) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val result = resToRParser.parse(
+            listTemp,
+            emptyList<String>()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
         val expectedAttrs = setOf(RFieldEntry(Type.ATTR, "value", value))
 
         assertEquals(mapOf(Type.ATTR to expectedAttrs), result)
@@ -177,32 +199,37 @@ class ResToRValueParserTest : BaseBindingStubTest() {
     @Test
     fun `assert string values are parsed correctly`() {
         val listTemp = testResFiles(
-                // STRING
-                TestResFile("string.xml",
-                        contents = """
+            // STRING
+            TestResFile(
+                "string.xml",
+                contents = """
                     <resources>
                         <string name="app_name">Playground</string>
                     </resources>
                     """.trimIndent(),
-                        path = "/src/res/values/"
-                ),
+                path = "/src/res/values/"
+            ),
 
-                // ITEMS
-                TestResFile("items.xml",
-                        contents = """
+            // ITEMS
+            TestResFile(
+                "items.xml",
+                contents = """
                 <resources>
                         <item name="item_string" type="string">Hello Item</item>
                 </resources>
-                """.trimIndent(), path = "/src/res/values/")
+                """.trimIndent(), path = "/src/res/values/"
+            )
 
         )
 
-        val result = resToRParser.parse(listTemp, emptyList<String>()) as MutableMap<Type, MutableSet<RFieldEntry>>
-        val expectedString = setOf(RFieldEntry(Type.STRING, "app_name", value),
-                RFieldEntry(Type.STRING, "item_string", value))
-
+        val result = resToRParser.parse(
+            listTemp,
+            emptyList()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val expectedString = setOf(
+            RFieldEntry(Type.STRING, "app_name", value),
+            RFieldEntry(Type.STRING, "item_string", value)
+        )
         assertEquals(mapOf(Type.STRING to expectedString), result)
-
     }
-
 }

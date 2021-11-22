@@ -16,13 +16,12 @@
 
 package com.grab.databinding.stub.rclass.parser.xml
 
-import com.grab.databinding.stub.rclass.parser.Type
-import com.grab.databinding.stub.rclass.parser.XmlTypeValues
+import com.grab.databinding.stub.common.ParentXmlEntry
+import com.grab.databinding.stub.common.XmlEntry
+import com.grab.databinding.stub.rclass.parser.ParserResult
 import com.grab.databinding.stub.rclass.parser.RFieldEntry
 import com.grab.databinding.stub.rclass.parser.ResourceFileParser
-import com.grab.databinding.stub.rclass.parser.ParserResult
-import com.grab.databinding.stub.common.XmlEntry
-import com.grab.databinding.stub.common.ParentXmlEntry
+import com.grab.databinding.stub.rclass.parser.Type
 import javax.inject.Inject
 
 /**
@@ -41,26 +40,26 @@ import javax.inject.Inject
 class DeclareStyleableParser @Inject constructor() : ResourceFileParser {
 
     override fun parse(entry: XmlEntry): ParserResult {
-        
+
         require(entry is ParentXmlEntry) { "Only instance of ParentXmlEntry could be used" }
 
         val rFields = mutableSetOf<RFieldEntry>()
 
         entry.children.forEach {
-            var childStyleName = entry.tagName.replace(".", "_")
+            val childStyleName = entry.tagName.replace(".", "_")
             val childName = "${childStyleName}_${it}"
             rFields.add(RFieldEntry(Type.STYLEABLE, childName, defaultResValue))
         }
 
         // Generate parent value with each subItem
-        val styleableValue = rFields.joinToString(separator = ",") { defaultResValue }.let { "{ ${it} }" }
+        val styleableValue = rFields
+            .joinToString(separator = ",") { defaultResValue }
+            .let { "{ $it }" }
 
         // Add parent styleable
-        var stylelableParentName = entry.tagName.replace(".", "_")
+        val stylelableParentName = entry.tagName.replace(".", "_")
         rFields.add(RFieldEntry(Type.STYLEABLE, stylelableParentName, styleableValue, true))
 
-        return rFields.let {
-            ParserResult(it, Type.STYLEABLE)
-        }
+        return ParserResult(rFields, Type.STYLEABLE)
     }
 }

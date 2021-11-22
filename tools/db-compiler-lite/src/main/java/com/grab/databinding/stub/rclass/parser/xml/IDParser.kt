@@ -16,12 +16,11 @@
 
 package com.grab.databinding.stub.rclass.parser.xml
 
-import com.grab.databinding.stub.rclass.parser.XmlTypeValues
-import com.grab.databinding.stub.rclass.parser.Type
+import com.grab.databinding.stub.common.XmlEntry
+import com.grab.databinding.stub.rclass.parser.ParserResult
 import com.grab.databinding.stub.rclass.parser.RFieldEntry
 import com.grab.databinding.stub.rclass.parser.ResourceFileParser
-import com.grab.databinding.stub.rclass.parser.ParserResult
-import com.grab.databinding.stub.common.XmlEntry
+import com.grab.databinding.stub.rclass.parser.Type
 import javax.inject.Inject
 
 /**
@@ -33,8 +32,6 @@ import javax.inject.Inject
 class IDParser @Inject constructor() : ResourceFileParser {
 
     override fun parse(entry: XmlEntry): ParserResult {
-        return setOf(RFieldEntry(Type.ID, entry.tagName, defaultResValue)).let {
-            ParserResult(it, Type.ID)
-        }
+        return ParserResult(setOf(RFieldEntry(Type.ID, entry.tagName, defaultResValue)), Type.ID)
     }
 }

@@ -16,36 +16,32 @@
 
 package com.grab.databinding.stub.rclass.parser
 
-import java.io.File
-import com.grab.databinding.stub.rclass.parser.Type
-import com.grab.databinding.stub.rclass.parser.XmlTypeValues
-import org.xmlpull.v1.XmlPullParser.START_TAG
-import org.xmlpull.v1.XmlPullParserFactory
-import org.xmlpull.v1.XmlPullParser
-import com.grab.databinding.stub.common.attributesNameValue
-import com.grab.databinding.stub.common.attributeName
-import com.grab.databinding.stub.common.NAME
-import com.grab.databinding.stub.common.events
-import com.grab.databinding.stub.common.SingleXmlEntry
-import com.grab.databinding.stub.common.ParentXmlEntryImpl
-import javax.inject.Inject
-import javax.inject.Named
-import javax.inject.Singleton
-import com.grab.databinding.stub.rclass.parser.RFieldEntry
-import java.util.NoSuchElementException
+import com.grab.databinding.stub.common.*
 import com.grab.databinding.stub.util.enumTypeValue
+import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserFactory
+import java.io.File
+import javax.inject.Singleton
 
+/**
+ * Parse resource xml, files and dependencies R.txt into types representing R class.
+ */
 interface ResToRParser {
-    fun parse(moduleRes: List<File>, depsContent: List<String>): Map<Type, MutableSet<RFieldEntry>>
+    fun parse(
+        resources: List<File>,
+        dependenciesRTxtContent: List<String>
+    ): Map<Type, MutableSet<RFieldEntry>>
 }
 
 // Allow having id like "android:id="@id/my_id" and "android:id="@+id/my_id"
-private const val ID_DEFINITION_PREFIX = "id/";
+private const val ID_DEFINITION_PREFIX = "id/"
 private const val ANDROID_ID = "android:id"
 private const val TAG_TYPE = "type"
 
 @Singleton
-class ResToRParserImpl constructor(val parsers: Map<ParserType, @JvmSuppressWildcards ResourceFileParser>) : ResToRParser {
+class ResToRParserImpl constructor(
+    private val parsers: Map<ParserType, @JvmSuppressWildcards ResourceFileParser>
+) : ResToRParser {
 
     companion object {
         private const val VALUE_INDEX = 3
@@ -56,16 +52,17 @@ class ResToRParserImpl constructor(val parsers: Map<ParserType, @JvmSuppressWild
     private val resources: MutableMap<Type, MutableSet<RFieldEntry>> = mutableMapOf()
     private val xpp = XmlPullParserFactory.newInstance().newPullParser()
 
-    override fun parse(moduleRes: List<File>, depsContent: List<String>): Map<Type, MutableSet<RFieldEntry>> {
-        moduleRes.forEach {
+    override fun parse(
+        resources: List<File>,
+        dependenciesRTxtContent: List<String>
+    ): Map<Type, MutableSet<RFieldEntry>> {
+        resources.forEach {
             collectRes(it)
         }
-
-        depsContent.forEach {
+        dependenciesRTxtContent.forEach {
             parseContent(it)
         }
-
-        return resources
+        return this.resources
     }
 
     private fun parseContent(content: String) {
@@ -78,12 +75,11 @@ class ResToRParserImpl constructor(val parsers: Map<ParserType, @JvmSuppressWild
         } else {
             // Parse format like
             // int[] styleable View { 0x00000000, 0x00000000, 0x00000000, 0x01010000, 0x010100da }
-            tokens.subList(VALUE_INDEX + 1, tokens.size - 1)
-                    .map { DEFAULT_VALUE }.joinToString(
-                            separator = ", ",
-                            prefix = "{ ",
-                            postfix = " }"
-                    )
+            tokens.subList(VALUE_INDEX + 1, tokens.size - 1).joinToString(
+                separator = ", ",
+                prefix = "{ ",
+                postfix = " }"
+            ) { DEFAULT_VALUE }
         }
 
         val type = Type.valueOf(tokens[TYPE_INDEX].toUpperCase())
@@ -92,7 +88,7 @@ class ResToRParserImpl constructor(val parsers: Map<ParserType, @JvmSuppressWild
     }
 
     private fun collectRes(file: File) {
-        val dirname = file.getParentFile().name
+        val dirname = file.parentFile.name
 
         if (dirname.startsWith("values".substringBefore("-"))) { // for lang values like "values-in"
             processValues(file)
@@ -106,30 +102,35 @@ class ResToRParserImpl constructor(val parsers: Map<ParserType, @JvmSuppressWild
         xpp.setInput(file.inputStream(), null)
 
         xpp.events()
-                .asSequence()
-                .filter { xpp.attributesNameValue().isNotEmpty() }
-                .filter { xpp.attributesNameValue().contains(NAME) }
-                .forEach {
-                    val name = xpp.attributeName()
+            .asSequence()
+            .filter { xpp.attributesNameValue().isNotEmpty() }
+            .filter { xpp.attributesNameValue().contains(NAME) }
+            .forEach {
+                val name = xpp.attributeName()
 
-                    val type = enumTypeValue(xpp.name).let {
-                        getTypedItem(it, xpp.attributesNameValue()) ?: it
-                    }.apply {
-                        // If item is not typed, we do not include it
-                        if (this == XmlTypeValues.ITEM) return@forEach
-                    }
-
-                    parseIntoRField(type, name, xpp)
+                val type = enumTypeValue(xpp.name).let {
+                    getTypedItem(it, xpp.attributesNameValue()) ?: it
+                }.apply {
+                    // If item is not typed, we do not include it
+                    if (this == XmlTypeValues.ITEM) return@forEach
                 }
+
+                parseIntoRField(type, name, xpp)
+            }
     }
 
-    private fun processFileNamesInDirectory(file: File, dirname: String) { //dirname = "drawable" or "layout"
+    private fun processFileNamesInDirectory(
+        file: File,
+        dirname: String
+    ) { //dirname = "drawable" or "layout"
         // Check for drawable with type 9path
         val filename = file.nameWithoutExtension.substringBefore(".9")
 
-        val type = Type.valueOf(dirname.toUpperCase().substringBefore("-")) // for lang or resolution values like "drawables-hdpi"
+        val type = Type.valueOf(
+            dirname.toUpperCase().substringBefore("-")
+        ) // for lang or resolution values like "drawables-hdpi"
 
-        addIntResource(type, filename);
+        addIntResource(type, filename)
     }
 
     private fun collectIDs(file: File) {
@@ -137,19 +138,31 @@ class ResToRParserImpl constructor(val parsers: Map<ParserType, @JvmSuppressWild
 
         xpp.setInput(file.inputStream(), null)
         xpp.events()
-                .asSequence()
-                .filter { xpp.attributesNameValue().contains(ANDROID_ID) }
-                .map { xpp.attributesNameValue().get(ANDROID_ID) }
-                .filterNotNull()
-                .filter { !it.contains("@android:") }
-                .map { it.substringAfter(ID_DEFINITION_PREFIX) }
-                //do not include "@android:id/mask"
-                .forEach { addIntResource(Type.ID, it) }
+            .asSequence()
+            .filter { xpp.attributesNameValue().contains(ANDROID_ID) }
+            .map { xpp.attributesNameValue().get(ANDROID_ID) }
+            .filterNotNull()
+            .filter { !it.contains("@android:") }
+            .map { it.substringAfter(ID_DEFINITION_PREFIX) }
+            //do not include "@android:id/mask"
+            .forEach { addIntResource(Type.ID, it) }
     }
 
-    private fun addIntResource(type: Type, name: String, value: String = DEFAULT_VALUE, isArray: Boolean = false) {
+    private fun addIntResource(
+        type: Type,
+        name: String,
+        value: String = DEFAULT_VALUE,
+        isArray: Boolean = false
+    ) {
         resources.getOrPut(type) { mutableSetOf() }.apply {
-            this.add(RFieldEntry(type, name, value, isArray)) // ID will be overriden by the second stage aapt runs
+            this.add(
+                RFieldEntry(
+                    type,
+                    name,
+                    value,
+                    isArray
+                )
+            ) // ID will be overriden by the second stage aapt runs
             resources.put(type, this)
         }
     }
@@ -170,9 +183,17 @@ class ResToRParserImpl constructor(val parsers: Map<ParserType, @JvmSuppressWild
     private fun parseIntoRField(type: XmlTypeValues, name: String, xpp: XmlPullParser) {
         when (type) {
             XmlTypeValues.STYLE -> parse(ParserType.STYLE_PARSER, name, type)
-            XmlTypeValues.ARRAY, XmlTypeValues.STRING_ARRAY, XmlTypeValues.INTEGER_ARRAY -> parse(ParserType.ARRAY_PARSER, name, type)
+            XmlTypeValues.ARRAY, XmlTypeValues.STRING_ARRAY, XmlTypeValues.INTEGER_ARRAY -> parse(
+                ParserType.ARRAY_PARSER,
+                name,
+                type
+            )
             XmlTypeValues.ENUM -> parse(ParserType.ID_PARSER, name, type)
-            XmlTypeValues.DECLARE_STYLEABLE -> parseParentEntry(ParserType.STYLEABLE_PARSER, name, xpp)
+            XmlTypeValues.DECLARE_STYLEABLE -> parseParentEntry(
+                ParserType.STYLEABLE_PARSER,
+                name,
+                xpp
+            )
             else -> parse(ParserType.DEFAULT_PARSER, name, type)
         }.apply {
             addResources(this)
@@ -180,8 +201,8 @@ class ResToRParserImpl constructor(val parsers: Map<ParserType, @JvmSuppressWild
     }
 
     private fun parse(type: ParserType, name: String, typeValue: XmlTypeValues): ParserResult {
-        return parsers.get(type)?.parse(SingleXmlEntry(name, typeValue))
-                ?: throw NullPointerException("Missing implementation. Parser must not be null.")
+        return parsers[type]?.parse(SingleXmlEntry(name, typeValue))
+            ?: throw NullPointerException("Missing implementation. Parser must not be null.")
     }
 
     private fun parseParentEntry(type: ParserType, name: String, xpp: XmlPullParser): ParserResult {
@@ -189,13 +210,13 @@ class ResToRParserImpl constructor(val parsers: Map<ParserType, @JvmSuppressWild
 
         xpp.next() // Proceed to the next (child) node once we save parent
 
-        while (xpp.getName() != XmlTypeValues.DECLARE_STYLEABLE.entry) {
+        while (xpp.name != XmlTypeValues.DECLARE_STYLEABLE.entry) {
 
             // Get next item
             xpp.next()
 
             // Prevent having null as a tag or "" as empty content
-            if (xpp.getName() == null || xpp.attributesNameValue().values.isEmpty()) {
+            if (xpp.name == null || xpp.attributesNameValue().values.isEmpty()) {
                 continue
             }
 
@@ -207,7 +228,8 @@ class ResToRParserImpl constructor(val parsers: Map<ParserType, @JvmSuppressWild
             parseIntoRField(XmlTypeValues.ATTR, childName, xpp)
         }
 
-        return parsers.get(type)?.parse(ParentXmlEntryImpl(name, XmlTypeValues.DECLARE_STYLEABLE, children))
-                ?: throw NullPointerException("Missing implementation. Parser must not be null.")
+        return parsers.get(type)
+            ?.parse(ParentXmlEntryImpl(name, XmlTypeValues.DECLARE_STYLEABLE, children))
+            ?: throw NullPointerException("Missing implementation. Parser must not be null.")
     }
 }

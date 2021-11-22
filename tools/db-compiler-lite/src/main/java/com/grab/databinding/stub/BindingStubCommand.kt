@@ -22,15 +22,9 @@ import java.io.File
 
 class BindingStubCommand : CliktCommand() {
 
-    private val layoutFiles by option(
-        "-l",
-        "--layouts",
-        help = "List of layout files"
-    ).split(",").default(emptyList())
-
     private val resources by option(
         "-res",
-        "--resources",
+        "--resource-files",
         help = "List of module res files"
     ).split(",").default(emptyList())
 
@@ -40,62 +34,40 @@ class BindingStubCommand : CliktCommand() {
         help = "Package name of R class"
     ).required()
 
-    private val src by option(
-        "-s",
-        "--src",
-        help = "The source package of the given layout files to process"
-    ).required()
-
-    private val debug by option(
-        "-d",
-        "--debug",
-        help = "Run the binary in debug mode which takes absolute paths for layout files"
-    ).flag(default = false)
-
     private val preferredOutputDir by option(
         "-o",
         "--output"
     ).convert { File(it) }
 
-    private val dependencyClassInfoZip: File by option(
-        "-cl",
-        "--class-info",
-        help = "Path to class-info.zip containing list of binding-clasess.json from direct dependencies"
-    ).convert { File(it) }.required()
-
-    private val rTxtZip by option(
-            "-r",
-            "--r-txt-deps",
-            help = "Zip of R txt files from deps aar"
-    ).convert { File(it) }.required()
+    private val databindingMetadataDir: File by option(
+        "-dm",
+        "--databinding-metadata",
+        help = "Path to databinding metadata folder containing class-infos and R.txt from dependencies"
+    ).convert { path ->
+        val dir = File(path)
+        when {
+            dir.endsWith("r_txt") || dir.endsWith("class_infos") -> dir.parentFile
+            else -> dir
+        }
+    }.required()
 
     override fun run() {
-        val layoutFiles = layoutFiles.map { file ->
-            when {
-                debug -> File(file)
-                else -> File("$src/$file")
-            }
-        }
-
-        val resourcesFiles = resources.map { file ->
-            when {
-                debug -> File(file)
-                else -> File("$src/$file")
-            }
-        }
-
+        val resourcesFiles = resources.map { path -> File(path) }
+        val layoutFiles = resourcesFiles.filter { it.path.contains("/layout") }
+        val classInfoDir = File(databindingMetadataDir, "class_infos")
+        val rTxtDir = File(databindingMetadataDir, "r_txt")
         DaggerBindingsStubComponent
             .factory()
             .create(
-                preferredOutputDir,
-                packageName,
-                layoutFiles,
-                resourcesFiles,
-                dependencyClassInfoZip,
-                rTxtZip
+                outputDir = preferredOutputDir,
+                packageName = packageName,
+                resourceFiles = resourcesFiles,
+                layoutFiles = layoutFiles,
+                classInfoDir = classInfoDir,
+                rTxtDir = rTxtDir
             ).apply {
                 val layoutBindings = layoutBindingsParser().parse(packageName, layoutFiles)
-                resToRClassGenerator().generate(packageName, resourcesFiles, rTxtZip)
+                resToRClassGenerator().generate(packageName, resourcesFiles, rTxtDir)
                 brClassGenerator().generate(packageName, layoutBindings)
                 bindingClassGenerator().generate(packageName, layoutBindings)
             }

@@ -34,6 +34,9 @@ import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
+/**
+ * Type to represent binding type in a layout XML
+ */
 sealed class BindingType {
     object Variable : BindingType()
     object View : BindingType()
@@ -46,6 +49,9 @@ sealed class BindingType {
     ) : BindingType()
 }
 
+/**
+ * The type of binding and it's metadata
+ */
 data class Binding(
     val rawName: String,
     val typeName: TypeName,
@@ -250,7 +256,7 @@ constructor(
 
     /**
      * Infers the generated layout type from either current module layout files or ones present in
-     * immediate dependencies
+     * direct dependencies
      */
     fun parseIncludedLayoutType(layoutName: String): TypeName? {
         return localLayoutTypeStore[layoutName]

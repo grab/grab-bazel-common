@@ -16,7 +16,7 @@
 
 package com.grab.databinding.stub.binding.store
 
-import com.grab.databinding.stub.common.CLASS_INFO
+import com.grab.databinding.stub.common.CLASS_INFO_DIR
 import com.grab.databinding.stub.common.LAYOUT_FILES
 import com.grab.databinding.stub.common.PACKAGE_NAME
 import com.grab.databinding.stub.util.toLayoutBindingName
@@ -30,7 +30,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.function.BiPredicate
-import java.util.zip.ZipFile
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -99,13 +98,13 @@ constructor(
 
 /**
  * [LayoutTypeStore] implementation that searches layout type for the given layout in the
- * given dependencies' [classInfoZip] file.
+ * given dependencies' [classInfoDir] directory.
  *
  * The implementation lazily parses the files on demand and utilizes caching to avoid doing
  * duplicating work.
  *
- * @param classInfoZip The merged zip provided from Bazel containing binding classes json files
- *                     of immediate dependencies
+ * @param classInfoDir The directory from Bazel containing binding classes json files of
+ *                     immediate dependencies
  * @param bindingClassJsonParser [BindingClassJsonParser] implementation that will be used to parse
  *                     contents of each binding class json file.
  */
@@ -113,16 +112,13 @@ constructor(
 class DependenciesLayoutTypeStore
 @Inject
 constructor(
-    @Named(CLASS_INFO) private val classInfoZip: File,
+    /**
+     * The directory where contents of dependencies' class info json files are present
+     */
+    @Named(CLASS_INFO_DIR) private val classInfoDir: File,
     private val bindingClassJsonParser: BindingClassJsonParser
 ) : LayoutTypeStore {
 
-    /**
-     * The directory where contents of [classInfoZip] will be extracted to.
-     */
-    private val classInfoDir by lazy(NONE) {
-        Paths.get("classInfos").let { Files.createDirectories(it) }
-    }
 
     private val jsonFilePredicate = BiPredicate<Path, BasicFileAttributes> { path, attr ->
         attr.isRegularFile && path.toString().endsWith(".json")
@@ -132,24 +128,9 @@ constructor(
      * List of databinding binding class json files extracted on demand.
      */
     private val bindingClassJsons: List<File> by lazy(NONE) {
-        ZipFile(classInfoZip).use { zip ->
-            zip.entries().asSequence().forEach { entry ->
-                zip.getInputStream(entry).use { input ->
-                    val extractedFile = File(classInfoDir.toFile(), entry.name).apply {
-                        parentFile?.mkdirs()
-                    }
-                    when {
-                        entry.isDirectory -> extractedFile.mkdirs()
-                        else -> extractedFile
-                            .outputStream()
-                            .use { output -> input.copyTo(output) }
-                    }
-                }
-            }
-        }
         Files
             .find(
-                classInfoDir,
+                Paths.get(classInfoDir.toURI()),
                 Int.MAX_VALUE,
                 jsonFilePredicate
             ).map(Path::toFile)

@@ -16,32 +16,15 @@
 
 package com.grab.databinding.stub.rclass.parser
 
-import com.grab.databinding.stub.binding.parser.Binding
-import com.grab.databinding.stub.binding.parser.BindingType
-import com.grab.databinding.stub.binding.parser.LayoutBindingData
 import com.grab.databinding.stub.common.BaseBindingStubTest
-import com.grab.databinding.stub.rclass.parser.Type.*
-import com.grab.databinding.stub.rclass.parser.RFieldEntry
-import com.squareup.javapoet.ClassName
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.assertTrue
-import com.grab.databinding.stub.rclass.parser.ResToRParser
-import com.grab.databinding.stub.rclass.parser.ResToRParserImpl
-import com.grab.databinding.stub.rclass.parser.Type
-import java.io.File
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
-import com.grab.databinding.stub.rclass.parser.ParserType
-import com.grab.databinding.stub.rclass.parser.xml.DefaultXmlParser
-import com.grab.databinding.stub.rclass.parser.xml.StyleParser
 
 class ResToRDepsParserTest : BaseBindingStubTest() {
 
     private lateinit var resToRParser: ResToRParser
+
     private val value = "0"
 
     @Before
@@ -77,31 +60,36 @@ class ResToRDepsParserTest : BaseBindingStubTest() {
             int xml xml 0x00000000
         """.trimIndent()
 
-        val result = resToRParser.parse(emptyList<File>(), contextRTxts.lines()) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val result = resToRParser.parse(
+            emptyList(),
+            contextRTxts.lines()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
 
         val expectedValues =
-                mapOf(Type.ANIM to setOf(RFieldEntry(Type.ANIM, "fade_up", value)),
-                        Type.ANIMATOR to setOf(RFieldEntry(Type.ANIMATOR, "fade_up_down", value)),
-                        Type.ARRAY to setOf(RFieldEntry(Type.ARRAY, "array", value)),
-                        Type.ATTR to setOf(RFieldEntry(Type.ATTR, "helperTextEnabled", value)),
-                        Type.BOOL to setOf(RFieldEntry(Type.BOOL, "enabled", value)),
-                        Type.COLOR to setOf(RFieldEntry(Type.COLOR, "primary_text", value)),
-                        Type.DIMEN to setOf(RFieldEntry(Type.DIMEN, "design_tab", value)),
-                        Type.DRAWABLE to setOf(RFieldEntry(Type.DRAWABLE, "abc_ic_voice", value)),
-                        Type.ID to setOf(RFieldEntry(Type.ID, "add", value)),
-                        Type.INTEGER to setOf(RFieldEntry(Type.INTEGER, "add_value", value)),
-                        Type.INTERPOLATOR to setOf(RFieldEntry(Type.INTERPOLATOR, "interpolator", value)),
-                        Type.MENU to setOf(RFieldEntry(Type.MENU, "menu", value)),
-                        Type.MIPMAP to setOf(RFieldEntry(Type.MIPMAP, "mipmap", value)),
-                        Type.PLURALS to setOf(RFieldEntry(Type.PLURALS, "plurals", value)),
-                        Type.RAW to setOf(RFieldEntry(Type.RAW, "raw", value)),
-                        Type.STRING to setOf(RFieldEntry(Type.STRING, "string", value)),
-                        Type.LAYOUT to setOf(RFieldEntry(Type.LAYOUT, "design_bottom", value)),
-                        Type.STYLE to setOf(RFieldEntry(Type.STYLE, "Base_Widget", value)),
-                        Type.STYLEABLE to setOf(RFieldEntry(Type.STYLEABLE, "autoSizePresetSizes", value)),
-                        Type.TRANSITION to setOf(RFieldEntry(Type.TRANSITION, "transition", value)),
-                        Type.FONT to setOf(RFieldEntry(Type.FONT, "font", value)),
-                        Type.XML to setOf(RFieldEntry(Type.XML, "xml", value)))
+            mapOf(
+                Type.ANIM to setOf(RFieldEntry(Type.ANIM, "fade_up", value)),
+                Type.ANIMATOR to setOf(RFieldEntry(Type.ANIMATOR, "fade_up_down", value)),
+                Type.ARRAY to setOf(RFieldEntry(Type.ARRAY, "array", value)),
+                Type.ATTR to setOf(RFieldEntry(Type.ATTR, "helperTextEnabled", value)),
+                Type.BOOL to setOf(RFieldEntry(Type.BOOL, "enabled", value)),
+                Type.COLOR to setOf(RFieldEntry(Type.COLOR, "primary_text", value)),
+                Type.DIMEN to setOf(RFieldEntry(Type.DIMEN, "design_tab", value)),
+                Type.DRAWABLE to setOf(RFieldEntry(Type.DRAWABLE, "abc_ic_voice", value)),
+                Type.ID to setOf(RFieldEntry(Type.ID, "add", value)),
+                Type.INTEGER to setOf(RFieldEntry(Type.INTEGER, "add_value", value)),
+                Type.INTERPOLATOR to setOf(RFieldEntry(Type.INTERPOLATOR, "interpolator", value)),
+                Type.MENU to setOf(RFieldEntry(Type.MENU, "menu", value)),
+                Type.MIPMAP to setOf(RFieldEntry(Type.MIPMAP, "mipmap", value)),
+                Type.PLURALS to setOf(RFieldEntry(Type.PLURALS, "plurals", value)),
+                Type.RAW to setOf(RFieldEntry(Type.RAW, "raw", value)),
+                Type.STRING to setOf(RFieldEntry(Type.STRING, "string", value)),
+                Type.LAYOUT to setOf(RFieldEntry(Type.LAYOUT, "design_bottom", value)),
+                Type.STYLE to setOf(RFieldEntry(Type.STYLE, "Base_Widget", value)),
+                Type.STYLEABLE to setOf(RFieldEntry(Type.STYLEABLE, "autoSizePresetSizes", value)),
+                Type.TRANSITION to setOf(RFieldEntry(Type.TRANSITION, "transition", value)),
+                Type.FONT to setOf(RFieldEntry(Type.FONT, "font", value)),
+                Type.XML to setOf(RFieldEntry(Type.XML, "xml", value))
+            )
 
 
         assertEquals(expectedValues, result)
@@ -116,26 +104,38 @@ class ResToRDepsParserTest : BaseBindingStubTest() {
         """.trimIndent()
 
         val listTemp = testResFiles(
-                TestResFile("activity_main.xml",
-                        contents = """
+            TestResFile(
+                "activity_main.xml",
+                contents = """
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:id="@+id/time_display"
                     android:layout_height="match_parent">
                 </LinearLayout>
-                """.trimIndent(), path = "/src/res/layout/")
+                """.trimIndent(), path = "/src/res/layout/"
+            )
         )
 
-        val result = resToRParser.parse(listTemp, contextRTxts.lines()) as MutableMap<Type, MutableSet<RFieldEntry>>
+        val result = resToRParser.parse(
+            listTemp,
+            contextRTxts.lines()
+        ) as MutableMap<Type, MutableSet<RFieldEntry>>
 
-        val expectedIDs = setOf(RFieldEntry(Type.ID, "add", value),
-                RFieldEntry(Type.ID, "time_display", value))
+        val expectedIDs = setOf(
+            RFieldEntry(Type.ID, "add", value),
+            RFieldEntry(Type.ID, "time_display", value)
+        )
 
-        val expectedLayouts = setOf(RFieldEntry(Type.LAYOUT, "design_bottom", value),
-                RFieldEntry(Type.LAYOUT, "activity_main", value))
+        val expectedLayouts = setOf(
+            RFieldEntry(Type.LAYOUT, "design_bottom", value),
+            RFieldEntry(Type.LAYOUT, "activity_main", value)
+        )
 
-        assertEquals(mapOf(Type.ID to expectedIDs,
-                Type.LAYOUT to expectedLayouts), result)
+        assertEquals(
+            mapOf(
+                Type.ID to expectedIDs,
+                Type.LAYOUT to expectedLayouts
+            ), result
+        )
     }
-
 }
