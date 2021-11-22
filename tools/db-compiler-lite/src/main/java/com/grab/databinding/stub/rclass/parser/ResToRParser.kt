@@ -17,7 +17,7 @@
 package com.grab.databinding.stub.rclass.parser
 
 import com.grab.databinding.stub.common.*
-import com.grab.databinding.stub.util.enumTypeValue
+import com.grab.databinding.stub.util.*
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.File

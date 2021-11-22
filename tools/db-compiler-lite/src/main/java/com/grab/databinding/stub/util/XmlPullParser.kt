@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.grab.databinding.stub.common
+package com.grab.databinding.stub.util
 
 import org.xmlpull.v1.XmlPullParser
 
@@ -55,4 +55,5 @@ fun XmlPullParser.attributesNameValue() = attributes { index ->
 /**
  * Return value by using key "name" or the first value if it is null
  */
-fun XmlPullParser.attributeName() = attributesNameValue().get(NAME) ?: attributesNameValue().values.first()
+fun XmlPullParser.attributeName() =
+    attributesNameValue().get(NAME) ?: attributesNameValue().values.first()

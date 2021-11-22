@@ -16,23 +16,11 @@
 
 package com.grab.databinding.stub.rclass.xml
 
-import com.grab.databinding.stub.rclass.parser.Type
-import com.grab.databinding.stub.rclass.parser.RFieldEntry
-import org.junit.Test
-import com.grab.databinding.stub.rclass.parser.XmlTypeValues
-import java.io.File
-
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
-import com.grab.databinding.stub.rclass.parser.ParserType
-import com.grab.databinding.stub.rclass.parser.ResourceFileParser
-import com.grab.databinding.stub.rclass.parser.ParserResult
-
+import com.grab.databinding.stub.rclass.parser.*
 import com.grab.databinding.stub.rclass.parser.xml.IDParser
-import com.grab.databinding.stub.common.SingleXmlEntry
+import com.grab.databinding.stub.util.SingleXmlEntry
+import org.junit.Test
+import kotlin.test.assertEquals
 
 
 class IDParserTest {

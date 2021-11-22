@@ -39,7 +39,8 @@ import javax.inject.Singleton
         BindingClassModule::class,
         BrClassModule::class,
         BindingsParserModule::class,
-        ResToRClassModule::class
+        ResToRClassModule::class,
+        SrcJarPackageModule::class
     ]
 )
 interface BindingsStubComponent {
@@ -47,6 +48,7 @@ interface BindingsStubComponent {
     fun resToRClassGenerator(): ResToRClassGenerator
     fun bindingClassGenerator(): BindingClassGenerator
     fun brClassGenerator(): BrClassGenerator
+    val srcJarPackager: SrcJarPackager
 
     @Component.Factory
     interface Factory {

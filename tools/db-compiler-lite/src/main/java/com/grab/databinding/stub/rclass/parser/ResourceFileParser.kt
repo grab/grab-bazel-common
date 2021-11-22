@@ -16,7 +16,7 @@
 
 package com.grab.databinding.stub.rclass.parser
 
-import com.grab.databinding.stub.common.XmlEntry
+import com.grab.databinding.stub.util.XmlEntry
 
 const val DEFAULT_VALUE = "0"
 

@@ -19,8 +19,8 @@ package com.grab.databinding.stub.binding.parser
 import com.grab.databinding.stub.binding.store.DEPS
 import com.grab.databinding.stub.binding.store.LOCAL
 import com.grab.databinding.stub.binding.store.LayoutTypeStore
-import com.grab.databinding.stub.common.attributesNameValue
-import com.grab.databinding.stub.common.events
+import com.grab.databinding.stub.util.attributesNameValue
+import com.grab.databinding.stub.util.events
 import com.grab.databinding.stub.util.extractPrimitiveType
 import com.grab.databinding.stub.util.toLayoutBindingName
 import com.squareup.javapoet.ClassName

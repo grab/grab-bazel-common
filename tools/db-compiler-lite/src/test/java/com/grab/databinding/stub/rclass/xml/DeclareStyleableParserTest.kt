@@ -16,17 +16,11 @@
 
 package com.grab.databinding.stub.rclass.xml
 
-import com.grab.databinding.stub.rclass.parser.Type
-import com.grab.databinding.stub.rclass.parser.RFieldEntry
-import org.junit.Test
-import com.grab.databinding.stub.rclass.parser.XmlTypeValues
-
-import kotlin.test.assertEquals
-import com.grab.databinding.stub.rclass.parser.ResourceFileParser
-import com.grab.databinding.stub.rclass.parser.ParserResult
-
+import com.grab.databinding.stub.rclass.parser.*
 import com.grab.databinding.stub.rclass.parser.xml.DeclareStyleableParser
-import com.grab.databinding.stub.common.ParentXmlEntryImpl
+import com.grab.databinding.stub.util.ParentXmlEntryImpl
+import org.junit.Test
+import kotlin.test.assertEquals
 
 
 class DeclareStyleableParserTest {

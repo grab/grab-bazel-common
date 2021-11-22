@@ -61,16 +61,20 @@ def _databinding_stubs_impl(ctx):
         join_with = ",",
         map_each = _to_short_path,
     )
+    args.add("--r-class-output", ctx.outputs.r_class_jar)
+    args.add("--stubs-output", ctx.outputs.binding_jar)
 
+    mnemonic = "DatabindingStubs"
     ctx.actions.run(
-        mnemonic = "DatabindingStubs",
+        mnemonic = mnemonic,
         inputs = depset(ctx.files.resource_files + databinding_metadata),
         outputs = [
-            ctx.outputs.jar,
+            ctx.outputs.r_class_jar,
+            ctx.outputs.binding_jar,
         ],
         executable = ctx.executable._compiler,
         arguments = [args],
-        progress_message = "Generating databinding stubs",
+        progress_message = "%s Generating databinding stubs for %s" % (mnemonic, ctx.label),
     )
 
 databinding_stubs = rule(
@@ -93,6 +97,7 @@ databinding_stubs = rule(
         ),
     },
     outputs = dict(
-        jar = "%{name}.jar",
+        r_class_jar = "%{name}_r.srcjar",
+        binding_jar = "%{name}_binding.srcjar",
     ),
 )

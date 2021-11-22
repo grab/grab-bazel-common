@@ -18,6 +18,8 @@ package com.grab.databinding.stub
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
+import com.grab.databinding.stub.common.DB_STUBS_OUTPUT
+import com.grab.databinding.stub.common.R_CLASS_OUTPUT
 import java.io.File
 
 class BindingStubCommand : CliktCommand() {
@@ -25,7 +27,7 @@ class BindingStubCommand : CliktCommand() {
     private val resources by option(
         "-res",
         "--resource-files",
-        help = "List of module res files"
+        help = "List of resource files to produce R.java from"
     ).split(",").default(emptyList())
 
     private val packageName by option(
@@ -51,6 +53,22 @@ class BindingStubCommand : CliktCommand() {
         }
     }.required()
 
+    private val rClassSrcJar by option(
+        "-r",
+        "--r-class-output",
+        help = "The R class srcjar location where the R class will be written to"
+    ).convert {
+        File(it)
+    }.required()
+
+    private val stubClassJar by option(
+        "-s",
+        "--stubs-output",
+        help = "The stubs srcjar location where the generated stubs will be written to"
+    ).convert {
+        File(it)
+    }.required()
+
     override fun run() {
         val resourcesFiles = resources.map { path -> File(path) }
         val layoutFiles = resourcesFiles.filter { it.path.contains("/layout") }
@@ -66,10 +84,20 @@ class BindingStubCommand : CliktCommand() {
                 classInfoDir = classInfoDir,
                 rTxtDir = rTxtDir
             ).apply {
-                val layoutBindings = layoutBindingsParser().parse(packageName, layoutFiles)
                 resToRClassGenerator().generate(packageName, resourcesFiles, rTxtDir)
+
+                val layoutBindings = layoutBindingsParser().parse(packageName, layoutFiles)
                 brClassGenerator().generate(packageName, layoutBindings)
                 bindingClassGenerator().generate(packageName, layoutBindings)
+
+                srcJarPackager.packageSrcJar(
+                    inputDir = File(R_CLASS_OUTPUT),
+                    outputFile = rClassSrcJar
+                )
+                srcJarPackager.packageSrcJar(
+                    inputDir = File(DB_STUBS_OUTPUT),
+                    outputFile = stubClassJar
+                )
             }
     }
 }

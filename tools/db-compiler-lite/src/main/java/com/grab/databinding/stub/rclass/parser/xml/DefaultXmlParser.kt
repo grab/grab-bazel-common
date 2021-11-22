@@ -16,11 +16,11 @@
 
 package com.grab.databinding.stub.rclass.parser.xml
 
-import com.grab.databinding.stub.common.XmlEntry
 import com.grab.databinding.stub.rclass.parser.ParserResult
 import com.grab.databinding.stub.rclass.parser.RFieldEntry
 import com.grab.databinding.stub.rclass.parser.ResourceFileParser
 import com.grab.databinding.stub.rclass.parser.Type
+import com.grab.databinding.stub.util.XmlEntry
 import javax.inject.Inject
 
 /**

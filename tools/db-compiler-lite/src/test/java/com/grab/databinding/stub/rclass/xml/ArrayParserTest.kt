@@ -16,17 +16,11 @@
 
 package com.grab.databinding.stub.rclass.xml
 
-import com.grab.databinding.stub.rclass.parser.Type
-import com.grab.databinding.stub.rclass.parser.RFieldEntry
-import org.junit.Test
-import com.grab.databinding.stub.rclass.parser.XmlTypeValues
-
-import kotlin.test.assertEquals
-import com.grab.databinding.stub.rclass.parser.ResourceFileParser
-import com.grab.databinding.stub.rclass.parser.ParserResult
-
+import com.grab.databinding.stub.rclass.parser.*
 import com.grab.databinding.stub.rclass.parser.xml.ArrayParser
-import com.grab.databinding.stub.common.SingleXmlEntry
+import com.grab.databinding.stub.util.SingleXmlEntry
+import org.junit.Test
+import kotlin.test.assertEquals
 
 
 class ArrayParserTest {
@@ -37,10 +31,12 @@ class ArrayParserTest {
 
     @Test
     fun `parse array`() {
-        val result = arrayParser.parse(SingleXmlEntry(
-            "array_name",
-            XmlTypeValues.ARRAY
-        ))
+        val result = arrayParser.parse(
+            SingleXmlEntry(
+                "array_name",
+                XmlTypeValues.ARRAY
+            )
+        )
 
         val exptectedValue = ParserResult(
             setOf(RFieldEntry(Type.ARRAY, "array_name", value)),
@@ -52,10 +48,12 @@ class ArrayParserTest {
 
     @Test
     fun `parse integer array`() {
-        val result = arrayParser.parse(SingleXmlEntry(
-            "int_array_name",
-            XmlTypeValues.INTEGER_ARRAY
-        ))
+        val result = arrayParser.parse(
+            SingleXmlEntry(
+                "int_array_name",
+                XmlTypeValues.INTEGER_ARRAY
+            )
+        )
 
         val exptectedValue = ParserResult(
             setOf(RFieldEntry(Type.ARRAY, "int_array_name", value)),
@@ -67,12 +65,15 @@ class ArrayParserTest {
 
     @Test
     fun `parse string array`() {
-        val result = arrayParser.parse(SingleXmlEntry(
-            "string_array_name",
-            XmlTypeValues.STRING_ARRAY
-        ))
+        val result = arrayParser.parse(
+            SingleXmlEntry(
+                "string_array_name",
+                XmlTypeValues.STRING_ARRAY
+            )
+        )
 
-        val exptectedValue = ParserResult(setOf(RFieldEntry(Type.ARRAY, "string_array_name", value)), Type.ARRAY)
+        val exptectedValue =
+            ParserResult(setOf(RFieldEntry(Type.ARRAY, "string_array_name", value)), Type.ARRAY)
 
         assertEquals(result, exptectedValue)
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.grab.databinding.stub.common
+package com.grab.databinding.stub.util
 
 import com.grab.databinding.stub.rclass.parser.XmlTypeValues
 

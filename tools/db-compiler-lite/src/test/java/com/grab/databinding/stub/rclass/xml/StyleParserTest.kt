@@ -16,17 +16,11 @@
 
 package com.grab.databinding.stub.rclass.xml
 
-import com.grab.databinding.stub.rclass.parser.Type
-import com.grab.databinding.stub.rclass.parser.RFieldEntry
-import org.junit.Test
-import com.grab.databinding.stub.rclass.parser.XmlTypeValues
-
-import kotlin.test.assertEquals
-import com.grab.databinding.stub.rclass.parser.ResourceFileParser
-import com.grab.databinding.stub.rclass.parser.ParserResult
-
+import com.grab.databinding.stub.rclass.parser.*
 import com.grab.databinding.stub.rclass.parser.xml.StyleParser
-import com.grab.databinding.stub.common.SingleXmlEntry
+import com.grab.databinding.stub.util.SingleXmlEntry
+import org.junit.Test
+import kotlin.test.assertEquals
 
 
 class StyleParserTest {
@@ -37,9 +31,13 @@ class StyleParserTest {
 
     @Test
     fun `parse style`() {
-        val result = styleParser.parse(SingleXmlEntry("Theme.MaterialComponent", XmlTypeValues.STYLE))
+        val result =
+            styleParser.parse(SingleXmlEntry("Theme.MaterialComponent", XmlTypeValues.STYLE))
 
-        val exptectedValue = ParserResult(setOf(RFieldEntry(Type.STYLE, "Theme_MaterialComponent", value)), Type.STYLE)
+        val exptectedValue = ParserResult(
+            setOf(RFieldEntry(Type.STYLE, "Theme_MaterialComponent", value)),
+            Type.STYLE
+        )
 
         assertEquals(result, exptectedValue)
     }

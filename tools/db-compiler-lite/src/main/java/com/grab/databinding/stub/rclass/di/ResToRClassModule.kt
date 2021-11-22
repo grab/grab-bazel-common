@@ -16,34 +16,28 @@
 
 package com.grab.databinding.stub.rclass.di
 
-import java.io.File
-import com.grab.databinding.stub.rclass.parser.ResToRParser
-import com.grab.databinding.stub.rclass.parser.ResToRParserImpl
+import com.grab.databinding.stub.common.OUTPUT
 import com.grab.databinding.stub.rclass.generator.ResToRClassGenerator
 import com.grab.databinding.stub.rclass.generator.ResToRClassGeneratorImpl
-import com.grab.databinding.stub.common.OUTPUT
-
-import com.grab.databinding.stub.rclass.parser.xml.StyleParser
-import com.grab.databinding.stub.rclass.parser.xml.ArrayParser
-import com.grab.databinding.stub.rclass.parser.xml.DefaultXmlParser
-import com.grab.databinding.stub.rclass.parser.xml.IDParser
-import com.grab.databinding.stub.rclass.parser.xml.DeclareStyleableParser
-import com.grab.databinding.stub.rclass.parser.ResourceFileParser
 import com.grab.databinding.stub.rclass.parser.ParserType
-
-import javax.inject.Singleton
-import javax.inject.Named
+import com.grab.databinding.stub.rclass.parser.ResToRParser
+import com.grab.databinding.stub.rclass.parser.ResToRParserImpl
+import com.grab.databinding.stub.rclass.parser.ResourceFileParser
+import com.grab.databinding.stub.rclass.parser.xml.*
+import dagger.Binds
+import dagger.MapKey
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoMap
-import dagger.MapKey
-import dagger.Binds
+import java.io.File
+import javax.inject.Named
+import javax.inject.Singleton
 
 @MapKey
 annotation class ParserKey(val value: ParserType)
 
 @Module
-interface ParserModule {
+interface ResourceParserModule {
     @Binds
     @IntoMap
     @ParserKey(ParserType.STYLE_PARSER)
@@ -70,13 +64,16 @@ interface ParserModule {
     fun DefaultXmlParser.defaultXmlParser(): ResourceFileParser
 }
 
-@Module(includes = [ParserModule::class])
+@Module(includes = [ResourceParserModule::class])
 object ResToRClassModule {
 
     @JvmStatic
     @Provides
     @Singleton
-    fun resToRClassGeneratorImpl(@Named(OUTPUT) dir: File?, resToRParser: ResToRParser): ResToRClassGenerator {
+    fun resToRClassGeneratorImpl(
+        @Named(OUTPUT) dir: File?,
+        resToRParser: ResToRParser
+    ): ResToRClassGenerator {
         return ResToRClassGeneratorImpl(resToRParser, dir)
     }
 
