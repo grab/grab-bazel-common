@@ -1,6 +1,26 @@
 """
 A rule to generate databinding stub classes like BR.java, R.java and *Binding.java to support
 Kotlin compilation.
+
+This macro registers collection of rules to compile Databinding stub classes like R.java, BR.java
+and other *Binding classes.
+
+It works by excluding all layout resources in `resource_files` and then compiling them with
+android_library to generate R class for all other resources.
+Then, all layout resources are passed to `_binding_stub_target` to generate all the remaining
+R and binding classes.
+Additionally it mimics AAPT by generating R.txt from dependencies and current module resources.
+
+Args:
+    name: Name for the target that uses the stubs
+    custom_package: Custom package for the target.
+    manifest: The AndroidManifest.xml file for android library.
+    resource_files: The resource files for the target
+    deps: The dependencies for the whole target.
+
+Outputs:
+    r-classes: The R and BR classes
+    binding-classes.srcjar: All the databinding *Binding classes
 """
 
 def _to_short_path(f):
@@ -30,7 +50,7 @@ def _databinding_stubs_impl(ctx):
         if (AndroidResourcesInfo in target):
             r_txt_file = target[AndroidResourcesInfo].compiletime_r_txt
             r_txt_symlink = ctx.actions.declare_file(
-               databinding_metadata_prefix + "/r_txt/%s_r.txt" % target.label.name,
+                databinding_metadata_prefix + "/r_txt/%s_r.txt" % target.label.name,
             )
             ctx.actions.symlink(
                 output = r_txt_symlink,
@@ -38,9 +58,8 @@ def _databinding_stubs_impl(ctx):
             )
             databinding_metadata.append(r_txt_symlink)
 
-
     databinding_metadata_path = ""
-    if len(databinding_metadata)==0: # When no symlinks are present then create an empty dir
+    if len(databinding_metadata) == 0:  # When no symlinks are present then create an empty dir
         databinding_metadata_dir = ctx.actions.declare_directory("databinding-metadata")
         databinding_metadata_path = databinding_metadata_dir.path
         ctx.actions.run_shell(
@@ -74,8 +93,15 @@ def _databinding_stubs_impl(ctx):
         ],
         executable = ctx.executable._compiler,
         arguments = [args],
-        progress_message = "%s Generating databinding stubs for %s" % (mnemonic, ctx.label),
+        progress_message = "%s Generating stubs for %s" % (mnemonic, ctx.label),
     )
+
+    return [
+        DefaultInfo(files = depset([
+            ctx.outputs.r_class_jar,
+            ctx.outputs.binding_jar,
+        ])),
+    ]
 
 databinding_stubs = rule(
     implementation = _databinding_stubs_impl,

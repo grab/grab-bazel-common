@@ -71,7 +71,7 @@ class CachingBindingClassJsonParserTest : BaseBindingStubTest() {
     }
 
     companion object {
-        private val DEFAULT_JSON_CONTENT = """
+        val DEFAULT_JSON_CONTENT = """
                 {
                   "mappings": {
                     "node_clock": {

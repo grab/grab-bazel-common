@@ -17,7 +17,11 @@ interface SrcJarPackager {
      * @param outputFile The output file where the srcjar will be written to.
      * @param verbose Debug logs from srcjar creator
      */
-    fun packageSrcJar(inputDir: File, outputFile: File, verbose: Boolean = false)
+    fun packageSrcJar(
+        inputDir: File,
+        outputFile: File,
+        verbose: Boolean = false
+    )
 }
 
 @Module
