@@ -16,7 +16,7 @@
 
 package com.grab.databinding.stub.binding.store
 
-import com.grab.databinding.stub.common.CLASS_INFO_DIR
+import com.grab.databinding.stub.common.CLASS_INFOS
 import com.grab.databinding.stub.common.LAYOUT_FILES
 import com.grab.databinding.stub.common.PACKAGE_NAME
 import com.grab.databinding.stub.util.toLayoutBindingName
@@ -102,7 +102,7 @@ constructor(
  * The implementation lazily parses the files on demand and utilizes caching to avoid doing
  * duplicating work.
  *
- * @param classInfoDir The directory from Bazel containing classInfo.zips of direct dependencies.
+ * @param classInfoZips List of classInfo.zip from direct dependencies
  * @param bindingClassJsonParser [BindingClassJsonParser] implementation that will be used to parse
  *                     contents of each binding class json file.
  */
@@ -110,7 +110,7 @@ constructor(
 class DependenciesLayoutTypeStore
 @Inject
 constructor(
-    @Named(CLASS_INFO_DIR) private val classInfoDir: File,
+    @Named(CLASS_INFOS) private val classInfoZips: List<File>,
     private val bindingClassJsonParser: BindingClassJsonParser,
 ) : LayoutTypeStore {
 
@@ -122,18 +122,6 @@ constructor(
      * The directory where the classInfo.zips will be extracted to
      */
     var extractionDir: File = Files.createTempDirectory("temp").toFile()
-
-    /**
-     * All classInfo.zip under [classInfoDir]
-     */
-    private val classInfoZips: List<File> by lazy(NONE) {
-        // Bit inefficient to load all files eagerly, but we work with it now
-        classInfoDir.walkTopDown()
-            .filter { it.isFile }
-            .filter { it.name.endsWith(".zip") }
-            .sortedBy { Files.size(it.toPath()) }
-            .toList()
-    }
 
     /**
      * Stores classInfo.zip extraction result. This is used to avoid doing repeat extractions when

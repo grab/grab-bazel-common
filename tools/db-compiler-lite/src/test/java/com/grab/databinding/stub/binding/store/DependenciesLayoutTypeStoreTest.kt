@@ -23,13 +23,14 @@ class DependenciesLayoutTypeStoreTest : BaseBindingStubTest() {
         val classInfoDir = temporaryFolder.newFolder("classInfoDir")
         val extractionDir = temporaryFolder.newFolder("extracted")
         dependenciesLayoutTypeStore = DependenciesLayoutTypeStore(
-            classInfoDir = classInfoDir,
+            classInfoZips = listOf(
+                createClassInfoZip(classInfoDir, "clock", DEFAULT_JSON_CONTENT),
+                createClassInfoZip(classInfoDir, "clock2", DEFAULT_JSON_CONTENT)
+            ),
             bindingClassJsonParser = CachingBindingClassJsonParser()
         )
         dependenciesLayoutTypeStore.extractionDir = extractionDir
-        // Create classInfo zip files
-        createClassInfoZip(classInfoDir, "clock", DEFAULT_JSON_CONTENT)
-        createClassInfoZip(classInfoDir, "clock2", DEFAULT_JSON_CONTENT)
+
     }
 
     /**
@@ -62,10 +63,10 @@ class DependenciesLayoutTypeStoreTest : BaseBindingStubTest() {
     fun `assert dependenciesLayoutTypeStore caches classInfoZip extractions`() {
         // Request random type name that does not exist
         dependenciesLayoutTypeStore["typename"]
-        // Ensure contents of extracted
+        // Ensure contents classInfozip was extracted
         val extractedFiles = extractedFiles()
         assertTrue("Extracted 2 binding class json files initially") { extractedFiles.size == 2 }
-        // Delete the files
+        // Delete the files manually
         extractedFiles.forEach { it.delete() }
         dependenciesLayoutTypeStore["typename"]
         assertTrue("New request responds without extraction") {

@@ -59,16 +59,16 @@ interface BindingsStubComponent {
          * @param packageName The package name of the target for which stubs are to be generated
          * @param layoutFiles The list of all layout xmls
          * @param resourceFiles The list of all resource files for compilation
-         * @param classInfoDir The directory containing databinding classInfo metadata.
-         * @param rTxtDir The directory containing Android Libraries compile time R txt file.
+         * @param classInfos The list of databinding classInfo.zips from direct dependencies
+         * @param rTxts The list of R.txts from direct dependencies.
          */
         fun create(
             @BindsInstance @Named(OUTPUT) outputDir: File?,
             @BindsInstance @Named(PACKAGE_NAME) packageName: String,
             @BindsInstance @Named(LAYOUT_FILES) layoutFiles: List<File>,
             @BindsInstance @Named(RES_FILES) resourceFiles: List<File>,
-            @BindsInstance @Named(CLASS_INFO_DIR) classInfoDir: File,
-            @BindsInstance @Named(R_TXT_DIR) rTxtDir: File
+            @BindsInstance @Named(CLASS_INFOS) classInfos: List<File>,
+            @BindsInstance @Named(R_TXTS) rTxts: List<File>
         ): BindingsStubComponent
     }
 }

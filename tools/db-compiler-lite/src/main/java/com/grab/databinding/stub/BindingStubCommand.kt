@@ -24,56 +24,54 @@ import java.io.File
 
 class BindingStubCommand : CliktCommand() {
 
-    private val resources by option(
-        "-res",
-        "--resource-files",
-        help = "List of resource files to produce R.java from"
-    ).split(",").default(emptyList())
-
     private val packageName by option(
         "-p",
         "--package",
         help = "Package name of R class"
     ).required()
 
+    private val resources by option(
+        "-res",
+        "--resource-files",
+        help = "List of resource files to produce R.java from"
+    ).split(",").default(emptyList())
+
+    private val classInfos: List<String> by option(
+        "-ci",
+        "--class-infos",
+        help = "List of dependencies classInfo.zip files "
+    ).split(",").default(emptyList())
+
+    private val rTxts: List<String> by option(
+        "-rt",
+        "--r-txts",
+        help = "List of dependencies R.txt files"
+    ).split(",").default(emptyList())
+
     private val preferredOutputDir by option(
         "-o",
         "--output"
     ).convert { File(it) }
 
-    private val databindingMetadataDir: File by option(
-        "-dm",
-        "--databinding-metadata",
-        help = "Path to databinding metadata folder containing class-infos and R.txt from dependencies"
-    ).convert { path ->
-        val dir = File(path)
-        when {
-            dir.endsWith("r_txt") || dir.endsWith("class_infos") -> dir.parentFile
-            else -> dir
-        }
-    }.required()
-
     private val rClassSrcJar by option(
         "-r",
         "--r-class-output",
         help = "The R class srcjar location where the R class will be written to"
-    ).convert {
-        File(it)
-    }.required()
+    ).convert { File(it) }.required()
 
     private val stubClassJar by option(
         "-s",
         "--stubs-output",
         help = "The stubs srcjar location where the generated stubs will be written to"
-    ).convert {
-        File(it)
-    }.required()
+    ).convert { File(it) }.required()
 
     override fun run() {
         val resourcesFiles = resources.map { path -> File(path) }
         val layoutFiles = resourcesFiles.filter { it.path.contains("/layout") }
-        val classInfoDir = File(databindingMetadataDir, "class_infos")
-        val rTxtDir = File(databindingMetadataDir, "r_txt")
+
+        val classInfoZip = classInfos.map { File(it) }
+        val depRTxts = rTxts.map { File(it) }
+
         DaggerBindingsStubComponent
             .factory()
             .create(
@@ -81,10 +79,10 @@ class BindingStubCommand : CliktCommand() {
                 packageName = packageName,
                 resourceFiles = resourcesFiles,
                 layoutFiles = layoutFiles,
-                classInfoDir = classInfoDir,
-                rTxtDir = rTxtDir
+                classInfos = classInfoZip,
+                rTxts = depRTxts
             ).apply {
-                resToRClassGenerator().generate(packageName, resourcesFiles, rTxtDir)
+                resToRClassGenerator().generate(packageName, resourcesFiles, depRTxts)
 
                 val layoutBindings = layoutBindingsParser().parse(packageName, layoutFiles)
                 brClassGenerator().generate(packageName, layoutBindings)

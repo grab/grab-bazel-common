@@ -45,7 +45,7 @@ interface ResToRClassGenerator : Generator {
      * @param rTxtDir The directory containing R.txt from direct dependencies, the content will be
      * merged with data extracted from resources.
      */
-    fun generate(packageName: String, resources: List<File>, rTxtDir: File)
+    fun generate(packageName: String, resources: List<File>, rTxts: List<File>)
 }
 
 @Singleton
@@ -54,8 +54,8 @@ class ResToRClassGeneratorImpl constructor(
     @Named(OUTPUT) override val preferredDir: File?
 ) : ResToRClassGenerator {
 
-    override fun generate(packageName: String, resources: List<File>, rTxtDir: File) {
-        val resourcesStore = resToRParser.parse(resources, parseRtxtContent(rTxtDir))
+    override fun generate(packageName: String, resources: List<File>, rTxts: List<File>) {
+        val resourcesStore = resToRParser.parse(resources, rTxts.flatMap(File::readLines))
 
         val subclasses = mutableListOf<TypeSpec>()
         resourcesStore.keys.forEach { key ->
@@ -99,13 +99,5 @@ class ResToRClassGeneratorImpl constructor(
                     .writeTo(outputDir)
                 logFile(packageName, type.name)
             }
-    }
-
-    private fun parseRtxtContent(rTxtDir: File): List<String> {
-        return File(rTxtDir.toURI())
-            .walkTopDown()
-            .filter { it.isFile }
-            .flatMap { it.readLines() }
-            .toList()
     }
 }
