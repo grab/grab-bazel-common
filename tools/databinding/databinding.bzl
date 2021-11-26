@@ -43,10 +43,10 @@ def kt_db_android_library(
     The macro ensures that Kotlin code referenced in any XMLs are compiled first using kt_jvm_library
     and then uses android_library's enable_data_binding to generate required Databinding classes.
 
-    This helps in breaking circular dependency when we have android_library (databinding enabled) -> kt_android_library.
+    This helps in breaking circular dependency when we have android_library (databinding enabled) -> kt_jvm_library.
     In that case, Databinding classes can't be generated until resources are processed and that
     happens only in android_library target. So compiling Koltin classes becomes dependent on
-    android_library and android_library depends on kt_android_library since it needs class files to
+    android_library and android_library depends on kt_jvm_library since it needs class files to
     process class references in XML. This macro alleviates this problem by processing resources
     without `aapt` via a custom compiler and generates stub classes like
     R.java, BR.java and *Binding.java.
@@ -81,10 +81,10 @@ def kt_db_android_library(
     )
     binding_classes_sources = databinding_stubs_target + "_binding.srcjar"
 
-    # R classes are not meant to be packaged into the binary, so export it as java_library but don't
-    # link it.
     r_classes_sources = databinding_stubs_target + "_r.srcjar"
     r_classes = name + "-r-classes"
+    # R classes are not meant to be packaged into the binary, so export it as java_library but don't
+    # link it.
     #native.java_library(
     #    name = r_classes,
     #    srcs = [r_classes_sources],
@@ -148,7 +148,7 @@ def kt_db_android_library(
 
     # Data binding target responsible for generating Databinding related classes.
     # By the time this is compiled:
-    # * Kotlin classes are already available via deps. So resources processing is safe.
+    # * Kotlin/Java classes are already available via deps. So resources processing is safe.
     # * Kotlin @BindingAdapters are converted to Java via our annotation processor
     # * Our stub classes will be replaced by android_library's actual generated code.
     native.android_library(
