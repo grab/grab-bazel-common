@@ -23,8 +23,6 @@ def _to_path(f):
     return f.path
 
 def _databinding_stubs_impl(ctx):
-    """
-    """
     deps = ctx.attr.deps
     custom_package = ctx.attr.custom_package
     class_infos = []
@@ -73,7 +71,7 @@ def _databinding_stubs_impl(ctx):
         ],
         executable = ctx.executable._compiler,
         arguments = [args],
-        progress_message = "%s Generating stubs for %s" % (mnemonic, ctx.label),
+        progress_message = "%s %s" % (mnemonic, ctx.label),
     )
 
     return [
@@ -87,15 +85,8 @@ databinding_stubs = rule(
     implementation = _databinding_stubs_impl,
     attrs = {
         "custom_package": attr.string(mandatory = True),
-        "resource_files": attr.label_list(
-            allow_files = True,
-        ),
+        "resource_files": attr.label_list(allow_files = True),
         "deps": attr.label_list(),
-        "_zipper": attr.label(
-            default = Label("@bazel_tools//tools/zip:zipper"),
-            cfg = "host",
-            executable = True,
-        ),
         "_compiler": attr.label(
             default = Label("@grab_bazel_common//tools/db-compiler-lite:db-compiler-lite"),
             executable = True,
