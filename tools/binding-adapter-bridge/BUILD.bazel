@@ -1,4 +1,4 @@
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@grab_bazel_common//tools/test:test.bzl", "grab_kt_jvm_test")
 
 kt_jvm_library(

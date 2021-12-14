@@ -1,5 +1,5 @@
 load(
-    "@io_bazel_rules_kotlin//kotlin:kotlin.bzl",
+    "@io_bazel_rules_kotlin//kotlin:jvm.bzl",
     _kt_jvm_library = "kt_jvm_library",
 )
 
