@@ -42,6 +42,14 @@ def _is_direct(dep, tags):
             return False
     return True
 
+def _list_or_depset_to_list(list_or_depset):
+    if type(list_or_depset) == "list":
+        return list_or_depset
+    elif type(list_or_depset) == "depset":
+        return list_or_depset.to_list()
+    else:
+        return _error("Expected a list or a depset. Got %s" % type(list_or_depset))
+
 def _databinding_stubs_impl(ctx):
     deps = ctx.attr.deps
     tags = ctx.attr.tags
@@ -51,7 +59,7 @@ def _databinding_stubs_impl(ctx):
 
     for target in deps:
         if (DataBindingV2Info in target):
-            for class_info in target[DataBindingV2Info].class_infos:
+            for class_info in _list_or_depset_to_list(target[DataBindingV2Info].class_infos):
                 if _is_direct(class_info.owner.package, tags):
                     class_infos[class_info.path] = class_info
         if (AndroidResourcesInfo in target):
