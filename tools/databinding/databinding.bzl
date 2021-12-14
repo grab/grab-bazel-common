@@ -1,7 +1,7 @@
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
 load(":databinding_aar.bzl", "databinding_aar")
 load(":databinding_classinfo.bzl", "direct_class_infos")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(":databinding_r_deps.bzl", "extract_r_txt_deps")
 load(":databinding_stubs.bzl", "databinding_stubs")
 
