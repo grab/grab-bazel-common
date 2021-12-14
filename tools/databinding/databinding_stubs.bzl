@@ -51,7 +51,7 @@ def _databinding_stubs_impl(ctx):
 
     for target in deps:
         if (DataBindingV2Info in target):
-            for class_info in target[DataBindingV2Info].class_infos.to_list():
+            for class_info in target[DataBindingV2Info].class_infos:
                 if _is_direct(class_info.owner.package, tags):
                     class_infos[class_info.path] = class_info
         if (AndroidResourcesInfo in target):
