@@ -47,6 +47,7 @@ class ResToRStyleableValueParserTest : BaseBindingStubTest() {
                     <declare-styleable name="StyleableView">
                         <attr name="colorAttr" />
                         <attr name="sizeAttr" />
+                        <attr name="android:drawableTint" format="reference" />
                     </declare-styleable>
                 </resources>
                 """.trimIndent(), path = "/src/res/values/"
@@ -57,16 +58,18 @@ class ResToRStyleableValueParserTest : BaseBindingStubTest() {
             listTemp,
             emptyList<String>()
         ) as MutableMap<Type, MutableSet<RFieldEntry>>
-        val parentValue = "{ 0,0 }"
+        val parentValue = "{ 0,0,0 }"
         val exptectedStyleable = setOf(
             RFieldEntry(Type.STYLEABLE, "StyleableView", parentValue, isArray = true),
             RFieldEntry(Type.STYLEABLE, "StyleableView_colorAttr", value),
-            RFieldEntry(Type.STYLEABLE, "StyleableView_sizeAttr", value)
+            RFieldEntry(Type.STYLEABLE, "StyleableView_sizeAttr", value),
+            RFieldEntry(Type.STYLEABLE, "StyleableView_android:drawableTint", value),
         )
 
         val exptectedAttrs = setOf(
             RFieldEntry(Type.ATTR, "colorAttr", value),
-            RFieldEntry(Type.ATTR, "sizeAttr", value)
+            RFieldEntry(Type.ATTR, "sizeAttr", value),
+            RFieldEntry(Type.ATTR, "android:drawableTint", value),
         )
 
         assertEquals(
