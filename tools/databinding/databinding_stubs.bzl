@@ -48,7 +48,7 @@ def _list_or_depset_to_list(list_or_depset):
     elif type(list_or_depset) == "depset":
         return list_or_depset.to_list()
     else:
-        return _error("Expected a list or a depset. Got %s" % type(list_or_depset))
+        fail("Expected a list or a depset. Got %s" % type(list_or_depset))
 
 def _databinding_stubs_impl(ctx):
     deps = ctx.attr.deps
