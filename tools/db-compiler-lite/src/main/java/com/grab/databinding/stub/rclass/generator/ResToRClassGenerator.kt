@@ -73,7 +73,7 @@ class ResToRClassGeneratorImpl constructor(
                         .toTypedArray()
 
                     fields.add(
-                        FieldSpec.builder(type, it.name.replace(":", "_"))
+                        FieldSpec.builder(type, it.name)
                             .addModifiers(*modifiers)
                             .initializer(it.value)
                             .build()

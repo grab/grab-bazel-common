@@ -220,7 +220,7 @@ class ResToRParserImpl constructor(
                 continue
             }
 
-            val childName = xpp.attributeName()
+            val childName = xpp.attributeName().replace(":", "_")
             // Add every child as a dependent for Parent node
             children.add(childName)
 

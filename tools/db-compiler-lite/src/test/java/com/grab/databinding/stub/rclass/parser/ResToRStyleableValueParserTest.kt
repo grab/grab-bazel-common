@@ -63,13 +63,13 @@ class ResToRStyleableValueParserTest : BaseBindingStubTest() {
             RFieldEntry(Type.STYLEABLE, "StyleableView", parentValue, isArray = true),
             RFieldEntry(Type.STYLEABLE, "StyleableView_colorAttr", value),
             RFieldEntry(Type.STYLEABLE, "StyleableView_sizeAttr", value),
-            RFieldEntry(Type.STYLEABLE, "StyleableView_android:drawableTint", value),
+            RFieldEntry(Type.STYLEABLE, "StyleableView_android_drawableTint", value),
         )
 
         val exptectedAttrs = setOf(
             RFieldEntry(Type.ATTR, "colorAttr", value),
             RFieldEntry(Type.ATTR, "sizeAttr", value),
-            RFieldEntry(Type.ATTR, "android:drawableTint", value),
+            RFieldEntry(Type.ATTR, "android_drawableTint", value),
         )
 
         assertEquals(
