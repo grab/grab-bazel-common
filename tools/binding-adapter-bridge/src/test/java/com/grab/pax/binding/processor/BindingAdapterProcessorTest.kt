@@ -85,6 +85,16 @@ fun <T : Node> Node.genericsUpdateNode(node: T, value: Int) {
     updateNode(node, value)
 }
 
+class CompanionTest<T> {
+    companion object Databinding {
+        @BindingAdapter(TEST_BIND)
+        @JvmStatic
+        fun <T : Node> companionUpdateNode(node: T, value: Int) {
+            updateNode(node, value)
+        }
+    }
+}
+
 class BindingAdapterProcessorTest {
 
     @Test
@@ -156,6 +166,11 @@ class BindingAdapterProcessorTest {
     @Test
     fun `when inverse binding adapters are used, assert proxy forwards to Kotlin implementation`() {
         assertNodeUpdate(com_grab_pax_binding_processor_Binding_Adapter_Stub::getUpdateNode)
+    }
+
+    @Test
+    fun `when binding adapters in named companion object, assert proxy forwards to Kotlin implementation`() {
+        assertNodeUpdate(com_grab_pax_binding_processor_Binding_Adapter_Stub::companionUpdateNode)
     }
 
     private fun assertNodeUpdate(updateFunction: (Node, Int) -> Unit) {

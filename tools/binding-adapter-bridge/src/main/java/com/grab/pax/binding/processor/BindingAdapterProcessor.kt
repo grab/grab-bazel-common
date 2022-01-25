@@ -76,8 +76,10 @@ class BindingAdapterProcessor : BasicAnnotationProcessor(),
                             .addParameters(params.map { variableElement ->
                                 ParameterSpec.get(variableElement)
                             })
-                            .addStatement(buildStatement(methodName, params, returns), parentClass)
-                            .addTypeVariables(typeParams.map { TypeVariableName.get(it) })
+                            .addStatement(
+                                buildStatement(methodName, params, returns),
+                                buildParentClassName(parentClass)
+                            ).addTypeVariables(typeParams.map { TypeVariableName.get(it) })
                             .build()
                     } else null
                 }
@@ -97,6 +99,14 @@ class BindingAdapterProcessor : BasicAnnotationProcessor(),
 
     private fun buildClassName(packageName: String): String {
         return packageName.replace(".", "_") + GeneratedSuffix
+    }
+
+    private fun buildParentClassName(parentClass: Element): ClassName {
+        val packageElement = processingEnv.elementUtils.getPackageOf(parentClass)
+        return ClassName.get(
+            packageElement.qualifiedName.toString(),
+            parentClass.simpleName.toString() // Strip type params since we only access the class statically
+        )
     }
 
     private fun buildStatement(
