@@ -125,7 +125,7 @@ def _gen_test_targets(
     test_compile_rule_type(
         name = test_build_target,
         srcs = srcs,
-        deps = test_compile_deps + deps,
+        deps = deps + test_compile_deps,
         associates = associates,
         testonly = True,
     )
@@ -153,9 +153,9 @@ def _gen_test_targets(
                 test_runner_rule_type(
                     name = test_class.replace(".", "_"),
                     test_class = test_class,
-                    runtime_deps = test_runtime_deps + [
+                    runtime_deps = [
                         ":" + test_build_target,
-                    ],
+                    ] + test_runtime_deps,
                     jvm_flags = [
                         "-Xverify:none",
                     ],
