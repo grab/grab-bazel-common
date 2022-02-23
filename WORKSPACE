@@ -38,6 +38,7 @@ maven_install(
         "com.google.android.material:material:1.2.1",
         "javax.inject:javax.inject:1",
         "junit:junit:4.13",
+        "org.json:json:20210307",
     ],
     repositories = DAGGER_REPOSITORIES + [
         "https://jcenter.bintray.com/",
