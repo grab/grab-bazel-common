@@ -60,27 +60,21 @@ build_config(
 ```
    
 ### Res values   
-`resValue` strings support for Android Projects
+Gradle's `resValue` strings support for Android Projects
 
 ```python
 load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
-# Define resValues
-res_value(
-    name = "app-res-value",
-    custom_package = "com.grab.playground",
-    manifest = "src/main/AndroidManifest.xml",
-    strings = {
-        "prefix": "app",
-        "field": "debug"
-    },
-)
-
 # Usage of defined resValues
 android_library(
-    deps = [
-        ":app-res-value",
+    resource_files = [
         ...
-    ],
+    ] + res_value(
+        name = "app-res-value",
+        strings = {
+            "prefix": "app",
+            "field": "debug"
+        },
+    ),
 )
 ```   
 
