@@ -1,6 +1,6 @@
 # Custom Patches Applied to Databinding Libraries
 
-The following fixes were applied to databinding compiler and runtime libraries on version 4.0.0.
+The following fixes were applied to databinding compiler and runtime libraries on version 7.1.0.
 
 ### Error when building multiple databinding libraries in parallel
 
@@ -110,3 +110,4 @@ index a9fd885c..564d15ac 100644
 * https://android.googlesource.com/platform/frameworks/data-binding/+/ae769bc6781a47e7e89a4ddfc0c4f8be9b6f76c1 Use Unix-like paths when sorting files
 * https://android.googlesource.com/platform/frameworks/data-binding/+/99f2b7c1e6db27ad89f42cbe85f3bf938209e245 Ensure deterministic order of entries in GenClassInfoLog
 * https://android.googlesource.com/platform/frameworks/data-binding/+/b1c2715b1be141226f9015618e0013536479c244 Sort files in directories to ensure deterministic order
+* Uses 7.1.0 version of databinding compiler and related libraries

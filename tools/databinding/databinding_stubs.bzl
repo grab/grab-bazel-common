@@ -62,8 +62,8 @@ def _databinding_stubs_impl(ctx):
             for class_info in _list_or_depset_to_list(target[DataBindingV2Info].class_infos):
                 if _is_direct(class_info.owner.package, tags):
                     class_infos[class_info.path] = class_info
-        if (AndroidResourcesInfo in target):
-            r_txts.append(target[AndroidResourcesInfo].compiletime_r_txt)
+#        if (AndroidResourcesInfo in target):
+#            r_txts.append(target[AndroidResourcesInfo].compiletime_r_txt)
 
     # Filter duplicates
     class_infos = list(class_infos.values())

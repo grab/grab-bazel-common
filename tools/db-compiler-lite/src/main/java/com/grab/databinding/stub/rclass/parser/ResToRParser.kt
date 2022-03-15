@@ -56,17 +56,23 @@ class ResToRParserImpl constructor(
         resources: List<File>,
         dependenciesRTxtContent: List<String>
     ): Map<Type, MutableSet<RFieldEntry>> {
-        resources.forEach {
-            collectRes(it)
+        resources.forEach { resource ->
+            collectRes(resource)
         }
-        dependenciesRTxtContent.forEach {
-            parseContent(it)
+        dependenciesRTxtContent.forEachIndexed { index, entry ->
+            parseContent(index, entry)
         }
         return this.resources
     }
 
-    private fun parseContent(content: String) {
+    private fun parseContent(index: Int, content: String) {
         val tokens = content.split(" ").map(String::trim)
+
+        if (tokens.size == 1) {
+            // Package aware R.txt can contain package names, exclude that from parsing
+            return
+        }
+
         val isArray = content.contains("[]")
         val name = tokens[NAME_INDEX]
 
@@ -105,7 +111,7 @@ class ResToRParserImpl constructor(
             .asSequence()
             .filter { xpp.attributesNameValue().isNotEmpty() }
             .filter { xpp.attributesNameValue().contains(NAME) }
-            .forEach {
+            .forEach { _ ->
                 val name = xpp.attributeName()
 
                 val type = enumTypeValue(xpp.name).let {
