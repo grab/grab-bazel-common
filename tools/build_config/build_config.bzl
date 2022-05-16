@@ -46,6 +46,7 @@ def _build_statement(type, items, quote = True):
 def build_config(
         name,
         package_name,
+        debug = True,
         strings = {},
         booleans = {},
         ints = {},
@@ -59,6 +60,7 @@ def build_config(
     Args:
         name: Name for this target
         package_name: Package name of the generated build file. Same as the android_binary or android_library
+        debug: Boolean to write to Build config
         strings: Build config field of type String
         booleans: Build config field of type Boolean
         ints: Build config field of type Int
@@ -76,9 +78,11 @@ def build_config(
         _generate_final_strings(strings),
     )
 
+    dbg = "true" if debug else "false"
+
     booleans_statements = _build_statement(
         _BOOLEAN_TYPE,
-        dict(booleans, DEBUG = "true"),
+        dict(booleans, DEBUG = dbg),
     )
     ints_statements = _build_statement(_INT_TYPE, ints, False)
     longs_statements = _build_statement(_LONG_TYPE, longs, False)
