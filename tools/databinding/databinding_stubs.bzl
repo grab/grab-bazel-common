@@ -92,7 +92,8 @@ def _databinding_stubs_impl(ctx):
     )
     args.add("--r-class-output", ctx.outputs.r_class_jar)
     args.add("--stubs-output", ctx.outputs.binding_jar)
-    args.add("--non-transitive-r-class")
+    if non_transitive_r_class:
+        args.add("--non-transitive-r-class")
 
     mnemonic = "DatabindingStubs"
     ctx.actions.run(
