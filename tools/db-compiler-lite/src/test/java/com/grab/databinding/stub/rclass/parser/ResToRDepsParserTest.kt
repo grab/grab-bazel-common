@@ -20,6 +20,7 @@ import com.grab.databinding.stub.common.BaseBindingStubTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class ResToRDepsParserTest : BaseBindingStubTest() {
 
@@ -29,7 +30,7 @@ class ResToRDepsParserTest : BaseBindingStubTest() {
 
     @Before
     fun setUp() {
-        resToRParser = ResToRParserImpl(emptyMap())
+        resToRParser = DefaultResToRParser(emptyMap(), false)
     }
 
     @Test
@@ -63,7 +64,7 @@ class ResToRDepsParserTest : BaseBindingStubTest() {
         val result = resToRParser.parse(
             emptyList(),
             contextRTxts.lines()
-        ) as MutableMap<Type, MutableSet<RFieldEntry>>
+        )
 
         val expectedValues =
             mapOf(
@@ -137,5 +138,23 @@ class ResToRDepsParserTest : BaseBindingStubTest() {
                 Type.LAYOUT to expectedLayouts
             ), result
         )
+    }
+
+    @Test
+    fun `assert non transitive R class with package aware R txt files gets parsed correctly`() {
+        val resToRParser = DefaultResToRParser(emptyMap(), nonTransitiveRClass = true)
+        val contextRTxts = """
+            com.grab.bazel.common
+            array array_strings
+            bool your_colors
+            attr payxValue
+        """.trimIndent()
+        val result = resToRParser.parse(
+            emptyList(),
+            contextRTxts.lines()
+        )
+        result.forEach { (_, rTypeEntries) ->
+            assertTrue { rTypeEntries.isEmpty() }
+        }
     }
 }

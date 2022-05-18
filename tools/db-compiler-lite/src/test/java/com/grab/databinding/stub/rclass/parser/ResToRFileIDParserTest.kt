@@ -28,7 +28,7 @@ class ResToRFileIDParserTest : BaseBindingStubTest() {
 
     @Before
     fun setUp() {
-        resToRParser = ResToRParserImpl(emptyMap())
+        resToRParser = DefaultResToRParser(emptyMap(), false)
     }
 
     @Test

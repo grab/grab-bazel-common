@@ -48,6 +48,12 @@ class BindingStubCommand : CliktCommand() {
         help = "List of dependencies R.txt files"
     ).split(",").default(emptyList())
 
+    private val nonTransitiveRClass: Boolean by option(
+        "-ntr",
+        "--non-transitive-r-class",
+        help = "When true, assumes R class is not transitive"
+    ).flag(default = false)
+
     private val preferredOutputDir by option(
         "-o",
         "--output"
@@ -80,7 +86,8 @@ class BindingStubCommand : CliktCommand() {
                 resourceFiles = resourcesFiles,
                 layoutFiles = layoutFiles,
                 classInfos = classInfoZip,
-                rTxts = depRTxts
+                rTxts = depRTxts,
+                nonTransitiveRClass = nonTransitiveRClass,
             ).apply {
                 resToRClassGenerator().generate(packageName, resourcesFiles, depRTxts)
 

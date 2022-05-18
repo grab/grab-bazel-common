@@ -61,6 +61,8 @@ interface BindingsStubComponent {
          * @param resourceFiles The list of all resource files for compilation
          * @param classInfos The list of databinding classInfo.zips from direct dependencies
          * @param rTxts The list of R.txts from direct dependencies.
+         * @param nonTransitiveRClass Whether generated R class source jars should be namespaced
+         * and not contain any transitive entries
          */
         fun create(
             @BindsInstance @Named(OUTPUT) outputDir: File?,
@@ -68,7 +70,8 @@ interface BindingsStubComponent {
             @BindsInstance @Named(LAYOUT_FILES) layoutFiles: List<File>,
             @BindsInstance @Named(RES_FILES) resourceFiles: List<File>,
             @BindsInstance @Named(CLASS_INFOS) classInfos: List<File>,
-            @BindsInstance @Named(R_TXTS) rTxts: List<File>
+            @BindsInstance @Named(R_TXTS) rTxts: List<File>,
+            @BindsInstance @Named(NON_TRANSITIVE_R) nonTransitiveRClass: Boolean,
         ): BindingsStubComponent
     }
 }

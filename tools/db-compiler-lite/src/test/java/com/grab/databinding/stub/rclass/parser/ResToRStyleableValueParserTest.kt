@@ -34,7 +34,7 @@ class ResToRStyleableValueParserTest : BaseBindingStubTest() {
             ParserType.STYLEABLE_PARSER to DeclareStyleableParser(),
             ParserType.DEFAULT_PARSER to DefaultXmlParser()
         )
-        resToRParser = ResToRParserImpl(providedParsers)
+        resToRParser = DefaultResToRParser(providedParsers, false)
     }
 
     @Test

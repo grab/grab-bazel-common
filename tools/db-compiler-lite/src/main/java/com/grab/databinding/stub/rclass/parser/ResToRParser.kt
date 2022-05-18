@@ -16,11 +16,13 @@
 
 package com.grab.databinding.stub.rclass.parser
 
-import com.grab.databinding.stub.common.*
+import com.grab.databinding.stub.common.NON_TRANSITIVE_R
 import com.grab.databinding.stub.util.*
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.File
+import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 
 /**
@@ -39,8 +41,9 @@ private const val ANDROID_ID = "android:id"
 private const val TAG_TYPE = "type"
 
 @Singleton
-class ResToRParserImpl constructor(
-    private val parsers: Map<ParserType, @JvmSuppressWildcards ResourceFileParser>
+class DefaultResToRParser @Inject constructor(
+    private val parsers: Map<ParserType, @JvmSuppressWildcards ResourceFileParser>,
+    @param:Named(NON_TRANSITIVE_R) private val nonTransitiveRClass: Boolean
 ) : ResToRParser {
 
     companion object {
@@ -59,19 +62,16 @@ class ResToRParserImpl constructor(
         resources.forEach { resource ->
             collectRes(resource)
         }
-        dependenciesRTxtContent.forEachIndexed { index, entry ->
-            parseContent(index, entry)
+        if (!nonTransitiveRClass) {
+            dependenciesRTxtContent.forEachIndexed { _, entry ->
+                parseContent(entry)
+            }
         }
         return this.resources
     }
 
-    private fun parseContent(index: Int, content: String) {
+    private fun parseContent(content: String) {
         val tokens = content.split(" ").map(String::trim)
-
-        if (tokens.size == 1) {
-            // Package aware R.txt can contain package names, exclude that from parsing
-            return
-        }
 
         val isArray = content.contains("[]")
         val name = tokens[NAME_INDEX]

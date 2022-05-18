@@ -78,6 +78,10 @@ def kt_db_android_library(
         resource_files = resource_files,
         tags = tags,
         deps = deps + _DATABINDING_DEPS,
+        non_transitive_r_class = select({
+            "@grab_bazel_common//:non_transitive_r_class": True,
+            "//conditions:default": False,
+        }),
     )
     binding_classes_sources = databinding_stubs_target + "_binding.srcjar"
 

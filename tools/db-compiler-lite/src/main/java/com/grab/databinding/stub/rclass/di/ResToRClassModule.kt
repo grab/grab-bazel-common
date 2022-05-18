@@ -19,9 +19,9 @@ package com.grab.databinding.stub.rclass.di
 import com.grab.databinding.stub.common.OUTPUT
 import com.grab.databinding.stub.rclass.generator.ResToRClassGenerator
 import com.grab.databinding.stub.rclass.generator.ResToRClassGeneratorImpl
+import com.grab.databinding.stub.rclass.parser.DefaultResToRParser
 import com.grab.databinding.stub.rclass.parser.ParserType
 import com.grab.databinding.stub.rclass.parser.ResToRParser
-import com.grab.databinding.stub.rclass.parser.ResToRParserImpl
 import com.grab.databinding.stub.rclass.parser.ResourceFileParser
 import com.grab.databinding.stub.rclass.parser.xml.*
 import dagger.Binds
@@ -62,11 +62,14 @@ interface ResourceParserModule {
     @IntoMap
     @ParserKey(ParserType.DEFAULT_PARSER)
     fun DefaultXmlParser.defaultXmlParser(): ResourceFileParser
+
+    @Binds
+    @Singleton
+    fun DefaultResToRParser.defaultResToRParser(): ResToRParser
 }
 
 @Module(includes = [ResourceParserModule::class])
 object ResToRClassModule {
-
     @JvmStatic
     @Provides
     @Singleton
@@ -75,12 +78,5 @@ object ResToRClassModule {
         resToRParser: ResToRParser
     ): ResToRClassGenerator {
         return ResToRClassGeneratorImpl(resToRParser, dir)
-    }
-
-    @JvmStatic
-    @Provides
-    @Singleton
-    fun resToRClassParser(parsers: Map<ParserType, @JvmSuppressWildcards ResourceFileParser>): ResToRParser {
-        return ResToRParserImpl(parsers)
     }
 }

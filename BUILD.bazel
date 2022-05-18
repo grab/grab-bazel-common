@@ -1,3 +1,7 @@
 load("@dagger//:workspace_defs.bzl", "dagger_rules")
 
 dagger_rules()
+
+load("@grab_bazel_common//toolchains:toolchains.bzl", "configure_toolchains")
+
+configure_toolchains()
