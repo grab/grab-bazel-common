@@ -11,8 +11,8 @@ GRAB_BAZEL_COMMON_ARTIFACTS = [
     "xmlpull:xmlpull:1.1.3.1",
     "net.sf.kxml:kxml2:2.3.0",
     "com.squareup.moshi:moshi:1.11.0",
-    "org.jetbrains.kotlin:kotlin-parcelize-compiler:1.4.20",
-    "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.4.20",
+    "org.jetbrains.kotlin:kotlin-parcelize-compiler:1.6.10",
+    "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.6.10",
 ]
 
 ANDROID_TOOLS_BUILD_FILE = """
