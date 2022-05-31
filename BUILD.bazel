@@ -5,9 +5,3 @@ dagger_rules()
 load("@grab_bazel_common//toolchains:toolchains.bzl", "configure_toolchains")
 
 configure_toolchains()
-
-load("@grab_bazel_common//tools/buildifier:rules.bzl", "buildifier_binary")
-
-buildifier_binary(
-  name = "buildifier",
-)
