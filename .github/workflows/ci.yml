@@ -7,29 +7,49 @@ on:
   pull_request:
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout the sources"
+      - name: "Checkout"
         uses: actions/checkout@v3
-
       - name: Install JDK 11
         uses: actions/setup-java@v2
         with:
           distribution: "zulu"
           java-version: "11"
-
+      - name: Lint
+        run: bazelisk run //:buildifier -- --mode=check -r $(pwd)
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+      - name: Install JDK 11
+        uses: actions/setup-java@v2
+        with:
+          distribution: "zulu"
+          java-version: "11"
       - name: Mount bazel cache
         uses: actions/cache@v3
         with:
           path: "bazel-cache"
-          key: caches-${{ runner.os }}-release
-
-      - name: Lint
-        run: bazelisk run //:buildifier -- --mode=check -r $(pwd)
-
+          key: bazel-common-build
       - name: Build
         run: bazelisk build //...
-
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+      - name: Install JDK 11
+        uses: actions/setup-java@v2
+        with:
+          distribution: "zulu"
+          java-version: "11"
+      - name: Mount bazel cache
+        uses: actions/cache@v3
+        with:
+          path: "bazel-cache"
+          key: bazel-common-test
       - name: Test
         run: bazelisk test //...
