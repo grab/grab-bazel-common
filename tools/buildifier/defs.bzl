@@ -17,20 +17,20 @@ BUILDIFIER_DEFAULT_VERSION = "5.1.0"
 BUILDIFIER_RELEASE_URL_TEMPLATE = "https://github.com/bazelbuild/buildtools/releases/download/{version}/buildifier-{os}-{arch}"
 
 BuildifierVersionInfo = provider(
-  "Provides information about the buildifier release",
-  fields = {
-    "version": "version of the buildifier release",
-    "supported_os": "list of supported os",
-    "supported_arch": "list of supported architecture",
-  }
+    "Provides information about the buildifier release",
+    fields = {
+        "version": "version of the buildifier release",
+        "supported_os": "list of supported os",
+        "supported_arch": "list of supported architecture",
+    },
 )
 
 BUILDIFIER_DEFAULT_TOOLCHAINS = BuildifierVersionInfo(
-  version = BUILDIFIER_DEFAULT_VERSION,
-  supported_os = ["darwin", "linux"],
-  supported_arch = ["arm64", "amd64"],
+    version = BUILDIFIER_DEFAULT_VERSION,
+    supported_os = ["darwin", "linux"],
+    supported_arch = ["arm64", "amd64"],
 )
 
 BUILDIFIER_DEFAULT_TOOLCHAIN_CONFIG = {
-  "name": "buildifier",
+    "name": "buildifier",
 }

@@ -16,23 +16,23 @@ Rule for running buildifier via toolchain config
 """
 
 def _buildifier_impl(ctx):
-  _buildifier_binary = ctx.toolchains["@buildifier_toolchains//:buildifier_toolchain_type"].binary
-  script = ctx.actions.declare_file("buildifier")
-  ctx.actions.symlink(
-    output = script,
-    target_file = _buildifier_binary,
-    is_executable = True,
-  )
+    _buildifier_binary = ctx.toolchains["@buildifier_toolchains//:buildifier_toolchain_type"].binary
+    script = ctx.actions.declare_file("buildifier")
+    ctx.actions.symlink(
+        output = script,
+        target_file = _buildifier_binary,
+        is_executable = True,
+    )
 
-  return [
-    DefaultInfo(
-      runfiles = ctx.runfiles(files = [_buildifier_binary]),
-      executable = script,
-    ),
-  ]
+    return [
+        DefaultInfo(
+            runfiles = ctx.runfiles(files = [_buildifier_binary]),
+            executable = script,
+        ),
+    ]
 
 buildifier_binary = rule(
-  implementation = _buildifier_impl,
-  toolchains = ["@buildifier_toolchains//:buildifier_toolchain_type"],
-  executable = True,
+    implementation = _buildifier_impl,
+    toolchains = ["@buildifier_toolchains//:buildifier_toolchain_type"],
+    executable = True,
 )

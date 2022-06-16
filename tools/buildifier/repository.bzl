@@ -17,72 +17,70 @@ load(":defs.bzl", "BUILDIFIER_RELEASE_URL_TEMPLATE")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
 def _buildifier_repository_impl(repository_ctx):
-  attr = repository_ctx.attr
-  
-  repository_ctx.file(
-    "WORKSPACE",
-    content = """workspace(name = "%s")""" % attr.name,
-  )
+    attr = repository_ctx.attr
 
-  repository_ctx.template(
-    "BUILD.bazel",
-    attr._template,
-    substitutions = {
-      "{{.BuildifierSupportedOS}}": "[\"{}\"]".format(
-        "\",\"".join(attr.supported_os)
-      ),
-      "{{.BuildifierSupportedArch}}": "[\"{}\"]".format(
-        "\",\"".join(attr.supported_arch)
-      ),
-    },
-    executable = False,
-  )
+    repository_ctx.file(
+        "WORKSPACE",
+        content = """workspace(name = "%s")""" % attr.name,
+    )
+
+    repository_ctx.template(
+        "BUILD.bazel",
+        attr._template,
+        substitutions = {
+            "{{.BuildifierSupportedOS}}": "[\"{}\"]".format(
+                "\",\"".join(attr.supported_os),
+            ),
+            "{{.BuildifierSupportedArch}}": "[\"{}\"]".format(
+                "\",\"".join(attr.supported_arch),
+            ),
+        },
+        executable = False,
+    )
 
 _buildifier_repository = repository_rule(
-  implementation = _buildifier_repository_impl,
-  attrs = {
-    "supported_os": attr.string_list(
-      allow_empty = False,
-      mandatory = True,
-    ),
-    "supported_arch": attr.string_list(
-      allow_empty = False,
-      mandatory = True,
-    ),
-    "_template": attr.label(
-      doc = "repository build file template",
-      default = ":BUILD.bazelbuild_buildtools_buildifier.bazel",
-    )
-  }
+    implementation = _buildifier_repository_impl,
+    attrs = {
+        "supported_os": attr.string_list(
+            allow_empty = False,
+            mandatory = True,
+        ),
+        "supported_arch": attr.string_list(
+            allow_empty = False,
+            mandatory = True,
+        ),
+        "_template": attr.label(
+            doc = "repository build file template",
+            default = ":BUILD.bazelbuild_buildtools_buildifier.bazel.tpl",
+        ),
+    },
 )
 
 def buildifier_repository(
-  name,
-  supported_os,
-  supported_arch,
-  version,
-):
+        name,
+        supported_os,
+        supported_arch,
+        version):
+    for os in supported_os:
+        for arch in supported_arch:
+            http_file(
+                name = "buildifier_{os}_{arch}".format(
+                    os = os,
+                    arch = arch,
+                ),
+                urls = [
+                    BUILDIFIER_RELEASE_URL_TEMPLATE.format(
+                        version = version,
+                        os = os,
+                        arch = arch,
+                    ),
+                ],
+                downloaded_file_path = "buildifier",
+                executable = True,
+            )
 
-  for os in supported_os:
-    for arch in supported_arch:
-      http_file(
-        name = "buildifier_{os}_{arch}".format(
-          os = os,
-          arch = arch,
-        ),
-        urls = [
-          BUILDIFIER_RELEASE_URL_TEMPLATE.format(
-            version = version,
-            os = os,
-            arch = arch,
-          )
-        ],
-        downloaded_file_path = "buildifier",
-        executable = True,
-      )
-
-  _buildifier_repository(
-    name = name,
-    supported_os = supported_os,
-    supported_arch = supported_arch,
-  )
+    _buildifier_repository(
+        name = name,
+        supported_os = supported_os,
+        supported_arch = supported_arch,
+    )

@@ -13,20 +13,20 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
 )
 
-DAGGER_TAG = "2.28.1"
+DAGGER_TAG = "2.37"
 
-DAGGER_SHA = "9e69ab2f9a47e0f74e71fe49098bea908c528aa02fa0c5995334447b310d0cdd"
+DAGGER_SHA = "0f001ed38ed4ebc6f5c501c20bd35a68daf01c8dbd7541b33b7591a84fcc7b1c"
 
 http_archive(
     name = "dagger",
     sha256 = DAGGER_SHA,
     strip_prefix = "dagger-dagger-%s" % DAGGER_TAG,
-    urls = ["https://github.com/google/dagger/archive/dagger-%s.zip" % DAGGER_TAG],
+    url = "https://github.com/google/dagger/archive/dagger-%s.zip" % DAGGER_TAG,
 )
 
-load("@rules_jvm_external//:defs.bzl", "maven_install")
 load("@dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
 load("@//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
+load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 maven_install(
     artifacts = DAGGER_ARTIFACTS + GRAB_BAZEL_COMMON_ARTIFACTS + [
@@ -47,30 +47,21 @@ maven_install(
     strict_visibility = True,
 )
 
-RULES_KOTLIN_VERSION = "v1.5.0-beta-3"
+RULES_KOTLIN_VERSION = "1.6.0-RC-2"
 
-RULES_KOTLIN_SHA = "58edd86f0f3c5b959c54e656b8e7eb0b0becabd412465c37a2078693c2571f7f"
+RULES_KOTLIN_SHA = "88d19c92a1fb63fb64ddb278cd867349c3b0d648b6fe9ef9a200b9abcacd489d"
 
 http_archive(
     name = "io_bazel_rules_kotlin",
     sha256 = RULES_KOTLIN_SHA,
-    urls = ["https://github.com/bazelbuild/rules_kotlin/releases/download/%s/rules_kotlin_release.tgz" % RULES_KOTLIN_VERSION],
+    urls = ["https://github.com/bazelbuild/rules_kotlin/releases/download/v%s/rules_kotlin_release.tgz" % RULES_KOTLIN_VERSION],
 )
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories", "kt_register_toolchains")
+load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories")
 
-KOTLIN_VERSION = "1.4.20"
+kotlin_repositories()
 
-KOTLINC_RELEASE_SHA = "11db93a4d6789e3406c7f60b9f267eba26d6483dcd771eff9f85bb7e9837011f"
-
-KOTLINC_RELEASE = {
-    "urls": [
-        "https://github.com/JetBrains/kotlin/releases/download/v{v}/kotlin-compiler-{v}.zip".format(v = KOTLIN_VERSION),
-    ],
-    "sha256": KOTLINC_RELEASE_SHA,
-}
-
-kotlin_repositories(compiler_release = KOTLINC_RELEASE)
+load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
 
 kt_register_toolchains()
 
@@ -85,3 +76,7 @@ new_local_repository(
     build_file_content = ANDROID_TOOLS_BUILD_FILE,
     path = ".",
 )
+
+load("@grab_bazel_common//toolchains:toolchains.bzl", "register_common_toolchains")
+
+register_common_toolchains()

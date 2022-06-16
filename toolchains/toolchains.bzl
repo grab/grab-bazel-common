@@ -14,45 +14,43 @@
 """"""
 
 load(
-  "@grab_bazel_common//tools/buildifier:defs.bzl",
-  "BUILDIFIER_DEFAULT_TOOLCHAINS",
-  "BUILDIFIER_DEFAULT_TOOLCHAIN_CONFIG",
+    "@grab_bazel_common//tools/buildifier:defs.bzl",
+    "BUILDIFIER_DEFAULT_TOOLCHAINS",
+    "BUILDIFIER_DEFAULT_TOOLCHAIN_CONFIG",
 )
 load(
-  "@grab_bazel_common//tools/buildifier:toolchains.bzl",
-  "buildifier_register_toolchains",
-  _buildifier_version = "buildifier_version",
+    "@grab_bazel_common//tools/buildifier:toolchains.bzl",
+    "buildifier_register_toolchains",
+    _buildifier_version = "buildifier_version",
 )
 load(
-  "@grab_bazel_common//tools/buildifier:buildifier_binary.bzl",
-  "buildifier_binary",
+    "@grab_bazel_common//tools/buildifier:buildifier_binary.bzl",
+    "buildifier_binary",
 )
 
 #exports
 buildifier_version = _buildifier_version
 
 def configure_toolchains():
-  native.config_setting(
-    name = "non_transitive_r_class",
-    values = {"define": "nontransitive_r_class=1"},
-  )
+    native.config_setting(
+        name = "non_transitive_r_class",
+        values = {"define": "nontransitive_r_class=1"},
+    )
 
-  buildifier_binary(
-    name = "buildifier",
-  )
+    buildifier_binary(
+        name = "buildifier",
+    )
 
 def register_common_toolchains(
-  buildifier = BUILDIFIER_DEFAULT_TOOLCHAINS,
-):
-  buildifier_register_toolchains(
-    version = buildifier.version,
-    supported_os = buildifier.supported_os,
-    supported_arch = buildifier.supported_arch,
-  )
+        buildifier = BUILDIFIER_DEFAULT_TOOLCHAINS):
+    buildifier_register_toolchains(
+        version = buildifier.version,
+        supported_os = buildifier.supported_os,
+        supported_arch = buildifier.supported_arch,
+    )
 
 def configure_common_toolchains(
-  buildifier = BUILDIFIER_DEFAULT_TOOLCHAIN_CONFIG
-):
-  buildifier_binary(
-    name = buildifier["name"],
-  )
+        buildifier = BUILDIFIER_DEFAULT_TOOLCHAIN_CONFIG):
+    buildifier_binary(
+        name = buildifier["name"],
+    )
