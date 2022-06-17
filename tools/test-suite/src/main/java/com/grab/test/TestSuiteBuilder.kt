@@ -100,13 +100,19 @@ class TestSuiteBuilder {
         }
 
         private fun containsTestMethods(container: Class<*>): Boolean {
-            return container.methods.any {
-                it.annotations
-                    .any { annotation ->
-                        annotation
-                            .annotationClass
-                            .qualifiedName == "org.junit.Test"
-                    }
+            return try {
+                container.methods.any {
+                    it.annotations
+                        .any { annotation ->
+                            annotation
+                                .annotationClass
+                                .qualifiedName == "org.junit.Test"
+                        }
+                }
+            } catch (e: ClassNotFoundException) {
+                false
+            } catch (e: NoClassDefFoundError) {
+                false
             }
         }
     }

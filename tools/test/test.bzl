@@ -159,8 +159,9 @@ EOF""".format(test_package = test_package),
             test_class = "com.grab.test.AllTests",
             jvm_flags = [
                 "-Xverify:none",
+                "-Djava.locale.providers=COMPAT,SPI"
             ],
-            shard_count = min(len(test_classes), 50),
+            shard_count = min(len(test_classes), 16),
             testonly = True,
             runtime_deps = test_runtime_deps,
         )
