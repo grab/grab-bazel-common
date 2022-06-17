@@ -38,8 +38,6 @@ def grab_android_local_test(
     )
 
     _gen_test_targets(
-        test_compile_rule_type = kt_jvm_library,
-        test_runner_rule_type = native.java_test,
         name = name,
         srcs = srcs,
         associates = associates,
@@ -75,8 +73,6 @@ def grab_kt_jvm_test(
         associates: associates target to allow access to internal members from the main Kotlin target
         """
     _gen_test_targets(
-        test_compile_rule_type = kt_jvm_library,
-        test_runner_rule_type = native.java_test,
         name = name,
         srcs = srcs,
         associates = associates,
@@ -88,9 +84,8 @@ def grab_kt_jvm_test(
         **kwargs
     )
 
+
 def _gen_test_targets(
-        test_compile_rule_type,
-        test_runner_rule_type,
         name,
         srcs,
         deps,
@@ -120,16 +115,7 @@ def _gen_test_targets(
     test_runtime_deps: Any dependencies required for the test runner target.
     associates: The list of associate targets to allow access to internal members.
     """
-    test_build_target = name + "_build"
-    test_compile_rule_type(
-        name = test_build_target,
-        srcs = srcs,
-        deps = deps + test_compile_deps,
-        associates = associates,
-        testonly = True,
-    )
-
-    test_names = []
+    test_classes = []
     for src in srcs:
         if src.endswith("Test.kt") or src.endswith("Tests.kt"):
             # src/test/java/com/grab/test/TestFile.kt
@@ -145,24 +131,65 @@ def _gen_test_targets(
             if path.find("src/test/java/") != -1 or path.find("src/test/kotlin/") != -1:  # TODO make this path configurable
                 path = path.split("src/test/java/")[1] if path.find("src/test/java/") != -1 else path.split("src/test/kotlin/")[1]  # com/grab/test
                 test_class = path.replace("/", ".") + "." + test_file_name  # com.grab.test.TestFile
-
                 test_target_name = test_class.replace(".", "_")
-                test_names.append(test_target_name)
+                test_classes.append(test_class)
 
-                test_runner_rule_type(
-                    name = test_class.replace(".", "_"),
-                    test_class = test_class,
-                    runtime_deps = [
-                        ":" + test_build_target,
-                    ] + test_runtime_deps,
-                    jvm_flags = [
-                        "-Xverify:none",
-                    ],
-                    **kwargs
-                )
-
-    if len(test_names) >= 0:
-        native.test_suite(
-            name = name,
-            tests = test_names,
+    test_build_target = name
+    if len(test_classes) > 0:
+        test_package = _common_package(test_classes)
+        test_package_file = [test_build_target + "_package.kt"]
+        native.genrule(
+            name = test_build_target + "_package",
+            outs = test_package_file,
+            cmd = """
+cat << EOF > $@
+package com.grab.test
+object TestPackageName {{
+    @JvmField
+    val PACKAGE_NAME = "{test_package}"
+}}
+EOF""".format(test_package = test_package),
         )
+
+        kt_jvm_test(
+            name = test_build_target,
+            srcs = srcs + test_package_file,
+            deps = deps + test_compile_deps + ["@grab_bazel_common//tools/test-suite:test-suite"],
+            associates = associates,
+            test_class = "com.grab.test.AllTests",
+            jvm_flags = [
+                "-Xverify:none",
+            ],
+            shard_count = min(len(test_classes), 50),
+            testonly = True,
+            runtime_deps = test_runtime_deps,
+        )
+
+def _common_package(packages):
+    """
+    Extract common package name from list of provided package name
+    Args:
+    packages: List of package name in the format [com.grab.test], [com.grab]
+    """
+    packages = sorted(packages, reverse = True)
+    common_path = ""
+
+    if len(packages) == 1:
+        chunks = packages[0].split(".")
+        chunks.pop()
+        return ".".join(chunks)
+
+    paths = []
+
+    for package in packages:
+        paths.append(package.split("."))
+
+    for j in range(len(paths[0])):
+        path = paths[0][j]
+        for i in range(len(packages)):
+            if i != 0:
+                if (path != paths[i][j]):
+                    return common_path.strip(".")
+        common_path = common_path + path + "."
+
+    return common_path.strip(".")
