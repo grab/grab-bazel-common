@@ -7,6 +7,7 @@ def grab_android_local_test(
         deps,
         associates = [],
         custom_package = "",
+        resources = [],
         **kwargs):
     """A macro that generates test targets to execute all android library unit tests.
 
@@ -41,14 +42,16 @@ def grab_android_local_test(
         name = name,
         srcs = srcs,
         associates = associates,
-        deps = deps + [":" + runtime_resources_name],
+        deps = deps,
         test_compile_deps = [
             "@grab_bazel_common//tools/test:mockable-android-jar",
         ],
         test_runtime_deps = [
+            ":" + runtime_resources_name,
             "@grab_bazel_common//tools/test:mockable-android-jar",
             "@com_github_jetbrains_kotlin//:kotlin-reflect",
         ],
+        resources = resources,
         **kwargs
     )
 
@@ -91,6 +94,7 @@ def _gen_test_targets(
         test_compile_deps,
         test_runtime_deps,
         associates = [],
+        resources = [],
         **kwargs):
     """A macro to auto generate and compile target and runner targets for tests.
 
@@ -158,11 +162,11 @@ EOF""".format(test_package = test_package),
             test_class = "com.grab.test.AllTests",
             jvm_flags = [
                 "-Xverify:none",
-                "-Djava.locale.providers=COMPAT,SPI",
             ],
             #shard_count = min(len(test_classes), 16),
             testonly = True,
             runtime_deps = test_runtime_deps,
+            resources = resources,
         )
 
 def _common_package(packages):
