@@ -36,6 +36,7 @@ object Classpath {
                     } catch (unused: UnsatisfiedLinkError) {
                         // Ignore: we're most likely running on a different platform.
                     } catch (unused: NoClassDefFoundError) {
+                    } catch (unused: VerifyError) {
                     }
                 }
             }
