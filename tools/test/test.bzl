@@ -1,4 +1,4 @@
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library", "kt_jvm_test")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 load(":runtime_resources.bzl", "runtime_resources")
 
 def grab_android_local_test(
@@ -52,6 +52,7 @@ def grab_android_local_test(
             "@com_github_jetbrains_kotlin//:kotlin-reflect",
         ],
         resources = resources,
+        custom_package = custom_package,
         **kwargs
     )
 
@@ -95,6 +96,7 @@ def _gen_test_targets(
         test_runtime_deps,
         associates = [],
         resources = [],
+        custom_package = "",
         **kwargs):
     """A macro to auto generate and compile target and runner targets for tests.
 
@@ -134,12 +136,11 @@ def _gen_test_targets(
             if path.find("src/test/java/") != -1 or path.find("src/test/kotlin/") != -1:  # TODO make this path configurable
                 path = path.split("src/test/java/")[1] if path.find("src/test/java/") != -1 else path.split("src/test/kotlin/")[1]  # com/grab/test
                 test_class = path.replace("/", ".") + "." + test_file_name  # com.grab.test.TestFile
-                test_target_name = test_class.replace(".", "_")
                 test_classes.append(test_class)
 
     test_build_target = name
     if len(test_classes) > 0:
-        test_package = _common_package(test_classes)
+        test_package = _common_package(test_classes) if custom_package == "" else custom_package
         test_package_file = [test_build_target + "_package.kt"]
         native.genrule(
             name = test_build_target + "_package",
