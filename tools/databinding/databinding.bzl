@@ -31,6 +31,7 @@ def kt_db_android_library(
         srcs = [],
         custom_package = None,
         manifest = None,
+        resources = [],
         resource_files = [],
         assets = None,
         assets_dir = None,
@@ -63,7 +64,8 @@ def kt_db_android_library(
         manifest: The AndroidManifest.xml file for android library.
         assets: Assets for android_library rule
         assets_dir: Assets dir for android_library rule
-        resource_files: The resource files for the target.
+        resources: The JAR resource files for the target.
+        resource_files: The Android resource files for the target.
         deps: The dependencies for the whole target.
         plugins: Kotlin compiler plugins for internal Kotlin target
         visibility: Visibility of the target.
@@ -77,7 +79,6 @@ def kt_db_android_library(
         name = databinding_stubs_target,
         custom_package = custom_package,
         resource_files = resource_files,
-        tags = tags,
         deps = deps + _DATABINDING_DEPS,
         non_transitive_r_class = select({
             "@grab_bazel_common//:non_transitive_r_class": True,
@@ -115,12 +116,12 @@ def kt_db_android_library(
         kt_jvm_library(
             name = kotlin_target,
             srcs = srcs + [binding_classes_sources],
+            resources = resources,
             plugins = plugins,
             deps = deps + _DATABINDING_DEPS + [r_classes] + [
                 "@grab_bazel_common//tools/binding-adapter-bridge:binding-adapter-bridge",
                 "@grab_bazel_common//tools/android:android_sdk",
             ],
-            tags = tags,
         )
         kotlin_targets.append(kotlin_target)
 
