@@ -1,9 +1,7 @@
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
-load(":databinding_aar.bzl", "databinding_aar")
-load(":databinding_classinfo.bzl", "direct_class_infos")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load(":databinding_r_deps.bzl", "extract_r_txt_deps")
 load(":databinding_stubs.bzl", "databinding_stubs")
+# load(":databinding_aar.bzl", "databinding_aar")
 
 # TODO(arun) Replace with configurable maven targets
 _DATABINDING_DEPS = [
@@ -140,11 +138,11 @@ def kt_db_android_library(
             srcs = [":" + kotlin_target + "-sources.jar"],
             outs = [kotlin_target + "_kt-sources.srcjar"],
             tools = [_zipper],
+            message = "Generating binding adapter stubs " + name,
             cmd = """
             TEMP="adapter-sources"
             mkdir -p $$TEMP
-            unzip -q -o $< -d $$TEMP/
-            find $$TEMP/. -type f ! -name '*_Binding_Adapter_Stub.java' -delete
+            unzip -q -o $< '*_Binding_Adapter_Stub.java' -d $$TEMP/ 2> /dev/null || true
             touch $$TEMP/empty.txt # Package empty file to ensure jar file is always generated
             find $$TEMP/. -type f -exec $(location {zipper}) c $(OUTS) {{}} +
             rm -rf $$TEMP
