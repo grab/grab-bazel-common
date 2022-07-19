@@ -27,10 +27,9 @@ class AllTests {
                 .create()
         }
 
-        private fun getInjectedPackage() = Class
+        private fun getInjectedPackage(): List<String> = Class
             .forName("com.grab.test.TestPackageName")
-            .fields.first { it.name == "PACKAGE_NAME" }
-            .get(null)
-            .toString()
+            .fields.first { it.name == "PACKAGE_NAMES" }
+            .get(null) as List<String>
     }
 }

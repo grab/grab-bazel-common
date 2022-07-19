@@ -41,19 +41,25 @@ class TestSuiteBuilder {
      * `pkgName` or its subpackages to the set of tests this builder will
      * search.
      */
-    fun addPackageRecursive(pkgName: String): TestSuiteBuilder {
-        for (c in getClassesRecursive(pkgName)) {
+    fun addPackageRecursive(pkgNames: List<String>): TestSuiteBuilder {
+        for (c in getClassesRecursive(pkgNames)) {
             addTestClass(c)
         }
         return this
     }
 
-    private fun getClassesRecursive(pkgName: String): Set<Class<*>> {
+    fun addPackageRecursive(pkgName: String): TestSuiteBuilder {
+        return addPackageRecursive(listOf(pkgName))
+    }
+
+    private fun getClassesRecursive(pkgNames: List<String>): Set<Class<*>> {
         val result: MutableSet<Class<*>> = LinkedHashSet()
         try {
-            for (clazz in Classpath.findClasses(pkgName)) {
-                if (isTestClass(clazz)) {
-                    result.add(clazz)
+            for(pkg in pkgNames) {
+                for (clazz in Classpath.findClasses(pkg)) {
+                    if (isTestClass(clazz)) {
+                        result.add(clazz)
+                    }
                 }
             }
         } catch (e: Classpath.ClassPathException) {

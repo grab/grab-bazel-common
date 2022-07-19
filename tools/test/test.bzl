@@ -96,7 +96,6 @@ def _gen_test_targets(
         test_runtime_deps,
         associates = [],
         resources = [],
-        custom_package = "",
         **kwargs):
     """A macro to auto generate and compile target and runner targets for tests.
 
@@ -121,6 +120,7 @@ def _gen_test_targets(
     associates: The list of associate targets to allow access to internal members.
     """
     test_classes = []
+    test_packages = []
     for src in srcs:
         if src.endswith("Test.kt") or src.endswith("Tests.kt"):
             # src/test/java/com/grab/test/TestFile.kt
@@ -132,15 +132,19 @@ def _gen_test_targets(
             # Find package name from path
             path = path_split[0]  # src/main/java/com/grab/test
 
-            test_package = ""
             if path.find("src/test/java/") != -1 or path.find("src/test/kotlin/") != -1:  # TODO make this path configurable
                 path = path.split("src/test/java/")[1] if path.find("src/test/java/") != -1 else path.split("src/test/kotlin/")[1]  # com/grab/test
-                test_class = path.replace("/", ".") + "." + test_file_name  # com.grab.test.TestFile
+                test_package = path.replace("/", ".")
+                test_class = test_package + "." + test_file_name  # com.grab.test.TestFile
                 test_classes.append(test_class)
 
+                if test_package not in test_packages:
+                    test_packages.append(test_package)
+
     test_build_target = name
-    if len(test_classes) > 0:
-        test_package = _common_package(test_classes) if custom_package == "" else custom_package
+    if len(test_packages) > 0:
+        common_packages = _common_packages(test_packages)
+        common_packages_str = "\",\"".join(common_packages)
         test_package_file = [test_build_target + "_package.kt"]
         native.genrule(
             name = test_build_target + "_package",
@@ -150,9 +154,9 @@ cat << EOF > $@
 package com.grab.test
 object TestPackageName {{
     @JvmField
-    val PACKAGE_NAME = "{test_package}"
+    val PACKAGE_NAMES = listOf("{common_packages_str}")
 }}
-EOF""".format(test_package = test_package),
+EOF""".format(common_packages_str = common_packages_str),
         )
 
         kt_jvm_test(
@@ -171,31 +175,25 @@ EOF""".format(test_package = test_package),
             resources = resources,
         )
 
-def _common_package(packages):
+def _common_packages(packages):
     """
-    Extract common package name from list of provided package name
+    Extract common package names from list of provided package names
     Args:
-    packages: List of package name in the format [com.grab.test], [com.grab]
+    packages: List of package name in the format ["com.grab.test", "com.grab"]
     """
-    packages = sorted(packages, reverse = True)
-    common_path = ""
-
-    if len(packages) == 1:
-        chunks = packages[0].split(".")
-        chunks.pop()
-        return ".".join(chunks)
-
-    paths = []
+    packages = sorted(packages)
+    common_packages = []
+    common_packages.append(packages[0])
 
     for package in packages:
-        paths.append(package.split("."))
+        if package not in common_packages:
+            not_in_common_packages = True
+            for common_package in common_packages:
+                if package.startswith(common_package):
+                    not_in_common_packages = False
+                    break
 
-    for j in range(len(paths[0])):
-        path = paths[0][j]
-        for i in range(len(packages)):
-            if i != 0:
-                if (path != paths[i][j]):
-                    return common_path.strip(".")
-        common_path = common_path + path + "."
+            if not_in_common_packages:
+                common_packages.append(package)
 
-    return common_path.strip(".")
+    return common_packages
