@@ -143,8 +143,8 @@ def _gen_test_targets(
 
     test_build_target = name
     if len(test_packages) > 0:
-        common_packages = _common_packages(test_packages)
-        common_packages_str = "\",\"".join(common_packages)
+        unique_packages = _unique_test_packages(test_packages)
+        unique_packages_str = "\",\"".join(unique_packages)
         test_package_file = [test_build_target + "_package.kt"]
         native.genrule(
             name = test_build_target + "_package",
@@ -154,9 +154,9 @@ cat << EOF > $@
 package com.grab.test
 object TestPackageName {{
     @JvmField
-    val PACKAGE_NAMES = listOf("{common_packages_str}")
+    val PACKAGE_NAMES = listOf("{unique_base_packages}")
 }}
-EOF""".format(common_packages_str = common_packages_str),
+EOF""".format(unique_base_packages = unique_packages_str),
         )
 
         kt_jvm_test(
@@ -175,25 +175,25 @@ EOF""".format(common_packages_str = common_packages_str),
             resources = resources,
         )
 
-def _common_packages(packages):
+def _unique_test_packages(packages):
     """
-    Extract common package names from list of provided package names
+    Extract unique base package names from list of provided package names
     Args:
     packages: List of package name in the format ["com.grab.test", "com.grab"]
     """
     packages = sorted(packages)
-    common_packages = []
-    common_packages.append(packages[0])
+    unique_packages = []
+    unique_packages.append(packages[0])
 
     for package in packages:
-        if package not in common_packages:
-            not_in_common_packages = True
-            for common_package in common_packages:
-                if package.startswith(common_package):
-                    not_in_common_packages = False
+        if package not in unique_packages:
+            not_in_unique_packages = True
+            for unique_package in unique_packages:
+                if package.startswith(unique_package):
+                    not_in_unique_packages = False
                     break
 
-            if not_in_common_packages:
-                common_packages.append(package)
+            if not_in_unique_packages:
+                unique_packages.append(package)
 
-    return common_packages
+    return unique_packages
