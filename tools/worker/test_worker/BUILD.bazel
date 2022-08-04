@@ -1,0 +1,48 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+    name = "test_worker_lib",
+    srcs = glob([
+        "src/main/kotlin/**/*.kt",
+    ]),
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//tools/worker:worker_lib",
+    ],
+)
+
+java_binary(
+    name = "test_worker",
+    main_class = "com.grab.SimpleWorkerKt",
+    runtime_deps = [":test_worker_lib"],
+)
+
+# Integration test to assert test_worker java binary output
+genrule(
+    name = "worker_script",
+    outs = ["worker_script.sh"],
+    cmd = """
+cat << EOF > $@
+\\$$1 --version | grep '--version' &> /dev/null
+if [ \\$$? == 0 ]; then
+    exit 0
+else
+    exit 1
+fi
+EOF
+    """,
+)
+
+sh_test(
+    name = "worker_integration_test",
+    size = "small",
+    srcs = ["worker_script.sh"],
+    args = [
+        "$(location :test_worker)",
+    ],
+    data = [
+        ":test_worker",
+    ],
+)

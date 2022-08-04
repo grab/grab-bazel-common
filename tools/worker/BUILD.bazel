@@ -1,0 +1,30 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@grab_bazel_common//tools/test:test.bzl", "grab_kt_jvm_test")
+
+kt_jvm_library(
+    name = "worker_lib",
+    srcs = glob([
+        "src/main/kotlin/**/*.kt",
+        "src/main/kotlin/**/*.java",
+    ]),
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//tools/worker/src/main/proto:worker_protocol",
+        "@maven//:com_google_protobuf_protobuf_java",
+        "@maven//:com_google_protobuf_protobuf_java_util",
+    ],
+)
+
+grab_kt_jvm_test(
+    name = "worker_test",
+    srcs = glob([
+        "src/test/kotlin/**/*.kt",
+    ]),
+    deps = [
+        ":worker_lib",
+        "@com_github_jetbrains_kotlin//:kotlin-test",
+        "@maven//:junit_junit",
+    ],
+)

@@ -11,6 +11,7 @@ kt_jvm_library(
     ],
     deps = [
         "//:dagger",
+        "//tools/worker:worker_lib",
         "@com_github_jetbrains_kotlin//:kotlin-stdlib-jdk8",
         "@maven//:androidx_databinding_databinding_common",
         "@maven//:com_github_ajalt_clikt",

@@ -4,6 +4,8 @@ GRAB_BAZEL_COMMON_ARTIFACTS = [
     "com.google.guava:guava:29.0-jre",
     "com.google.auto:auto-common:0.10",
     "com.google.auto.service:auto-service:1.0-rc6",
+    "com.google.protobuf:protobuf-java:3.6.0",
+    "com.google.protobuf:protobuf-java-util:3.6.0",
     "com.squareup:javapoet:1.9.0",
     "com.github.ajalt:clikt:2.8.0",
     "org.ow2.asm:asm:6.0",

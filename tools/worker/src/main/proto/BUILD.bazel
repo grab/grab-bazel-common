@@ -1,0 +1,11 @@
+#alias(
+#    name = "worker_protocol_java_proto",
+#    actual = "@bazel_tools//src/main/protobuf:worker_protocol_java_proto",
+#    visibility = ["//visibility:public"],
+#)
+
+java_import(
+    name = "worker_protocol",
+    jars = ["jars/libworker_protocol_proto-speed.jar"],
+    visibility = ["//visibility:public"],
+)

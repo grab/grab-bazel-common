@@ -2,6 +2,40 @@ workspace(name = "grab_bazel_common")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# http_archive(
+#     name = "com_google_protobuf",
+#     sha256 = "cf754718b0aa945b00550ed7962ddc167167bd922b842199eeb6505e6f344852",
+#     strip_prefix = "protobuf-%s" % "3.11.3",
+#     urls = [
+#         "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v%s.tar.gz" % "3.11.3",
+#         "https://github.com/protocolbuffers/protobuf/archive/v%s.tar.gz" % "3.11.3",
+#     ],
+# )
+
+# http_archive(
+#     name = "bazel_skylib",
+#     sha256 = "1c531376ac7e5a180e0237938a2536de0c54d93f5c278634818e0efc952dd56c",
+#     urls = ["https://github.com/bazelbuild/bazel-skylib/releases/download/%s/bazel-skylib-%s.tar.gz" % (
+#         "1.0.3",
+#         "1.0.3",
+#     )],
+# )
+
+# http_archive(
+#     name = "rules_proto",
+#     sha256 = "e017528fd1c91c5a33f15493e3a398181a9e821a804eb7ff5acdd1d2d6c2b18d",
+#     strip_prefix = "rules_proto-4.0.0-3.20.0",
+#     urls = [
+#         "https://github.com/bazelbuild/rules_proto/archive/refs/tags/4.0.0-3.20.0.tar.gz",
+#     ],
+# )
+
+# load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+
+# rules_proto_dependencies()
+
+# rules_proto_toolchains()
+
 RULES_JVM_EXTERNAL_TAG = "3.3"
 
 RULES_JVM_EXTERNAL_SHA = "d85951a92c0908c80bd8551002d66cb23c3434409c814179c0ff026b53544dab"
