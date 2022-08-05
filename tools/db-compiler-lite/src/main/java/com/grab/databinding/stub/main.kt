@@ -25,6 +25,7 @@ fun main(args: Array<String>) {
             BindingStubCommand().main(args)
             Status.Success
         } catch (e: Exception) {
+            e.printStackTrace()
             Status.Failure
         }
     }
