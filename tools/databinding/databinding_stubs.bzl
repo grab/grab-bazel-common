@@ -109,7 +109,7 @@ def _databinding_stubs_impl(ctx):
         executable = ctx.executable._compiler,
         arguments = [args],
         progress_message = "%s %s" % (mnemonic, ctx.label),
-        execution_requirements = {"supports-workers": "1"},
+        execution_requirements = {"supports-workers": "1", "supports-multiplex-workers": "1"},
     )
 
     return [
