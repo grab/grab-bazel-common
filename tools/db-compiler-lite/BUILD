@@ -15,7 +15,6 @@ kt_jvm_library(
         "@com_github_jetbrains_kotlin//:kotlin-stdlib-jdk8",
         "@maven//:androidx_databinding_databinding_common",
         "@maven//:com_github_ajalt_clikt",
-        "@maven//:com_google_guava_guava",
         "@maven//:com_squareup_javapoet",
         "@maven//:com_squareup_moshi_moshi",
         "@maven//:net_sf_kxml_kxml2",

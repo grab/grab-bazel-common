@@ -1,5 +1,0 @@
-alias(
-    name = "worker_protocol_java_proto",
-    actual = "@bazel_tools//src/main/protobuf:worker_protocol_java_proto",
-    visibility = ["//visibility:public"],
-)
