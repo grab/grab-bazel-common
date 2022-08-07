@@ -80,6 +80,7 @@ android_library(
 
 ### Databinding 
 Provides a macro which in most cases can be used as a drop-in replacement to `kt_android_library` to enable support for Kotlin code when using databinding. [Details](https://github.com/grab/grab-bazel-common/blob/documentation/tools/databinding/databinding.bzl).
+Worker support for some of the internal actions can be enabled by `build --strategy=DatabindingStubs=worker`.
 
 ```python
 load("@grab_bazel_common//tools/databinding:databinding.bzl", "kt_db_android_library")

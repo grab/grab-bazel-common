@@ -20,9 +20,9 @@ import io.bazel.Status
 import io.bazel.Worker
 
 fun main(args: Array<String>) {
-    Worker.from(args = args.toList()).run { args ->
+    Worker.from(args = args.toList()).run { cliArgs ->
         try {
-            BindingStubCommand().main(args)
+            BindingStubCommand().main(cliArgs)
             Status.Success
         } catch (e: Exception) {
             e.printStackTrace()
