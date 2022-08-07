@@ -20,7 +20,7 @@ import com.grab.databinding.stub.binding.parser.Binding
 import com.grab.databinding.stub.binding.parser.BindingType
 import com.grab.databinding.stub.binding.parser.LayoutBindingData
 import com.grab.databinding.stub.common.BaseBindingStubTest
-import com.grab.databinding.stub.common.R_CLASS_OUTPUT
+import com.grab.databinding.stub.common.R_CLASS_OUTPUT_DIR
 import com.squareup.javapoet.ClassName
 import org.junit.Before
 import org.junit.Test
@@ -30,20 +30,19 @@ import kotlin.test.assertTrue
 
 class DefaultBrClassGeneratorTest : BaseBindingStubTest() {
     private lateinit var brClassGenerator: BrClassGenerator
-    private lateinit var outputDir: File
+    private lateinit var baseDir: File
     private lateinit var layoutBinding: LayoutBindingData
     private val packageName = "packageName"
 
-    private val generatedFileContents
-        get() = File(
-            outputDir,
-            Paths.get(R_CLASS_OUTPUT, packageName, "BR.java").toString()
-        ).readText()
+    private fun generatedFileContents(outputDir: File) = File(
+        outputDir,
+        Paths.get(packageName, "BR.java").toString()
+    ).readText()
 
     @Before
     fun setUp() {
-        outputDir = temporaryFolder.newFolder()
-        brClassGenerator = DefaultBrClassGenerator(outputDir)
+        baseDir = temporaryFolder.newFolder()
+        brClassGenerator = DefaultBrClassGenerator(baseDir)
         val className = ClassName.get(DefaultBrClassGeneratorTest::class.java)
         layoutBinding = LayoutBindingData(
             layoutName = "SimpleBinding",
@@ -71,23 +70,23 @@ class DefaultBrClassGeneratorTest : BaseBindingStubTest() {
 
     @Test
     fun `assert BR class fields are derived from layout data expressions`() {
-        brClassGenerator.generate(packageName, listOf(layoutBinding))
+        val output = brClassGenerator.generate(packageName, listOf(layoutBinding))
         assertTrue {
-            generatedFileContents.contains("public static int _all = 0;")
+            generatedFileContents(output).contains("public static int _all = 0;")
         }
         assertTrue {
-            generatedFileContents.contains("public static int bindableName = 0;")
+            generatedFileContents(output).contains("public static int bindableName = 0;")
         }
         assertTrue {
-            generatedFileContents.contains("public static int userscore_name = 0;")
+            generatedFileContents(output).contains("public static int userscore_name = 0;")
         }
     }
 
     @Test
     fun `assert BR class fields does not have duplicates`() {
-        brClassGenerator.generate(packageName, listOf(layoutBinding))
+        val output = brClassGenerator.generate(packageName, listOf(layoutBinding))
         assertTrue {
-            generatedFileContents
+            generatedFileContents(output)
                 .lineSequence()
                 .map { it.trim() }
                 .count { it == "public static int userscore_name = 0;" } == 1

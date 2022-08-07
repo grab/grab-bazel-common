@@ -19,15 +19,7 @@ package com.grab.databinding.stub.common
 import java.io.File
 
 interface Generator {
-    val preferredDir: File?
-
-    val defaultDirName: String
-
-    val outputDir: File
-        get() = when {
-            preferredDir != null -> File(preferredDir, defaultDirName)
-            else -> File(defaultDirName)
-        }
+    val baseDir: File
 
     fun logFile(packageName: String, typeName: String) {
 //        val fileName = Paths.get(

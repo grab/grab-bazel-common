@@ -16,12 +16,14 @@
 
 package com.grab.databinding.stub.common
 
-const val OUTPUT = "OUTPUT"
+const val BASE_DIR = "BASE_DIR"
+const val R_CLASS_OUTPUT_DIR = "rclasses"
+const val DATABINDING_OUTPUT_DIR = "databinding"
+
 const val PACKAGE_NAME = "PACKAGE_NAME"
 const val LAYOUT_FILES = "LAYOUT_FILES"
 const val RES_FILES = "RES_FILES"
 const val CLASS_INFOS = "CLASS_INFO"
 const val R_TXTS = "R_TXT_ZIP"
-const val R_CLASS_OUTPUT = "r-classes"
-const val DB_STUBS_OUTPUT = "db-stubs"
+
 const val NON_TRANSITIVE_R = "NON_TRANSITIVE_R"

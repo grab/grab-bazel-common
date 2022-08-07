@@ -16,33 +16,33 @@
 
 package com.grab.databinding.stub.binding.generator
 
+import com.grab.databinding.stub.AaptScope
 import com.grab.databinding.stub.binding.parser.Binding
 import com.grab.databinding.stub.binding.parser.BindingType
 import com.grab.databinding.stub.binding.parser.LayoutBindingData
-import com.grab.databinding.stub.common.DB_STUBS_OUTPUT
+import com.grab.databinding.stub.common.BASE_DIR
 import com.grab.databinding.stub.common.Generator
-import com.grab.databinding.stub.common.OUTPUT
 import com.squareup.javapoet.*
 import com.squareup.javapoet.TypeName.BOOLEAN
 import com.squareup.javapoet.TypeName.INT
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Named
-import javax.inject.Singleton
 import javax.lang.model.element.Modifier.*
 
 interface BindingClassGenerator : Generator {
-    override val defaultDirName: String get() = DB_STUBS_OUTPUT
-
-    fun generate(packageName: String, layoutBindings: List<LayoutBindingData>)
+    fun generate(
+        packageName: String,
+        layoutBindings: List<LayoutBindingData>
+    ): File
 }
 
-@Singleton
+@AaptScope
 class DefaultBindingClassGenerator
 @Inject
 constructor(
-    @Named(OUTPUT)
-    override val preferredDir: File?
+    @Named(BASE_DIR)
+    override val baseDir: File
 ) : BindingClassGenerator {
     companion object {
         private const val INFLATE_METHOD_NAME = "inflate"
@@ -110,9 +110,10 @@ constructor(
             } + additionalLayoutBindings).distinct()
     }
 
-    override fun generate(packageName: String, layoutBindings: List<LayoutBindingData>) {
-        // By default we generate android.databinding.DataBindingComponent
-        generateDataBindingComponentInterface()
+    override fun generate(packageName: String, layoutBindings: List<LayoutBindingData>): File {
+        val outputDir = File(baseDir, DATABINDING_PACKAGE)
+        // By default we generate androidx.databinding.DataBindingComponent
+        generateDataBindingComponentInterface(outputDir)
         calculateBindingsToGenerate(layoutBindings)
             .forEach { layoutBinding ->
                 val bindingClass = layoutBinding.layoutName
@@ -143,9 +144,10 @@ constructor(
                         logFile(genPackageName, type.name)
                     }
             }
+        return outputDir
     }
 
-    private fun generateDataBindingComponentInterface() {
+    private fun generateDataBindingComponentInterface(outputDir: File) {
         TypeSpec.interfaceBuilder(dataBindingComponent)
             .addModifiers(PUBLIC)
             .build()

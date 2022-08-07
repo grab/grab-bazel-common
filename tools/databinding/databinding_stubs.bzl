@@ -71,6 +71,9 @@ def _databinding_stubs_impl(ctx):
 
     # Args for compiler
     args = ctx.actions.args()
+    args.set_param_file_format("multiline")
+    args.use_param_file("--flagfile=%s", use_always = True)
+
     args.add("--package", custom_package)
     args.add_joined(
         "--resource-files",
@@ -106,6 +109,7 @@ def _databinding_stubs_impl(ctx):
         executable = ctx.executable._compiler,
         arguments = [args],
         progress_message = "%s %s" % (mnemonic, ctx.label),
+        execution_requirements = {"supports-workers": "1"},
     )
 
     return [

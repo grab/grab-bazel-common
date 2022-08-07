@@ -23,23 +23,26 @@ import com.grab.databinding.stub.binding.parser.LayoutBindingsParser
 import com.grab.databinding.stub.brclass.BrClassGenerator
 import com.grab.databinding.stub.brclass.BrClassModule
 import com.grab.databinding.stub.common.*
-import com.grab.databinding.stub.rclass.di.ResToRClassModule
+import com.grab.databinding.stub.rclass.ResourceParserModule
 import com.grab.databinding.stub.rclass.generator.RClassModule
 import com.grab.databinding.stub.rclass.generator.ResToRClassGenerator
 import dagger.BindsInstance
 import dagger.Component
 import java.io.File
 import javax.inject.Named
-import javax.inject.Singleton
+import javax.inject.Scope
 
-@Singleton
+@Scope
+annotation class AaptScope
+
+@AaptScope
 @Component(
     modules = [
         RClassModule::class,
         BindingClassModule::class,
         BrClassModule::class,
         BindingsParserModule::class,
-        ResToRClassModule::class,
+        ResourceParserModule::class,
         SrcJarPackageModule::class
     ]
 )
@@ -55,7 +58,7 @@ interface BindingsStubComponent {
         /**
          * Construct the [BindingsStubComponent] injector.
          *
-         * @param outputDir The output dir root where the files should be generated
+         * @param baseDir The base directory where files will be written to
          * @param packageName The package name of the target for which stubs are to be generated
          * @param layoutFiles The list of all layout xmls
          * @param resourceFiles The list of all resource files for compilation
@@ -65,7 +68,7 @@ interface BindingsStubComponent {
          * and not contain any transitive entries
          */
         fun create(
-            @BindsInstance @Named(OUTPUT) outputDir: File?,
+            @BindsInstance @Named(BASE_DIR) baseDir: File,
             @BindsInstance @Named(PACKAGE_NAME) packageName: String,
             @BindsInstance @Named(LAYOUT_FILES) layoutFiles: List<File>,
             @BindsInstance @Named(RES_FILES) resourceFiles: List<File>,

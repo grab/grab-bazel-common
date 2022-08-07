@@ -16,10 +16,11 @@
 
 package com.grab.databinding.stub.brclass
 
+import com.grab.databinding.stub.AaptScope
 import com.grab.databinding.stub.binding.parser.LayoutBindingData
+import com.grab.databinding.stub.common.BASE_DIR
 import com.grab.databinding.stub.common.Generator
-import com.grab.databinding.stub.common.OUTPUT
-import com.grab.databinding.stub.common.R_CLASS_OUTPUT
+import com.grab.databinding.stub.common.R_CLASS_OUTPUT_DIR
 import com.squareup.javapoet.FieldSpec
 import com.squareup.javapoet.JavaFile
 import com.squareup.javapoet.TypeName.INT
@@ -29,14 +30,11 @@ import dagger.Module
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Named
-import javax.inject.Singleton
 import javax.lang.model.element.Modifier.PUBLIC
 import javax.lang.model.element.Modifier.STATIC
 
 interface BrClassGenerator : Generator {
-    override val defaultDirName get() = R_CLASS_OUTPUT
-
-    fun generate(packageName: String, layoutBindings: List<LayoutBindingData>)
+    fun generate(packageName: String, layoutBindings: List<LayoutBindingData>): File
 }
 
 @Module
@@ -45,12 +43,12 @@ interface BrClassModule {
     fun DefaultBrClassGenerator.provide(): BrClassGenerator
 }
 
-@Singleton
+@AaptScope
 class DefaultBrClassGenerator
 @Inject
 constructor(
-    @Named(OUTPUT)
-    override val preferredDir: File?
+    @Named(BASE_DIR)
+    override val baseDir: File
 ) : BrClassGenerator {
 
     companion object {
@@ -63,7 +61,8 @@ constructor(
         )
     }
 
-    override fun generate(packageName: String, layoutBindings: List<LayoutBindingData>) {
+    override fun generate(packageName: String, layoutBindings: List<LayoutBindingData>): File {
+        val outputDir = File(baseDir, R_CLASS_OUTPUT_DIR)
         val fields = DEFAULT_FIELDS + layoutBindings
             .asSequence()
             .flatMap { it.bindables.asSequence() }
@@ -88,5 +87,6 @@ constructor(
             .build()
             .writeTo(outputDir)
         logFile(packageName, brType.name)
+        return outputDir
     }
 }

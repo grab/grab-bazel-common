@@ -16,9 +16,10 @@
 
 package com.grab.databinding.stub.rclass.generator
 
+import com.grab.databinding.stub.AaptScope
+import com.grab.databinding.stub.common.BASE_DIR
 import com.grab.databinding.stub.common.Generator
-import com.grab.databinding.stub.common.OUTPUT
-import com.grab.databinding.stub.common.R_CLASS_OUTPUT
+import com.grab.databinding.stub.common.R_CLASS_OUTPUT_DIR
 import com.grab.databinding.stub.rclass.parser.ResToRParser
 import com.squareup.javapoet.ArrayTypeName
 import com.squareup.javapoet.FieldSpec
@@ -26,8 +27,9 @@ import com.squareup.javapoet.JavaFile
 import com.squareup.javapoet.TypeName.INT
 import com.squareup.javapoet.TypeSpec
 import java.io.File
+import java.io.FileOutputStream
+import javax.inject.Inject
 import javax.inject.Named
-import javax.inject.Singleton
 import javax.lang.model.element.Modifier.*
 
 /**
@@ -35,26 +37,28 @@ import javax.lang.model.element.Modifier.*
  * R.java file containing merged data from resource files and R.txts from dependencies
  */
 interface ResToRClassGenerator : Generator {
-    override val defaultDirName get() = R_CLASS_OUTPUT
-
     /**
      * For given resources and R.txt metadata dir generates R.java by merging all the entries.
      *
      * @param packageName The package name of the R class
      * @param resources The list of resources for which R class content should be extracted from
-     * @param rTxtDir The directory containing R.txt from direct dependencies, the content will be
-     * merged with data extracted from resources.
+     * @param rTxts The list of R.txt files from dependencies
+     * @return The directory where the classes were written to
      */
-    fun generate(packageName: String, resources: List<File>, rTxts: List<File>)
+    fun generate(packageName: String, resources: List<File>, rTxts: List<File>): File
 }
 
-@Singleton
-class ResToRClassGeneratorImpl constructor(
+@AaptScope
+class ResToRClassGeneratorImpl
+@Inject
+constructor(
+    @Named(BASE_DIR)
+    override val baseDir: File,
     private val resToRParser: ResToRParser,
-    @Named(OUTPUT) override val preferredDir: File?
 ) : ResToRClassGenerator {
 
-    override fun generate(packageName: String, resources: List<File>, rTxts: List<File>) {
+    override fun generate(packageName: String, resources: List<File>, rTxts: List<File>): File {
+        val outputDir = File(baseDir, R_CLASS_OUTPUT_DIR)
         val resourcesStore = resToRParser.parse(resources, rTxts.flatMap(File::readLines))
 
         val subclasses = mutableListOf<TypeSpec>()
@@ -98,5 +102,6 @@ class ResToRClassGeneratorImpl constructor(
                     .writeTo(outputDir)
                 logFile(packageName, type.name)
             }
+        return outputDir
     }
 }

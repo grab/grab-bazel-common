@@ -16,6 +16,7 @@
 
 package com.grab.databinding.stub.binding.parser
 
+import com.grab.databinding.stub.AaptScope
 import com.grab.databinding.stub.binding.store.DEPS
 import com.grab.databinding.stub.binding.store.LOCAL
 import com.grab.databinding.stub.binding.store.LayoutTypeStore
@@ -92,7 +93,7 @@ interface BindingsParserModule {
  */
 private typealias ImportedTypes = MutableMap<String /* type name */, TypeName>
 
-@Singleton
+@AaptScope
 class DefaultLayoutBindingsParser
 @Inject
 constructor(

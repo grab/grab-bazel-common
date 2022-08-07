@@ -20,7 +20,7 @@ import com.grab.databinding.stub.binding.parser.Binding
 import com.grab.databinding.stub.binding.parser.BindingType
 import com.grab.databinding.stub.binding.parser.LayoutBindingData
 import com.grab.databinding.stub.common.BaseBindingStubTest
-import com.grab.databinding.stub.common.DB_STUBS_OUTPUT
+import com.grab.databinding.stub.common.DATABINDING_OUTPUT_DIR
 import com.squareup.javapoet.ClassName
 import org.junit.Before
 import org.junit.Test
@@ -33,32 +33,30 @@ import kotlin.test.assertTrue
 class DefaultBindingClassGeneratorTest : BaseBindingStubTest() {
 
     private lateinit var defaultBindingClassGenerator: DefaultBindingClassGenerator
-    private lateinit var outputDir: File
+    private lateinit var baseDir: File
     private lateinit var layoutBinding: LayoutBindingData
 
     private val testPackage = "test"
     private val className = "com.package.Class"
     private val layoutName = "SimpleBinding"
     private val bindableName = "vm"
-    private val bindableNameWithUnderscoe = "vm_test"
+    private val bindableNameWithUnderscore = "vm_test"
     private val bindingName = "time_display"
     private val bindingFragmentRawName = "fragment_view"
 
-    private val generatedFileContents
-        get() = File(
-            outputDir,
-            Paths.get(
-                DB_STUBS_OUTPUT,
-                testPackage,
-                "databinding",
-                "$layoutName.java"
-            ).toString()
-        ).readText()
+    private fun generatedFileContents(outputDir: File) = File(
+        outputDir,
+        Paths.get(
+            testPackage,
+            DATABINDING_OUTPUT_DIR,
+            "$layoutName.java"
+        ).toString()
+    ).readText()
 
     @Before
     fun setup() {
-        outputDir = temporaryFolder.newFolder()
-        defaultBindingClassGenerator = DefaultBindingClassGenerator(outputDir)
+        baseDir = temporaryFolder.newFolder()
+        defaultBindingClassGenerator = DefaultBindingClassGenerator(baseDir)
         val testClassName = ClassName.bestGuess(className)
         layoutBinding = LayoutBindingData(
             layoutName = layoutName,
@@ -76,7 +74,7 @@ class DefaultBindingClassGeneratorTest : BaseBindingStubTest() {
                     bindingType = BindingType.Variable
                 ),
                 Binding(
-                    rawName = bindableNameWithUnderscoe,
+                    rawName = bindableNameWithUnderscore,
                     typeName = testClassName,
                     bindingType = BindingType.Variable
                 )
@@ -98,9 +96,9 @@ class DefaultBindingClassGeneratorTest : BaseBindingStubTest() {
 
     @Test
     fun `assert constructor method has binding information`() {
-        defaultBindingClassGenerator.generate(testPackage, listOf(layoutBinding))
+        val output = defaultBindingClassGenerator.generate(testPackage, listOf(layoutBinding))
         assertTrue("Constructor arguments contain bindings") {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  protected SimpleBinding(Object _bindingComponent, View _root, int _localFieldCount,
       Class timeDisplay) {"""
             )
@@ -109,9 +107,9 @@ class DefaultBindingClassGeneratorTest : BaseBindingStubTest() {
 
     @Test
     fun `assert inflate methods are generated`() {
-        defaultBindingClassGenerator.generate(testPackage, listOf(layoutBinding))
+        val output = defaultBindingClassGenerator.generate(testPackage, listOf(layoutBinding))
         assertTrue() {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  @NonNull
   public static SimpleBinding inflate(LayoutInflater inflater, ViewGroup root,
       boolean attachToRoot) {"""
@@ -119,7 +117,7 @@ class DefaultBindingClassGeneratorTest : BaseBindingStubTest() {
         }
 
         assertTrue {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  @NonNull
   public static SimpleBinding inflate(LayoutInflater inflater, ViewGroup root, boolean attachToRoot,
       Object component) {"""
@@ -127,7 +125,7 @@ class DefaultBindingClassGeneratorTest : BaseBindingStubTest() {
         }
 
         assertTrue {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  @NonNull
   public static SimpleBinding inflate(LayoutInflater inflater) {"""
             )
@@ -136,21 +134,21 @@ class DefaultBindingClassGeneratorTest : BaseBindingStubTest() {
 
     @Test
     fun `assert public binding fields are generated`() {
-        defaultBindingClassGenerator.generate(testPackage, listOf(layoutBinding))
+        val output = defaultBindingClassGenerator.generate(testPackage, listOf(layoutBinding))
         assertTrue {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  @NonNull
   public final Class timeDisplay;"""
             )
         }
         assertFalse("Invalid binding types are not considered") {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  @NonNull
   public final fragment fragmentView;"""
             )
         }
         assertTrue {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  @Bindable
   protected Class mVm;"""
             )
@@ -159,25 +157,25 @@ class DefaultBindingClassGeneratorTest : BaseBindingStubTest() {
 
     @Test
     fun `assert bindable setters and getters are generated`() {
-        defaultBindingClassGenerator.generate(testPackage, listOf(layoutBinding))
+        val output = defaultBindingClassGenerator.generate(testPackage, listOf(layoutBinding))
         assertTrue {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  public abstract void setVm(Class var1);"""
             )
         }
         assertTrue {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  @Nullable
   public Class getVm() {"""
             )
         }
         assertTrue {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  public abstract void setVmTest(Class var1);"""
             )
         }
         assertTrue {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  @Nullable
   public Class getVmTest() {"""
             )
@@ -186,15 +184,15 @@ class DefaultBindingClassGeneratorTest : BaseBindingStubTest() {
 
     @Test
     fun `assert bind mehods are generated`() {
-        defaultBindingClassGenerator.generate(testPackage, listOf(layoutBinding))
+        val output = defaultBindingClassGenerator.generate(testPackage, listOf(layoutBinding))
         assertTrue {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  @NonNull
   public static SimpleBinding bind(View view) {"""
             )
         }
         assertTrue {
-            generatedFileContents.contains(
+            generatedFileContents(output).contains(
                 """  @NonNull
   public static SimpleBinding bind(View view, Object component) {"""
             )

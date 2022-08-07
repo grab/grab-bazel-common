@@ -16,6 +16,7 @@
 
 package com.grab.databinding.stub.rclass.parser
 
+import com.grab.databinding.stub.AaptScope
 import com.grab.databinding.stub.common.NON_TRANSITIVE_R
 import com.grab.databinding.stub.util.*
 import org.xmlpull.v1.XmlPullParser
@@ -40,7 +41,7 @@ private const val ID_DEFINITION_PREFIX = "id/"
 private const val ANDROID_ID = "android:id"
 private const val TAG_TYPE = "type"
 
-@Singleton
+@AaptScope
 class DefaultResToRParser @Inject constructor(
     private val parsers: Map<ParserType, @JvmSuppressWildcards ResourceFileParser>,
     @param:Named(NON_TRANSITIVE_R) private val nonTransitiveRClass: Boolean

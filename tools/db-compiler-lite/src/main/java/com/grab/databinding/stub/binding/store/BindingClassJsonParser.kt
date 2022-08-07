@@ -16,6 +16,7 @@
 
 package com.grab.databinding.stub.binding.store
 
+import com.grab.databinding.stub.AaptScope
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonReader.Token
@@ -25,7 +26,6 @@ import dagger.Binds
 import dagger.Module
 import java.io.File
 import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.LazyThreadSafetyMode.NONE
 
 
@@ -48,7 +48,7 @@ interface BindingClassJsonParserModule {
     fun CachingBindingClassJsonParser.cachingParser(): BindingClassJsonParser
 }
 
-@Singleton
+@AaptScope
 class CachingBindingClassJsonParser
 @Inject
 constructor() : BindingClassJsonParser {

@@ -18,8 +18,6 @@ package com.grab.databinding.stub
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
-import com.grab.databinding.stub.common.DB_STUBS_OUTPUT
-import com.grab.databinding.stub.common.R_CLASS_OUTPUT
 import java.io.File
 
 class BindingStubCommand : CliktCommand() {
@@ -33,31 +31,26 @@ class BindingStubCommand : CliktCommand() {
     private val resources by option(
         "-res",
         "--resource-files",
-        help = "List of resource files to produce R.java from"
+        help = "List of resource files to produce R class from"
     ).split(",").default(emptyList())
 
     private val classInfos: List<String> by option(
         "-ci",
         "--class-infos",
-        help = "List of dependencies classInfo.zip files "
+        help = "List of databinding classInfo.zip files from dependencies"
     ).split(",").default(emptyList())
 
     private val rTxts: List<String> by option(
         "-rt",
         "--r-txts",
-        help = "List of dependencies R.txt files"
+        help = "List of dependencies' R.txt files"
     ).split(",").default(emptyList())
 
     private val nonTransitiveRClass: Boolean by option(
         "-ntr",
         "--non-transitive-r-class",
-        help = "When true, assumes R class is not transitive"
+        help = "When true, assumes R class is not transitive and only use local symbols"
     ).flag(default = false)
-
-    private val preferredOutputDir by option(
-        "-o",
-        "--output"
-    ).convert { File(it) }
 
     private val rClassSrcJar by option(
         "-r",
@@ -77,32 +70,30 @@ class BindingStubCommand : CliktCommand() {
 
         val classInfoZip = classInfos.map { File(it) }
         val depRTxts = rTxts.map { File(it) }
+        val baseDir = File(packageName.replace(".", File.separator))
 
-        DaggerBindingsStubComponent
-            .factory()
-            .create(
-                outputDir = preferredOutputDir,
-                packageName = packageName,
-                resourceFiles = resourcesFiles,
-                layoutFiles = layoutFiles,
-                classInfos = classInfoZip,
-                rTxts = depRTxts,
-                nonTransitiveRClass = nonTransitiveRClass,
-            ).apply {
-                resToRClassGenerator().generate(packageName, resourcesFiles, depRTxts)
+        val command = DaggerBindingsStubComponent.factory().create(
+            baseDir = baseDir,
+            packageName = packageName,
+            resourceFiles = resourcesFiles,
+            layoutFiles = layoutFiles,
+            classInfos = classInfoZip,
+            rTxts = depRTxts,
+            nonTransitiveRClass = nonTransitiveRClass,
+        )
+        val layoutBindings = command.layoutBindingsParser().parse(packageName, layoutFiles)
+        command.resToRClassGenerator().generate(packageName, resourcesFiles, depRTxts)
 
-                val layoutBindings = layoutBindingsParser().parse(packageName, layoutFiles)
-                brClassGenerator().generate(packageName, layoutBindings)
-                bindingClassGenerator().generate(packageName, layoutBindings)
+        val rClasses = command.brClassGenerator().generate(packageName, layoutBindings)
+        command.srcJarPackager.packageSrcJar(inputDir = rClasses, outputFile = rClassSrcJar)
 
-                srcJarPackager.packageSrcJar(
-                    inputDir = File(R_CLASS_OUTPUT),
-                    outputFile = rClassSrcJar
-                )
-                srcJarPackager.packageSrcJar(
-                    inputDir = File(DB_STUBS_OUTPUT),
-                    outputFile = stubClassJar
-                )
-            }
+        val dataBindingClasses = command.bindingClassGenerator().generate(
+            packageName,
+            layoutBindings
+        )
+        command.srcJarPackager.packageSrcJar(
+            inputDir = dataBindingClasses,
+            outputFile = stubClassJar
+        )
     }
 }

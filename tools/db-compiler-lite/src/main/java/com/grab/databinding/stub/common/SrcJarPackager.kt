@@ -1,5 +1,6 @@
 package com.grab.databinding.stub.common
 
+import com.grab.databinding.stub.AaptScope
 import com.grab.databinding.stub.util.jars.SourceJarCreator
 import dagger.Binds
 import dagger.Module
@@ -30,7 +31,7 @@ interface SrcJarPackageModule {
     fun DefaultSrcJarPackager.packager(): SrcJarPackager
 }
 
-@Singleton
+@AaptScope
 class DefaultSrcJarPackager @Inject constructor() : SrcJarPackager {
 
     override fun packageSrcJar(inputDir: File, outputFile: File, verbose: Boolean) {

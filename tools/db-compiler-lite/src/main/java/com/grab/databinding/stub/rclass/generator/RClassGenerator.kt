@@ -16,10 +16,11 @@
 
 package com.grab.databinding.stub.rclass.generator
 
+import com.grab.databinding.stub.AaptScope
 import com.grab.databinding.stub.binding.parser.LayoutBindingData
+import com.grab.databinding.stub.common.BASE_DIR
 import com.grab.databinding.stub.common.Generator
-import com.grab.databinding.stub.common.OUTPUT
-import com.grab.databinding.stub.common.R_CLASS_OUTPUT
+import com.grab.databinding.stub.common.R_CLASS_OUTPUT_DIR
 import com.grab.databinding.stub.rclass.parser.DefaultRTxtParser
 import com.grab.databinding.stub.rclass.parser.RFieldEntry
 import com.grab.databinding.stub.rclass.parser.RTxtParser
@@ -33,13 +34,10 @@ import dagger.Module
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Named
-import javax.inject.Singleton
 import javax.lang.model.element.Modifier.*
 
 //TODO: remove if not used
 interface RClassGenerator : Generator {
-    override val defaultDirName get() = R_CLASS_OUTPUT
-
     fun generate(
         packageName: String,
         content: List<String>,
@@ -56,13 +54,13 @@ interface RClassModule {
     fun DefaultRTxtParser.rTxtParser(): RTxtParser
 }
 
-@Singleton
+@AaptScope
 class DefaultRClassGenerator
 @Inject
 constructor(
+    @Named(BASE_DIR)
+    override val baseDir: File,
     private val rTxtParser: RTxtParser,
-    @Named(OUTPUT)
-    override val preferredDir: File?
 ) : RClassGenerator {
 
     private fun RFieldEntry.toFieldSpec(): FieldSpec? {
@@ -102,7 +100,7 @@ constructor(
             .let { type ->
                 JavaFile.builder(rClass.packageName, type)
                     .build()
-                    .writeTo(outputDir)
+                    .writeTo(File(baseDir, R_CLASS_OUTPUT_DIR))
                 logFile(rClass.packageName, type.name)
             }
     }

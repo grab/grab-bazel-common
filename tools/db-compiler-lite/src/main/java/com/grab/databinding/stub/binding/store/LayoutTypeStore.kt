@@ -16,6 +16,7 @@
 
 package com.grab.databinding.stub.binding.store
 
+import com.grab.databinding.stub.AaptScope
 import com.grab.databinding.stub.common.CLASS_INFOS
 import com.grab.databinding.stub.common.LAYOUT_FILES
 import com.grab.databinding.stub.common.PACKAGE_NAME
@@ -68,7 +69,7 @@ interface LayoutStoreModule {
  * This class infers the generated class name from the layout name itself. For example, for
  * `simple_layout`, the generated class name will be `<package-name>.databinding.SimpleLayoutBinding`
  */
-@Singleton
+@AaptScope
 class LocalModuleLayoutTypeStore
 @Inject
 constructor(
@@ -106,7 +107,7 @@ constructor(
  * @param bindingClassJsonParser [BindingClassJsonParser] implementation that will be used to parse
  *                     contents of each binding class json file.
  */
-@Singleton
+@AaptScope
 class DependenciesLayoutTypeStore
 @Inject
 constructor(
