@@ -7,3 +7,4 @@
 * `mobile-install-crash-fix.patch` - Fix for https://github.com/bazelbuild/bazel/issues/11961#issuecomment-799579112
 * `databinding-hang-fix.patch` - Fix for https://github.com/bazelbuild/bazel/issues/12780
 * `android-resource-workers.patch` - Fix for enabling Android workers when databinding is used https://github.com/bazelbuild/bazel/issues/13649
+* Worker support for `GenerateDatabindingBaseClasses` - https://github.com/bazelbuild/bazel/pull/16067

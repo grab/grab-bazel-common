@@ -81,12 +81,16 @@ def _databinding_stubs_impl(ctx):
         join_with = ",",
         map_each = _to_path,
     )
-    args.add_joined(
-        "--class-infos",
-        class_infos,
-        join_with = ",",
-        map_each = _to_path,
-    )
+
+    has_layouts = len([resource for resource in ctx.files.resource_files if resource.path.find("/layout") != -1]) != 0
+    if has_layouts:
+        args.add_joined(
+            "--class-infos",
+            class_infos,
+            join_with = ",",
+            map_each = _to_path,
+        )
+
     args.add_joined(
         "--r-txts",
         r_txts,
