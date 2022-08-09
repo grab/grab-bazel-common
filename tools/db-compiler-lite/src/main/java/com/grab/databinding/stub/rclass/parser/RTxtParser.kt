@@ -19,7 +19,6 @@ package com.grab.databinding.stub.rclass.parser
 import com.grab.databinding.stub.AaptScope
 import com.grab.databinding.stub.binding.parser.LayoutBindingData
 import javax.inject.Inject
-import javax.inject.Singleton
 
 data class RFieldEntry(
     val type: Type,

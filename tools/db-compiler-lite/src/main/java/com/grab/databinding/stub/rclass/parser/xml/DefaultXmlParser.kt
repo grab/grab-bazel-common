@@ -38,7 +38,7 @@ import javax.inject.Inject
 class DefaultXmlParser @Inject constructor() : ResourceFileParser {
 
     override fun parse(entry: XmlEntry): ParserResult {
-        val typeR = Type.valueOf(entry.type.entry.toUpperCase()) // Define one of DEFAULT TYPES
-        return ParserResult(setOf(RFieldEntry(typeR, entry.tagName, defaultResValue)), typeR)
+        val type = Type.valueOf(entry.type.entry.uppercase()) // Define one of DEFAULT TYPES
+        return ParserResult(setOf(RFieldEntry(type, entry.tagName, defaultResValue)), type)
     }
 }

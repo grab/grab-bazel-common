@@ -22,6 +22,7 @@ import com.grab.databinding.stub.binding.parser.BindingType
 import com.grab.databinding.stub.binding.parser.LayoutBindingData
 import com.grab.databinding.stub.common.BASE_DIR
 import com.grab.databinding.stub.common.Generator
+import com.grab.databinding.stub.util.capitalize
 import com.squareup.javapoet.*
 import com.squareup.javapoet.TypeName.BOOLEAN
 import com.squareup.javapoet.TypeName.INT

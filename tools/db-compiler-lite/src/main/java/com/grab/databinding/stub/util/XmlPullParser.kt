@@ -31,14 +31,6 @@ fun XmlPullParser.events() = object : Iterator<Int> {
 
 fun XmlPullParser.attributes() = (0 until attributeCount)
 
-/**
- * Very simple holder for xml attribute's name and value alone.
- */
-data class XmlAttribute(
-    val name: String,
-    val value: String
-)
-
 fun <T> XmlPullParser.attributes(
     valueMapper: XmlPullParser.(Int) -> T
 ) = attributes().map { valueMapper(this, it) }
@@ -56,4 +48,4 @@ fun XmlPullParser.attributesNameValue() = attributes { index ->
  * Return value by using key "name" or the first value if it is null
  */
 fun XmlPullParser.attributeName() =
-    attributesNameValue().get(NAME) ?: attributesNameValue().values.first()
+    attributesNameValue()[NAME] ?: attributesNameValue().values.first()

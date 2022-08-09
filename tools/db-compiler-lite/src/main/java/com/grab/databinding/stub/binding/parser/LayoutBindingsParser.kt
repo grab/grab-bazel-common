@@ -20,10 +20,7 @@ import com.grab.databinding.stub.AaptScope
 import com.grab.databinding.stub.binding.store.DEPS
 import com.grab.databinding.stub.binding.store.LOCAL
 import com.grab.databinding.stub.binding.store.LayoutTypeStore
-import com.grab.databinding.stub.util.attributesNameValue
-import com.grab.databinding.stub.util.events
-import com.grab.databinding.stub.util.extractPrimitiveType
-import com.grab.databinding.stub.util.toLayoutBindingName
+import com.grab.databinding.stub.util.*
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.TypeName
 import dagger.Binds
@@ -31,9 +28,9 @@ import dagger.Module
 import org.xmlpull.v1.XmlPullParser.START_TAG
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.File
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Named
-import javax.inject.Singleton
 
 /**
  * Type to represent binding type in a layout XML
@@ -124,57 +121,63 @@ constructor(
         layoutFiles: List<File>
     ): List<LayoutBindingData> {
         return layoutFiles.map { layoutFile ->
-            xpp.setInput(layoutFile.inputStream(), null)
-            val bindingClassName = layoutFile.bindingName
-            val bindings = mutableSetOf<Binding>()
-            val bindables = mutableSetOf<Binding>()
+            layoutFile.inputStream().buffered().use { stream ->
+                xpp.setInput(stream, null)
+                val bindingClassName = layoutFile.bindingName
+                val bindings = mutableSetOf<Binding>()
+                val bindables = mutableSetOf<Binding>()
 
-            val importedTypes: ImportedTypes = mutableMapOf()
+                val importedTypes: ImportedTypes = mutableMapOf()
 
-            xpp.events()
-                .asSequence()
-                .forEach { event: Int ->
-                    if (event == START_TAG) {
-                        when (val nodeName = xpp.name) {
-                            IMPORT -> {
-                                val attributes = xpp.attributesNameValue()
-                                    .withDefault { error("Could not parse: $it") }
-                                val typeFqcn = attributes.getValue(TYPE)
-                                val typeName = attributes[ALIAS] ?: typeFqcn.split(".").last()
-                                importedTypes[typeName] = ClassName.bestGuess(typeFqcn)
-                            }
-                            VARIABLE -> {
-                                val attributes = xpp.attributesNameValue()
-                                    .withDefault { error("Could not parse: $it") }
-                                bindables.add(
-                                    Binding(
-                                        rawName = attributes.getValue(NAME),
-                                        typeName = parseBindableTypeName(
-                                            typeName = attributes.getValue(TYPE),
-                                            importedTypes = importedTypes
-                                        ),
-                                        bindingType = BindingType.Variable
+                xpp.events()
+                    .asSequence()
+                    .forEach { event: Int ->
+                        if (event == START_TAG) {
+                            when (val nodeName = xpp.name) {
+                                IMPORT -> {
+                                    val attributes = xpp.attributesNameValue()
+                                        .withDefault { error("Could not parse: $it") }
+                                    val typeFqcn = attributes.getValue(TYPE)
+                                    val typeName = attributes[ALIAS] ?: typeFqcn.split(".").last()
+                                    importedTypes[typeName] = ClassName.bestGuess(typeFqcn)
+                                }
+                                VARIABLE -> {
+                                    val attributes = xpp.attributesNameValue()
+                                        .withDefault { error("Could not parse: $it") }
+                                    bindables.add(
+                                        Binding(
+                                            rawName = attributes.getValue(NAME),
+                                            typeName = parseBindableTypeName(
+                                                typeName = attributes.getValue(TYPE),
+                                                importedTypes = importedTypes
+                                            ),
+                                            bindingType = BindingType.Variable
+                                        )
                                     )
-                                )
-                            }
-                            else -> {
-                                val attributes = xpp.attributesNameValue()
-                                    .filterKeys { it == ANDROID_ID || it == LAYOUT }
-                                    .withDefault {
-                                        error("Could not parse: $it in $packageName:$layoutFile")
-                                    }
+                                }
+                                else -> {
+                                    val attributes = xpp.attributesNameValue()
+                                        .filterKeys { it == ANDROID_ID || it == LAYOUT }
+                                        .withDefault {
+                                            error("Could not parse: $it in $packageName:$layoutFile")
+                                        }
 
-                                parseBinding(packageName, nodeName, attributes)?.let(bindings::add)
+                                    parseBinding(
+                                        packageName,
+                                        nodeName,
+                                        attributes
+                                    )?.let(bindings::add)
+                                }
                             }
                         }
                     }
-                }
-            LayoutBindingData(
-                bindingClassName,
-                layoutFile,
-                bindings.toList(),
-                bindables.toList()
-            )
+                LayoutBindingData(
+                    bindingClassName,
+                    layoutFile,
+                    bindings.toList(),
+                    bindables.toList()
+                )
+            }
         }.distinctBy(LayoutBindingData::layoutName)
     }
 

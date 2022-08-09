@@ -90,7 +90,7 @@ class SourceJarCreator(
          * @param block the visitor, the second param is the package name and may still be null.
          */
         fun visitDeferredEntries(block: (Path, String?, ByteArray) -> Unit) {
-            deferredEntries.forEach { sourceFile, bytes ->
+            deferredEntries.forEach { (sourceFile, bytes) ->
                 block(sourceFile, directoryToPackageMap[sourceFile.parent], bytes)
             }
         }

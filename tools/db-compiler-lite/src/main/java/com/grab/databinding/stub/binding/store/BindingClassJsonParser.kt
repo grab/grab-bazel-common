@@ -32,7 +32,7 @@ import kotlin.LazyThreadSafetyMode.NONE
 typealias BindingClassJsonContents = Map</* Layout Name */String, /* Qualified Name */String>
 
 /**
- * Contract for a class that can parse given databinding binding class file and extract [LayoutTypeData]s
+ * Contract for a class that can parse given databinding binding class file and extract [BindingClassJsonContents]s
  * from it.
  */
 interface BindingClassJsonParser {
@@ -114,7 +114,7 @@ constructor() : BindingClassJsonParser {
                     } catch (e: Exception) {
                         null
                     }
-                }.firstOrNull() { it != null }
+                }.firstOrNull { it != null }
                 ?: throw IllegalArgumentException("Error parsing ${bindingClassJsonFile.path}")
             cache[bindingClassJsonFile.path] = mappings
             mappings

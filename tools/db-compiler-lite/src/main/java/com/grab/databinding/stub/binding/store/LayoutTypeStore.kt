@@ -27,13 +27,9 @@ import dagger.Binds
 import dagger.Module
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.attribute.BasicFileAttributes
-import java.util.function.BiPredicate
 import java.util.zip.ZipFile
 import javax.inject.Inject
 import javax.inject.Named
-import javax.inject.Singleton
 import kotlin.LazyThreadSafetyMode.NONE
 
 /**
@@ -115,10 +111,6 @@ constructor(
     private val bindingClassJsonParser: BindingClassJsonParser,
 ) : LayoutTypeStore {
 
-    private val zipFilePredicate = BiPredicate<Path, BasicFileAttributes> { path, attr ->
-        attr.isRegularFile && path.toString().endsWith(".zip")
-    }
-
     /**
      * The directory where the classInfo.zips will be extracted to
      */
@@ -150,7 +142,7 @@ constructor(
             val jsonFiles = mutableListOf<File>()
             ZipFile(classInfoZip).use { zip ->
                 zip.entries().asSequence().forEach { entry ->
-                    zip.getInputStream(entry).use { input ->
+                    zip.getInputStream(entry).buffered().use { input ->
                         val dir = File(
                             extractionDir,
                             classInfoZip.parentFile?.name ?: error("$classInfoZip does not exist")
@@ -162,6 +154,7 @@ constructor(
                                 extractedFile
                                     .also { jsonFiles.add(it) }
                                     .outputStream()
+                                    .buffered()
                                     .use { output -> input.copyTo(output) }
                             }
                         }

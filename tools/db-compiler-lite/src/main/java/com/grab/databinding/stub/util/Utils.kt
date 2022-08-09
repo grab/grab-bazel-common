@@ -44,5 +44,5 @@ fun String.toLayoutBindingName(): String {
 }
 
 fun enumTypeValue(name: String): XmlTypeValues {
-    return enumValues<XmlTypeValues>().first() { it.entry == name }
+    return enumValues<XmlTypeValues>().first { it.entry == name }
 }

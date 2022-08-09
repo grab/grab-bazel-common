@@ -22,9 +22,9 @@ import com.grab.databinding.stub.util.*
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.File
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Named
-import javax.inject.Singleton
 
 /**
  * Parse resource xml, files and dependencies R.txt into types representing R class.
@@ -89,7 +89,7 @@ class DefaultResToRParser @Inject constructor(
             ) { DEFAULT_VALUE }
         }
 
-        val type = Type.valueOf(tokens[TYPE_INDEX].toUpperCase())
+        val type = Type.valueOf(tokens[TYPE_INDEX].uppercase(Locale.getDefault()))
 
         addIntResource(type, name, id, isArray)
     }
@@ -106,24 +106,23 @@ class DefaultResToRParser @Inject constructor(
     }
 
     private fun processValues(file: File) {
-        xpp.setInput(file.inputStream(), null)
-
-        xpp.events()
-            .asSequence()
-            .filter { xpp.attributesNameValue().isNotEmpty() }
-            .filter { xpp.attributesNameValue().contains(NAME) }
-            .forEach { _ ->
-                val name = xpp.attributeName()
-
-                val type = enumTypeValue(xpp.name).let {
-                    getTypedItem(it, xpp.attributesNameValue()) ?: it
-                }.apply {
-                    // If item is not typed, we do not include it
-                    if (this == XmlTypeValues.ITEM) return@forEach
+        file.inputStream().buffered().use { stream ->
+            xpp.setInput(stream, null)
+            xpp.events()
+                .asSequence()
+                .filter { xpp.attributesNameValue().isNotEmpty() }
+                .filter { xpp.attributesNameValue().contains(NAME) }
+                .forEach { _ ->
+                    val name = xpp.attributeName()
+                    val type = enumTypeValue(xpp.name).let {
+                        getTypedItem(it, xpp.attributesNameValue()) ?: it
+                    }
+                    if (type != XmlTypeValues.ITEM) {
+                        // If item is not typed, we do not include it
+                        parseIntoRField(type, name, xpp)
+                    }
                 }
-
-                parseIntoRField(type, name, xpp)
-            }
+        }
     }
 
     private fun processFileNamesInDirectory(
@@ -134,7 +133,7 @@ class DefaultResToRParser @Inject constructor(
         val filename = file.nameWithoutExtension.substringBefore(".9")
 
         val type = Type.valueOf(
-            dirname.toUpperCase().substringBefore("-")
+            dirname.uppercase(Locale.getDefault()).substringBefore("-")
         ) // for lang or resolution values like "drawables-hdpi"
 
         addIntResource(type, filename)
@@ -142,17 +141,18 @@ class DefaultResToRParser @Inject constructor(
 
     private fun collectIDs(file: File) {
         if (file.extension != "xml") return //process only xml files to get IDs
-
-        xpp.setInput(file.inputStream(), null)
-        xpp.events()
-            .asSequence()
-            .filter { xpp.attributesNameValue().contains(ANDROID_ID) }
-            .map { xpp.attributesNameValue().get(ANDROID_ID) }
-            .filterNotNull()
-            .filter { !it.contains("@android:") }
-            .map { it.substringAfter(ID_DEFINITION_PREFIX) }
-            //do not include "@android:id/mask"
-            .forEach { addIntResource(Type.ID, it) }
+        file.inputStream().buffered().use { stream ->
+            xpp.setInput(stream, null)
+            xpp.events()
+                .asSequence()
+                .filter { xpp.attributesNameValue().contains(ANDROID_ID) }
+                .map { xpp.attributesNameValue()[ANDROID_ID] }
+                .filterNotNull()
+                .filter { !it.contains("@android:") }
+                .map { it.substringAfter(ID_DEFINITION_PREFIX) }
+                //do not include "@android:id/mask"
+                .forEach { addIntResource(Type.ID, it) }
+        }
     }
 
     private fun addIntResource(
@@ -170,20 +170,20 @@ class DefaultResToRParser @Inject constructor(
                     isArray
                 )
             ) // ID will be overriden by the second stage aapt runs
-            resources.put(type, this)
+            resources[type] = this
         }
     }
 
     private fun addResources(result: ParserResult) {
         (resources[result.type] ?: mutableSetOf()).apply {
             this.addAll(result.rFields)
-            resources.put(result.type, this)
+            resources[result.type] = this
         }
     }
 
     private fun getTypedItem(type: XmlTypeValues, map: Map<String, String>): XmlTypeValues? {
         return if (type == XmlTypeValues.ITEM && map.containsKey(TAG_TYPE)) {
-            map.get(TAG_TYPE)?.let { enumTypeValue(it) }
+            map[TAG_TYPE]?.let { enumTypeValue(it) }
         } else null
     }
 
@@ -235,7 +235,7 @@ class DefaultResToRParser @Inject constructor(
             parseIntoRField(XmlTypeValues.ATTR, childName, xpp)
         }
 
-        return parsers.get(type)
+        return parsers[type]
             ?.parse(ParentXmlEntryImpl(name, XmlTypeValues.DECLARE_STYLEABLE, children))
             ?: throw NullPointerException("Missing implementation. Parser must not be null.")
     }

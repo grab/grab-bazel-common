@@ -6,7 +6,6 @@ import dagger.Binds
 import dagger.Module
 import java.io.File
 import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.streams.asStream
 
 /**
