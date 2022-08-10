@@ -1,6 +1,7 @@
 package io.bazel
 
 import com.google.devtools.build.lib.worker.WorkerProtocol.WorkRequest
+import io.bazel.Worker.Companion.parseArgs
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.PrintStream
@@ -34,11 +35,17 @@ enum class Status(val exit: Int) {
 fun interface Worker {
     companion object {
         private const val PERSISTENT_WORKER = "--persistent_worker"
+        private val FLAGFILE_REGEX = Regex("""^--flagfile=((.*)-(\d+).params)$""")
 
+        fun parseArgs(args: List<String>): List<String>? {
+            return FLAGFILE_REGEX.matchEntire(args.first())?.groups?.get(1)?.let {
+                Files.readAllLines(FileSystems.getDefault().getPath(it.value), UTF_8)
+            }
+        }
 
-        fun from(args: List<String>) = when (PERSISTENT_WORKER) {
+        fun from(args: List<String>): Worker = when (PERSISTENT_WORKER) {
             in args -> PersistentWorker()
-            else -> DefaultWorker(args.filter { it != PERSISTENT_WORKER })
+            else -> DefaultWorker(parseArgs(args.filter { it != PERSISTENT_WORKER }) ?: args)
         }
     }
 
@@ -100,9 +107,7 @@ class PersistentWorker : Worker {
     ): Int {
         val exitCode = try {
             // Parse args from flagfile
-            val actualArgs = FLAGFILE_RE.matchEntire(args.first())?.groups?.get(1)?.let {
-                Files.readAllLines(FileSystems.getDefault().getPath(it.value), UTF_8)
-            } ?: args
+            val actualArgs = parseArgs(args) ?: args
             // Process the actual request and grab the exit code
             action(actualArgs).exit
         } catch (e: Exception) {
@@ -118,9 +123,5 @@ class PersistentWorker : Worker {
             }
         }
         return exitCode
-    }
-
-    companion object {
-        private val FLAGFILE_RE = Regex("""^--flagfile=((.*)-(\d+).params)$""")
     }
 }
