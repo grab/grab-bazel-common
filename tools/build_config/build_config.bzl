@@ -51,7 +51,7 @@ def build_config(
         booleans = {},
         ints = {},
         longs = {}):
-    """Generates a Jar file containing BuildConfig class just like AGP.
+    """Generates a kt_jvm_library target containing build config fields just like AGP.
 
     Usage:
     Add the field variables in the relevant dicts like (strings, booleans etc) and add a dependency
@@ -68,10 +68,7 @@ def build_config(
     """
 
     build_config = "BuildConfig"
-    build_config_file_path = "$(RULEDIR)/{}.kt".format(build_config)
-
-    # Uses srcjar so that the generated .kt file can be compiled to class file via kt_jvm_library
-    build_config_jar = name + ".srcjar"
+    build_config_file_path = "src/main/%s/%s.kt" % (name, build_config)
 
     strings_statements = _build_statement(
         _STRING_TYPE,
@@ -87,10 +84,9 @@ def build_config(
     ints_statements = _build_statement(_INT_TYPE, ints, False)
     longs_statements = _build_statement(_LONG_TYPE, longs, False)
 
-    # Cmd for genrule. Generates BuildConfig.kt and packages it to a Java jar file in the build
-    # directory
+    # Cmd for genrule. Generates BuildConfig.
     cmd = """
-cat << EOF > {build_config_file_path}
+cat << EOF > $@
 /**
  * Generated file do not modify
  */
@@ -102,9 +98,7 @@ object {build_config} {{
     {ints_statements}
     {longs_statements}
 }}
-EOF
-$(location @bazel_tools//tools/zip:zipper) c $@ {build_config_file_path}
-""".format(
+EOF""".format(
         build_config = build_config,
         build_config_file_path = build_config_file_path,
         package_name = package_name,
@@ -115,14 +109,13 @@ $(location @bazel_tools//tools/zip:zipper) c $@ {build_config_file_path}
     )
 
     native.genrule(
-        name = "_" + name,
-        outs = [build_config_jar],
+        name = "_%s_gen" % name,
+        outs = [build_config_file_path],
         cmd = cmd,
         message = "Generating %s's build config class" % (native.package_name()),
-        tools = ["@bazel_tools//tools/zip:zipper"],
     )
 
     kt_jvm_library(
         name = name,
-        srcs = [build_config_jar],
+        srcs = [build_config_file_path],
     )

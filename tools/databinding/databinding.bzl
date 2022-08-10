@@ -1,6 +1,7 @@
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(":databinding_stubs.bzl", "databinding_stubs")
+load("@grab_bazel_common//tools/java:java_library_no_header.bzl", "java_library_no_header")
 # load(":databinding_aar.bzl", "databinding_aar")
 
 # TODO(arun) Replace with configurable maven targets
@@ -95,6 +96,12 @@ def kt_db_android_library(
         neverlink = 1,  # Use the R classes only for compiling and not at runtime.
     )
 
+    r_classes_no_header = name + "-r-classes-no-header"
+    java_library_no_header(
+        name = r_classes_no_header,
+        dep = ":" + r_classes,
+    )
+
     # Create an intermediate target for compiling all Kotlin classes used in Databinding
     kotlin_target = name + "-kotlin"
     kotlin_targets = []
@@ -114,7 +121,7 @@ def kt_db_android_library(
             name = kotlin_target,
             srcs = srcs + [binding_classes_sources],
             plugins = plugins,
-            deps = deps + _DATABINDING_DEPS + [r_classes] + [
+            deps = deps + _DATABINDING_DEPS + [r_classes_no_header] + [
                 "@grab_bazel_common//tools/binding-adapter-bridge:binding-adapter-bridge",
                 "@grab_bazel_common//tools/android:android_sdk",
             ],
