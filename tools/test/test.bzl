@@ -189,7 +189,8 @@ def _unique_test_packages(packages):
         if package not in unique_packages:
             not_in_unique_packages = True
             for unique_package in unique_packages:
-                if package.startswith(unique_package):
+                # ensure that package is not a subpackage of unique_package
+                if package.startswith("{}.".format(unique_package)):
                     not_in_unique_packages = False
                     break
 
