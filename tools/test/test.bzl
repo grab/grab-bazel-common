@@ -132,11 +132,17 @@ def _gen_test_targets(
             # Find package name from path
             path = path_split[0]  # src/main/java/com/grab/test
 
-            if path.find("src/test/java/") != -1 or path.find("src/test/kotlin/") != -1:  # TODO make this path configurable
-                path = path.split("src/test/java/")[1] if path.find("src/test/java/") != -1 else path.split("src/test/kotlin/")[1]  # com/grab/test
+            if path.find("src/test/java") != -1 or path.find("src/test/kotlin") != -1:  # TODO make this path configurable
+                path = path.split("src/test/java")[1] if path.find("src/test/java") != -1 else path.split("src/test/kotlin")[1]  # /com/grab/test
+                if path != "" and path[0] == "/":
+                    path = path.replace("/", "", 1)
+
                 test_package = path.replace("/", ".")
                 test_class = test_package + "." + test_file_name  # com.grab.test.TestFile
                 test_classes.append(test_class)
+
+                if test_package == "":
+                    fail("\033[0;31mEmpty test package detected for {}\033[0m".format(src))
 
                 if test_package not in test_packages:
                     test_packages.append(test_package)
