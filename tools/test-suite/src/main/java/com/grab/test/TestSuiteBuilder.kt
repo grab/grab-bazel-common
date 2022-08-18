@@ -114,7 +114,10 @@ class TestSuiteBuilder {
                                 .annotationClass
                                 .qualifiedName == "org.junit.Test"
                         }
-                }
+                } || (container.superclass?.interfaces?.any {
+                    it.name == "junit.framework.Test"
+                } == true)
+
             } catch (e: ClassNotFoundException) {
                 false
             } catch (e: NoClassDefFoundError) {
