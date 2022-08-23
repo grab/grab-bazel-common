@@ -3,33 +3,34 @@ load(":runtime_resources.bzl", "runtime_resources")
 
 def grab_android_local_test(
         name,
-        srcs,
         deps,
+        srcs = [],
+        src_sets = ["src/test/java", "src/test/kotlin"],
         associates = [],
-        custom_package = "",
         resources = [],
         **kwargs):
-    """A macro that generates test targets to execute all android library unit tests.
+    """A macro that executes all android library unit tests.
 
     Usage:
-    The macro creates a single build target to compile all Android unit test classes and then creates
-    multiple parallel test targets for each Test class. The name of the test class is derived from
-    test class name and location of the file on disk.
+    The macro creates a single build target to compile all Android unit test classes and then loads
+    all Test class onto a test suite for execution.
 
     The macro adds a mocked Android jar to compile classpath similar to Android Gradle Plugin's
     testOptions.unitTests.returnDefaultValues = true feature.
 
-    The macro assumes Kotlin is used and will use rules_kotlin's kt_jvm_library to compile test
-    sources with mocked android.jar on the classpath. The test will be executed with java_test.
+    The macro assumes Kotlin is used and will use rules_kotlin's kt_jvm_test for execution with 
+    mocked android.jar on the classpath.
 
     Executing via Robolectric is currently not supported.
 
     Args:
         name: name for the test target,
         srcs: the test sources under test.
+        src_sets: The root source set path of all test sources
         deps: the build dependencies to use for the generated the android local test target
         and all valid arguments that you want to pass to the android_local_test target
         associates: associates target to allow access to internal members from the main Kotlin target
+        resources: A list of files that should be include in a Java jar.
     """
 
     runtime_resources_name = name + "-runtime-resources"
@@ -41,6 +42,7 @@ def grab_android_local_test(
     _gen_test_targets(
         name = name,
         srcs = srcs,
+        src_sets = src_sets,
         associates = associates,
         deps = deps,
         test_compile_deps = [
@@ -52,14 +54,14 @@ def grab_android_local_test(
             "@com_github_jetbrains_kotlin//:kotlin-reflect",
         ],
         resources = resources,
-        custom_package = custom_package,
         **kwargs
     )
 
 def grab_kt_jvm_test(
         name,
-        srcs,
         deps,
+        srcs = [],
+        src_sets = ["src/test/java", "src/test/kotlin"],
         associates = [],
         **kwargs):
     """A macro that generates test targets to execute all Kotlin unit tests.
@@ -72,6 +74,7 @@ def grab_kt_jvm_test(
     Args:
         name: name for the test target,
         srcs: the test sources under test.
+        src_sets: The root source set path of all test sources
         deps: the build dependencies to use for the generated the android local test target
         and all valid arguments that you want to pass to the android_local_test target
         associates: associates target to allow access to internal members from the main Kotlin target
@@ -79,6 +82,7 @@ def grab_kt_jvm_test(
     _gen_test_targets(
         name = name,
         srcs = srcs,
+        src_sets = src_sets,
         associates = associates,
         deps = deps,
         test_compile_deps = [],
@@ -91,58 +95,55 @@ def grab_kt_jvm_test(
 def _gen_test_targets(
         name,
         srcs,
+        src_sets,
         deps,
         test_compile_deps,
         test_runtime_deps,
         associates = [],
         resources = [],
         **kwargs):
-    """A macro to auto generate and compile target and runner targets for tests.
+    """A macro that detects all test packages to be loaded onto test suite for execution
 
     Usage:
-        The macro works under certain assumptions and only works for Kotlin files. The macro builds
-        all test sources in a single target specified by test_compile_rule_type and then generates
-        parallel runner targets with test_runner_rule_type.
+        The macro works under certain assumptions and only works for Kotlin files. The macro detects
+        test packages within the given src_sets in the classpath and uses AllTests test suite to run
+        tests.
         In order for this to function correctly, the Kotlin test file and the class name should be the
-        same and package name of test class should mirror the location of the file on disk. The root
-        source set path must be either src/main/java or src/main/kotlin (this can be made configurable
-        in the future).
+        same and package name of test class should mirror the location of the file on disk. The default
+        root source set path is either src/test/java or src/test/kotlin (this can be made configurable
+        via src_sets).
 
     Args:
-    test_compile_rule_type: The rule type that will be used for compiling test sources
-    test_runner_rule_type: The rule type that will be used for running test targets
     name: name of the target
     srcs: All test sources, mixed Java and Kotlin are supported during build phase but only Kotlin is
+    src_sets: The root source set path of all test sources
     supported in runner phase.
     deps: All dependencies required for building test sources
     test_compile_deps: Any dependencies required for the build target.
     test_runtime_deps: Any dependencies required for the test runner target.
     associates: The list of associate targets to allow access to internal members.
+    resources: A list of files that should be include in a Java jar.
     """
-    test_classes = []
     test_packages = []
+
+    if len(srcs) == 0:
+        srcs = _glob_srcs_from_src_sets(src_sets)
+
     for src in srcs:
-        if src.startswith("src/test"):
-            # src/test/java/com/grab/test/TestFile.kt
-            path_split = src.rpartition("/")  # [src/test/java/com/grab/test,/,TestFile.kt]
+        for src_set in src_sets:
+            if src_set[-1] != "/":
+                src_set += "/"
 
-            test_file = path_split[2]  # Testfile.kt
-            test_file_name = test_file.split(".")[0]  # Testfile
+            if src.startswith(src_set):
+                path = src.split(src_set)[1]
+                
+                # com/grab/test/TestFile.kt
+                path_split = path.split("/") # [com,grab,test,TestFile.kt]
 
-            # Find package name from path
-            path = path_split[0]  # src/test/java/com/grab/test
-
-            if path.find("src/test/java") != -1 or path.find("src/test/kotlin") != -1:  # TODO make this path configurable
-                path = path.split("src/test/java")[1] if path.find("src/test/java") != -1 else path.split("src/test/kotlin")[1]  # /com/grab/test
-                if path != "" and path[0] == "/":
-                    path = path.replace("/", "", 1)
-
-                test_package = path.replace("/", ".")
-                test_class = test_package + "." + test_file_name  # com.grab.test.TestFile
-                test_classes.append(test_class)
-
-                if test_package == "":
+                if len(path_split) <= 1:
                     fail("\033[0;31mEmpty test package detected for {}\033[0m".format(src))
+
+                test_package = ".".join(path_split[:-1])
 
                 if test_package not in test_packages:
                     test_packages.append(test_package)
@@ -182,8 +183,8 @@ EOF""".format(unique_base_packages = unique_packages_str),
         )
 
 def _unique_test_packages(packages):
-    """
-    Extract unique base package names from list of provided package names
+    """Extract unique base package names from list of provided package names
+
     Args:
     packages: List of package name in the format ["com.grab.test", "com.grab"]
     """
@@ -204,3 +205,17 @@ def _unique_test_packages(packages):
                 unique_packages.append(package)
 
     return unique_packages
+
+def _glob_srcs_from_src_sets(src_sets):
+    """Obtain a list of kt file sources contained within the given src_sets
+
+    Args:
+    src_sets: List of paths to glob the kt files
+    """
+    patterns = []
+    for src_set in src_sets:
+        if src_set[-1] != "/":
+            patterns.append(src_set + "/**/*.kt")
+        else:
+            patterns.append(src_set + "**/*.kt")
+    return native.glob(patterns)
