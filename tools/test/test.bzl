@@ -18,7 +18,7 @@ def grab_android_local_test(
     The macro adds a mocked Android jar to compile classpath similar to Android Gradle Plugin's
     testOptions.unitTests.returnDefaultValues = true feature.
 
-    The macro assumes Kotlin is used and will use rules_kotlin's kt_jvm_test for execution with 
+    The macro assumes Kotlin is used and will use rules_kotlin's kt_jvm_test for execution with
     mocked android.jar on the classpath.
 
     Executing via Robolectric is currently not supported.
@@ -136,9 +136,9 @@ def _gen_test_targets(
 
             if src.startswith(src_set):
                 path = src.split(src_set)[1]
-                
+
                 # com/grab/test/TestFile.kt
-                path_split = path.split("/") # [com,grab,test,TestFile.kt]
+                path_split = path.split("/")  # [com,grab,test,TestFile.kt]
 
                 if len(path_split) <= 1:
                     fail("\033[0;31mEmpty test package detected for {}\033[0m".format(src))
