@@ -1,7 +1,7 @@
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 load(":runtime_resources.bzl", "runtime_resources")
 
-DEFAULT_SRC_SETS = ["src/test/java", "src/test/kotlin"]
+_DEFAULT_SRC_SETS = ["src/test/java", "src/test/kotlin"]
 
 def grab_android_local_test(
         name,
@@ -127,7 +127,7 @@ def _gen_test_targets(
     resources: A list of files that should be include in a Java jar.
     """
     test_packages = []
-    src_sets = DEFAULT_SRC_SETS + additional_src_sets
+    src_sets = _DEFAULT_SRC_SETS + additional_src_sets
 
     for src in srcs:
         for src_set in src_sets:
