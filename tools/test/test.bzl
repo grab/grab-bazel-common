@@ -1,11 +1,13 @@
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 load(":runtime_resources.bzl", "runtime_resources")
 
+DEFAULT_SRC_SETS = ["src/test/java", "src/test/kotlin"]
+
 def grab_android_local_test(
         name,
         deps,
-        srcs = [],
-        src_sets = ["src/test/java", "src/test/kotlin"],
+        srcs,
+        additional_src_sets = [],
         associates = [],
         resources = [],
         **kwargs):
@@ -42,7 +44,7 @@ def grab_android_local_test(
     _gen_test_targets(
         name = name,
         srcs = srcs,
-        src_sets = src_sets,
+        additional_src_sets = additional_src_sets,
         associates = associates,
         deps = deps,
         test_compile_deps = [
@@ -59,9 +61,9 @@ def grab_android_local_test(
 
 def grab_kt_jvm_test(
         name,
+        srcs,
         deps,
-        srcs = [],
-        src_sets = ["src/test/java", "src/test/kotlin"],
+        additional_src_sets = [],
         associates = [],
         **kwargs):
     """A macro that generates test targets to execute all Kotlin unit tests.
@@ -82,7 +84,7 @@ def grab_kt_jvm_test(
     _gen_test_targets(
         name = name,
         srcs = srcs,
-        src_sets = src_sets,
+        additional_src_sets = additional_src_sets,
         associates = associates,
         deps = deps,
         test_compile_deps = [],
@@ -95,7 +97,7 @@ def grab_kt_jvm_test(
 def _gen_test_targets(
         name,
         srcs,
-        src_sets,
+        additional_src_sets,
         deps,
         test_compile_deps,
         test_runtime_deps,
@@ -125,9 +127,7 @@ def _gen_test_targets(
     resources: A list of files that should be include in a Java jar.
     """
     test_packages = []
-
-    if len(srcs) == 0:
-        srcs = _glob_srcs_from_src_sets(src_sets)
+    src_sets = DEFAULT_SRC_SETS + additional_src_sets
 
     for src in srcs:
         for src_set in src_sets:
@@ -205,17 +205,3 @@ def _unique_test_packages(packages):
                 unique_packages.append(package)
 
     return unique_packages
-
-def _glob_srcs_from_src_sets(src_sets):
-    """Obtain a list of kt file sources contained within the given src_sets
-
-    Args:
-    src_sets: List of paths to glob the kt files
-    """
-    patterns = []
-    for src_set in src_sets:
-        if src_set[-1] != "/":
-            patterns.append(src_set + "/**/*.kt")
-        else:
-            patterns.append(src_set + "**/*.kt")
-    return native.glob(patterns)
