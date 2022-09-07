@@ -96,12 +96,6 @@ def kt_db_android_library(
         neverlink = 1,  # Use the R classes only for compiling and not at runtime.
     )
 
-    r_classes_no_header = name + "-r-classes-no-header"
-    java_library_no_header(
-        name = r_classes_no_header,
-        dep = ":" + r_classes,
-    )
-
     # Create an intermediate target for compiling all Kotlin classes used in Databinding
     kotlin_target = name + "-kotlin"
     kotlin_targets = []
@@ -157,6 +151,18 @@ def kt_db_android_library(
         )
         binding_adapter_sources.append(binding_adapters_source)
 
+    # DatabindingMapperImpl is in the public ABI among Databinding generated classes, use a stub
+    # class instead so that we can avoid running entire databinding processor for header compilation.
+    databinding_mapper = "_" + name + "_mapper"
+    native.java_library(
+        name = databinding_mapper,
+        srcs = [databinding_stubs_target + "_mapper.srcjar"],
+        neverlink = 1,  # Use only in the compile classpath
+        deps = _DATABINDING_DEPS + [
+            "@grab_bazel_common//tools/android:android_sdk",
+        ],
+    )
+
     # Data binding target responsible for generating Databinding related classes.
     # By the time this is compiled:
     # * Kotlin/Java classes are already available via deps. So resources processing is safe.
@@ -173,7 +179,7 @@ def kt_db_android_library(
         visibility = visibility,
         manifest = manifest,
         tags = tags,
-        deps = kotlin_targets + _filter_deps(deps) + _DATABINDING_DEPS,
+        deps = kotlin_targets + _filter_deps(deps) + _DATABINDING_DEPS + [databinding_mapper],
         # Export the Kotlin target so that other databinding modules that depend on this module
         # can use classes defined in this module in their databinding generated classes.
         #

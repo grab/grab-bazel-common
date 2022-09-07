@@ -74,6 +74,7 @@ def _databinding_stubs_impl(ctx):
     args.set_param_file_format("multiline")
     args.use_param_file("--flagfile=%s", use_always = True)
 
+    args.add("AAPT_LITE")
     args.add("--package", custom_package)
     args.add_joined(
         "--resource-files",
@@ -113,13 +114,42 @@ def _databinding_stubs_impl(ctx):
         executable = ctx.executable._compiler,
         arguments = [args],
         progress_message = "%s %s" % (mnemonic, ctx.label),
-        execution_requirements = {"supports-workers": "1", "supports-multiplex-workers": "1"},
+        execution_requirements = {
+            "supports-workers": "1",
+            "supports-multiplex-workers": "1",
+            "worker-key-mnemonic": "DatabindingWorker",
+        },
+    )
+
+    # Databinding Mappers
+    mapper_args = ctx.actions.args()
+    mapper_args.set_param_file_format("multiline")
+    mapper_args.use_param_file("--flagfile=%s", use_always = True)
+    mapper_args.add("DATABINDING_MAPPER")
+    mapper_args.add("--package", custom_package)
+    mapper_args.add("--output", ctx.outputs.mapper_jar)
+
+    mnemonic = "DatabindingMapperStubs"
+    ctx.actions.run(
+        mnemonic = mnemonic,
+        outputs = [
+            ctx.outputs.mapper_jar,
+        ],
+        executable = ctx.executable._compiler,
+        arguments = [mapper_args],
+        progress_message = "%s %s" % (mnemonic, ctx.label),
+        execution_requirements = {
+            "supports-workers": "1",
+            "supports-multiplex-workers": "1",
+            "worker-key-mnemonic": "DatabindingWorker",
+        },
     )
 
     return [
         DefaultInfo(files = depset([
             ctx.outputs.r_class_jar,
             ctx.outputs.binding_jar,
+            ctx.outputs.mapper_jar,
         ])),
     ]
 
@@ -139,5 +169,6 @@ databinding_stubs = rule(
     outputs = dict(
         r_class_jar = "%{name}_r.srcjar",
         binding_jar = "%{name}_binding.srcjar",
+        mapper_jar = "%{name}_mapper.srcjar",
     ),
 )

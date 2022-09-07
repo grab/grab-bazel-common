@@ -16,13 +16,31 @@
 
 package com.grab.databinding.stub
 
+import com.grab.databinding.stub.mapper.GenerateMapperCommand
 import io.bazel.Status
 import io.bazel.Worker
+
+
+enum class Tool {
+    AAPT_LITE {
+        override fun call(args: Array<String>) {
+            BindingStubCommand().main(args)
+        }
+    },
+    DATABINDING_MAPPER {
+        override fun call(args: Array<String>) {
+            GenerateMapperCommand().main(args)
+        }
+    };
+
+    abstract fun call(args: Array<String>)
+}
 
 fun main(args: Array<String>) {
     Worker.from(args = args.toList()).run { cliArgs ->
         try {
-            BindingStubCommand().main(cliArgs)
+            Tool.valueOf(cliArgs.first())
+                .call(cliArgs.drop(1).toTypedArray())
             Status.Success
         } catch (e: Exception) {
             e.printStackTrace()

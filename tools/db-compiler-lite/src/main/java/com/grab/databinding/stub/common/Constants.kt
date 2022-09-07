@@ -27,3 +27,6 @@ const val CLASS_INFOS = "CLASS_INFO"
 const val R_TXTS = "R_TXT_ZIP"
 
 const val NON_TRANSITIVE_R = "NON_TRANSITIVE_R"
+
+
+const val DATABINDING_PACKAGE = "androidx.databinding"

@@ -21,6 +21,7 @@ import com.grab.databinding.stub.binding.parser.Binding
 import com.grab.databinding.stub.binding.parser.BindingType
 import com.grab.databinding.stub.binding.parser.LayoutBindingData
 import com.grab.databinding.stub.common.BASE_DIR
+import com.grab.databinding.stub.common.DATABINDING_PACKAGE
 import com.grab.databinding.stub.common.Generator
 import com.grab.databinding.stub.util.capitalize
 import com.squareup.javapoet.*
@@ -54,7 +55,6 @@ constructor(
         private const val ATTACH_TO_ROOT = "attachToRoot"
         private const val COMPONENT = "component"
         private const val RUNTIME_EXCEPTION = """throw new RuntimeException("Stub!")"""
-        private const val DATABINDING_PACKAGE = "androidx.databinding"
         private const val VIEW_PACKAGE = "android.view"
     }
 
@@ -64,7 +64,6 @@ constructor(
     private val layoutInflaterClass = ClassName.get(VIEW_PACKAGE, "LayoutInflater")
     private val androidNonNull = ClassName.get("androidx.annotation", "NonNull")
     private val androidNullable = ClassName.get("androidx.annotation", "Nullable")
-    private val dataBindingComponent = ClassName.get(DATABINDING_PACKAGE, "DataBindingComponent")
     private val bindableAnnotation = ClassName.get(DATABINDING_PACKAGE, "Bindable")
     private val viewDataBinding = ClassName.get(DATABINDING_PACKAGE, "ViewDataBinding")
     private val emptyBinding = LayoutBindingData(
@@ -146,18 +145,6 @@ constructor(
                     }
             }
         return outputDir
-    }
-
-    private fun generateDataBindingComponentInterface(outputDir: File) {
-        TypeSpec.interfaceBuilder(dataBindingComponent)
-            .addModifiers(PUBLIC)
-            .build()
-            .let { type ->
-                JavaFile.builder(DATABINDING_PACKAGE, type)
-                    .build()
-                    .writeTo(outputDir)
-                logFile(DATABINDING_PACKAGE, type.name)
-            }
     }
 
     private fun buildFields(bindings: List<Binding>, bindables: List<Binding>): List<FieldSpec> {
