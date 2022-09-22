@@ -35,7 +35,7 @@ def _is_direct(package, dep, tags):
         return True
     for tag in tags:
         if tag.startswith("@direct//"):
-            if (tag[9:]).startswith(package + ":" + dep):
+            if (tag[9:] == package):
                 return True
     for tag in tags:
         if tag.startswith("@direct//"):
