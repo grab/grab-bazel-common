@@ -12,8 +12,8 @@ kt_jvm_library(
     ],
     deps = [
         "//tools/worker/src/main/proto:worker_protocol",
-        "@maven//:com_google_protobuf_protobuf_java",
-        "@maven//:com_google_protobuf_protobuf_java_util",
+        "@bazel_common_maven//:com_google_protobuf_protobuf_java",
+        "@bazel_common_maven//:com_google_protobuf_protobuf_java_util",
     ],
 )
 
@@ -24,7 +24,7 @@ grab_kt_jvm_test(
     ]),
     deps = [
         ":worker_lib",
+        "@bazel_common_maven//:junit_junit",
         "@com_github_jetbrains_kotlin//:kotlin-test",
-        "@maven//:junit_junit",
     ],
 )

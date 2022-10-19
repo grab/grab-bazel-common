@@ -1,6 +1,8 @@
-load("@dagger//:workspace_defs.bzl", "dagger_rules")
+load("@bazel_common_dagger//:workspace_defs.bzl", "dagger_rules")
 
-dagger_rules()
+dagger_rules(
+    repo_name = "@bazel_common_maven",
+)
 
 load("@grab_bazel_common//toolchains:toolchains.bzl", "configure_toolchains")
 

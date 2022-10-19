@@ -15,28 +15,18 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "grab_bazel_common",
-    commit = "<commit-hash>",
+    commit = "<commit hash>",
     remote = "https://github.com/grab/grab-bazel-common.git",
 )
 
-# Optional patched Android Tools
-load("@grab_bazel_common//:workspace_defs.bzl", "android_tools")
+load("@grab_bazel_common//android:repositories.bzl", "bazel_common_dependencies")
 
-android_tools(
-    commit = "<commit-hash>",
-    remote = "https://github.com/grab/grab-bazel-common.git",
-)
+bazel_common_dependencies()
 
-# Maven dependencies
-load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
+load("@grab_bazel_common//android:initialize.bzl", "bazel_common_initialize")
 
-load("@rules_jvm_external//:defs.bzl", "maven_install")
-
-maven_install(
-    artifacts = GRAB_BAZEL_COMMON_ARTIFACTS + [
-        # ... 
-    ],
-    ...
+bazel_common_initialize(
+    buildifier_version = "5.1.0",
 )
 ```
 

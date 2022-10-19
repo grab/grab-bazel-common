@@ -7,10 +7,10 @@ kt_jvm_library(
     ]),
     deps = [
         "//tools/auto-service",
-        "@maven//:com_google_auto_auto_common",
-        "@maven//:com_google_auto_service_auto_service",
-        "@maven//:com_squareup_javapoet",
-        "@maven//:junit_junit",
+        "@bazel_common_maven//:com_google_auto_auto_common",
+        "@bazel_common_maven//:com_google_auto_service_auto_service",
+        "@bazel_common_maven//:com_squareup_javapoet",
+        "@bazel_common_maven//:junit_junit",
     ],
 )
 
@@ -38,7 +38,7 @@ kt_jvm_test(
     test_class = "com.grazel.generated.TestSuite",
     deps = [
         ":test-suite-generator",
+        "@bazel_common_maven//:junit_junit",
         "@com_github_jetbrains_kotlin//:kotlin-test",
-        "@maven//:junit_junit",
     ],
 )

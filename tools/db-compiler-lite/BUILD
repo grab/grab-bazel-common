@@ -12,13 +12,13 @@ kt_jvm_library(
     deps = [
         "//:dagger",
         "//tools/worker:worker_lib",
+        "@bazel_common_maven//:com_github_ajalt_clikt",
+        "@bazel_common_maven//:com_squareup_javapoet",
+        "@bazel_common_maven//:com_squareup_moshi_moshi",
+        "@bazel_common_maven//:net_sf_kxml_kxml2",
+        "@bazel_common_maven//:xmlpull_xmlpull",
         "@com_github_jetbrains_kotlin//:kotlin-stdlib-jdk8",
         "@maven//:androidx_databinding_databinding_common",
-        "@maven//:com_github_ajalt_clikt",
-        "@maven//:com_squareup_javapoet",
-        "@maven//:com_squareup_moshi_moshi",
-        "@maven//:net_sf_kxml_kxml2",
-        "@maven//:xmlpull_xmlpull",
     ],
 )
 
@@ -29,8 +29,8 @@ grab_kt_jvm_test(
     ]),
     deps = [
         ":db-compiler-lite-lib",
+        "@bazel_common_maven//:junit_junit",
         "@com_github_jetbrains_kotlin//:kotlin-test",
-        "@maven//:junit_junit",
     ],
 )
 

@@ -9,7 +9,7 @@ kt_jvm_library(
         "//visibility:public",
     ],
     deps = [
-        "@maven//:com_google_guava_guava",
-        "@maven//:junit_junit",
+        "@bazel_common_maven//:com_google_guava_guava",
+        "@bazel_common_maven//:junit_junit",
     ],
 )

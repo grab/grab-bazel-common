@@ -7,7 +7,7 @@ kt_android_library(
         "src/main/java/**/*.kt",
     ]),
     deps = [
-        "@maven//:com_google_android_material_material",
+        "@bazel_common_maven//:com_google_android_material_material",
     ],
 )
 
