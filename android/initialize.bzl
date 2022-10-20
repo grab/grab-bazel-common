@@ -1,11 +1,27 @@
-load("@bazel_common_dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
-load("@rules_jvm_external//:defs.bzl", "maven_install")
-load("@grab_bazel_common//toolchains:toolchains.bzl", "register_common_toolchains", _buildifier_version = "buildifier_version")
+load(
+    "@grab_bazel_common//toolchains:toolchains.bzl",
+    "register_common_toolchains",
+    _buildifier_version = "buildifier_version",
+)
 load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
 load("@grab_bazel_common//tools/buildifier:defs.bzl", "BUILDIFIER_DEFAULT_VERSION")
+load("@grab_bazel_common//android/tools:defs.bzl", "android_tools")
+load("@bazel_common_dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+
 # load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
+# Setup android databinding compilation and optionally used patched android tools jar
+def _android(patched_android_tools):
+    native.bind(
+        name = "databinding_annotation_processor",
+        actual = "@grab_bazel_common//tools/android:compiler_annotation_processor",
+    )
+    if patched_android_tools:
+        android_tools()
+
 def bazel_common_initialize(
+        patched_android_tools = True,
         buildifier_version = BUILDIFIER_DEFAULT_VERSION):
     #rules_proto_dependencies()
     #rules_proto_toolchains()
@@ -45,3 +61,5 @@ def bazel_common_initialize(
         ],
         strict_visibility = True,
     )
+
+    _android(patched_android_tools)

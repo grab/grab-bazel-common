@@ -26,6 +26,7 @@ bazel_common_dependencies()
 load("@grab_bazel_common//android:initialize.bzl", "bazel_common_initialize")
 
 bazel_common_initialize(
+    patched_android_tools = True, # Optionally use patched android_tools jars
     buildifier_version = "5.1.0",
 )
 ```

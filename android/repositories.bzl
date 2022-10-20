@@ -1,6 +1,5 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", _http_archive = "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
-load("@grab_bazel_common//:workspace_defs.bzl", "ANDROID_TOOLS_BUILD_FILE")
 
 def http_archive(name, **kwargs):
     maybe(_http_archive, name = name, **kwargs)
@@ -25,14 +24,6 @@ def _maven():
         sha256 = DAGGER_SHA,
         strip_prefix = "dagger-dagger-%s" % DAGGER_TAG,
         url = "https://github.com/google/dagger/archive/dagger-%s.zip" % DAGGER_TAG,
-    )
-
-def _android():
-    maybe(
-        native.new_local_repository,
-        name = "android_tools",
-        build_file_content = ANDROID_TOOLS_BUILD_FILE,
-        path = ".",
     )
 
 def _kotlin():
@@ -78,5 +69,4 @@ def _proto():
 def bazel_common_dependencies():
     #_proto
     _maven()
-    _android()
     _kotlin()
