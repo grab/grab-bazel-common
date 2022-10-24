@@ -48,6 +48,7 @@ enum class Type(val entry: String) {
     LAYOUT("layout"),
     MENU("menu"),
     MIPMAP("mipmap"),
+    NAVIGATION("navigation"),
     PLURALS("plurals"),
     RAW("raw"),
     STRING("string"),
