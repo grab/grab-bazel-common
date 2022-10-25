@@ -28,6 +28,7 @@ import com.grab.aapt.databinding.util.events
 import com.grab.aapt.databinding.util.extractPrimitiveType
 import com.grab.aapt.databinding.util.toLayoutBindingName
 import com.squareup.javapoet.ClassName
+import com.squareup.javapoet.ParameterizedTypeName
 import com.squareup.javapoet.TypeName
 import dagger.Binds
 import dagger.Module
@@ -147,13 +148,40 @@ constructor(
         }.distinctBy(LayoutBindingData::layoutName)
     }
 
+    /**
+     * Parses the given type as a parameterized type, e.g. List<String>.
+     *
+     * @param typeName The name of the type to process
+     * @param importedTypes A map of type names to [TypeName] imported in the binding layout.
+     *
+     * @return The parsed [TypeName]
+     */
+    private fun parseParameterizedType(typeName: String, importedTypes: ImportedTypes): TypeName? {
+        val collectionType = typeName.takeWhile { it != '<' }.let {
+            (importedTypes[it] as? ClassName) ?: return null
+        }
+        val innerType = typeName.dropWhile { it != '<' }
+            .drop(1)
+            .takeWhile { it != '>' }
+            .let {
+                importedTypes[it] ?: return null
+            }
+        return ParameterizedTypeName.get(collectionType, innerType)
+    }
+
     private fun parseBindableTypeName(
         typeName: String,
         importedTypes: ImportedTypes
-    ): TypeName = if (!typeName.contains(".") && importedTypes.containsKey(typeName)) {
-        importedTypes[typeName] ?: error("Imported type $typeName not found")
-    } else {
-        typeName.extractPrimitiveType() ?: ClassName.bestGuess(typeName)
+    ): TypeName = when {
+        (typeName.contains("<") && typeName.contains(">")) -> {
+            parseParameterizedType(typeName, importedTypes) ?: error("Imported parameterized type $typeName not found")
+        }
+
+        (!typeName.contains(".") && importedTypes.containsKey(typeName)) -> {
+            importedTypes[typeName] ?: error("Imported type $typeName not found")
+        }
+
+        else -> typeName.extractPrimitiveType() ?: ClassName.bestGuess(typeName)
     }
 
     /**

@@ -95,12 +95,12 @@ constructor(
      *
      * Criteria
      * * Layouts with `<layout>` tags only
-     * * Layouts with <include> but their layout type could not inferred from either local or dep context.
+     * * Layouts with <include> but their layout type could not be inferred from either local or dep context.
      * @param layoutBindings The original parsed layout data
      */
     fun calculateBindingsToGenerate(layoutBindings: List<LayoutBindingData>): Sequence<LayoutBindingData> {
         // If there are any binding of included type with their layout missing in both local and deps,
-        // generate a empty binding to let the build pass instead of failing eagerly.
+        // generate an empty binding to let the build pass instead of failing eagerly.
         val additionalLayoutBindings = layoutBindings
             .asSequence()
             .flatMap { it.bindings.asSequence() }

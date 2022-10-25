@@ -193,6 +193,35 @@ class DefaultLayoutBindingsParserTest : BaseBindingStubTest() {
     }
 
     @Test
+    fun `assert parameterized types are parsed correctly`() {
+        val layoutBindings = layoutBindingsParser.parse(
+            packageName = packageName,
+            layoutFiles = testResFiles(
+                TestResFile(
+                    name = "layout_with_parameterized_imports.xml",
+                    contents = """
+                        <layout xmlns:android="http://schemas.android.com/apk/res/android">
+                        <data>
+                            <import type="java.util.List"/>
+                            <import type="com.my.CustomType"/>
+                            <variable
+                                name="objects"
+                                type="List&lt;CustomType>" />
+                        </data>
+                    </layout>
+                    """.trimIndent()
+                )
+            )
+        )
+        val bindable = layoutBindings.first().bindables
+
+        val listBindable = bindable.first()
+        assertEquals("objects", listBindable.rawName)
+        assertEquals("java.util.List<com.my.CustomType>", listBindable.typeName.toString())
+        assertEquals("objects", listBindable.name)
+    }
+
+    @Test
     fun `assert inbuilt view types are parsed correctly`() {
         val layoutBindings = layoutBindingsParser.parse(
             packageName = packageName,
