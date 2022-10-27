@@ -27,7 +27,7 @@ def parcelize_rules():
         stubs_phase = False,
         target_embedded_compiler = True,
         deps = [
-            "@maven//:org_jetbrains_kotlin_kotlin_parcelize_compiler",
+            "@bazel_common_maven//:org_jetbrains_kotlin_kotlin_parcelize_compiler",
         ],
     )
 
@@ -36,6 +36,6 @@ def parcelize_rules():
         exported_compiler_plugins = [":parcelize_plugin"],
         visibility = ["//visibility:public"],
         exports = [
-            "@maven//:org_jetbrains_kotlin_kotlin_parcelize_runtime",
+            "@bazel_common_maven//:org_jetbrains_kotlin_kotlin_parcelize_runtime",
         ],
     )

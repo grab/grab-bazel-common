@@ -3,7 +3,6 @@ load(
     "register_common_toolchains",
     _buildifier_version = "buildifier_version",
 )
-load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
 load("@grab_bazel_common//tools/buildifier:defs.bzl", "BUILDIFIER_DEFAULT_VERSION")
 load("@grab_bazel_common//android/tools:defs.bzl", "android_tools")
 load("@bazel_common_dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
