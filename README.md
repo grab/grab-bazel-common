@@ -34,7 +34,9 @@ load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
 
 # Bazel common uses few artifacts under @maven repository
 maven_install(
-    artifacts = GRAB_BAZEL_COMMON_ARTIFACTS + [ ]
+    artifacts = GRAB_BAZEL_COMMON_ARTIFACTS + [
+      # Your project artifacts 
+    ]
 )    
 ```
 
