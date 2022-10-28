@@ -29,6 +29,13 @@ bazel_common_initialize(
     patched_android_tools = True, # Optionally use patched android_tools jars
     buildifier_version = "5.1.0",
 )
+
+load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
+
+# Bazel common uses few artifacts under @maven repository
+maven_install(
+    artifacts = GRAB_BAZEL_COMMON_ARTIFACTS + [ ]
+)    
 ```
 
 # Features
