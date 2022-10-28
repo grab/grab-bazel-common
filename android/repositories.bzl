@@ -5,8 +5,8 @@ def http_archive(name, **kwargs):
     maybe(_http_archive, name = name, **kwargs)
 
 def _maven():
-    RULES_JVM_EXTERNAL_TAG = "3.3"
-    RULES_JVM_EXTERNAL_SHA = "d85951a92c0908c80bd8551002d66cb23c3434409c814179c0ff026b53544dab"
+    RULES_JVM_EXTERNAL_TAG = "4.4.2"
+    RULES_JVM_EXTERNAL_SHA = "735602f50813eb2ea93ca3f5e43b1959bd80b213b836a07a62a29d757670b77b"
 
     http_archive(
         name = "rules_jvm_external",
