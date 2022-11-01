@@ -19,10 +19,10 @@ def android_instrumentation_binary(
       - The build config flag [--experimental_disable_instrumentation_manifest_merge] is enabled
     """
 
-    generate_manifest_name = custom_package.replace(".", "_") + "_manifest"
+    generate_manifest_name = name + "_manifest"
     _generate_manifest_xml(
         name = generate_manifest_name,
-        output = "AndroidTestManifest.xml",
+        output = name + ".AndroidTestManifest.xml",
         package_name = custom_package,
         test_instrumentation_runner = test_instrumentation_runner,
     )
