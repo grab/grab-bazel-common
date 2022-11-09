@@ -160,7 +160,7 @@ databinding_stubs = rule(
         "resource_files": attr.label_list(allow_files = True),
         "deps": attr.label_list(),
         "_compiler": attr.label(
-            default = Label("@grab_bazel_common//tools/db-compiler-lite:db-compiler-lite"),
+            default = Label("@grab_bazel_common//tools/aapt_lite:aapt_lite"),
             executable = True,
             cfg = "exec",
         ),
