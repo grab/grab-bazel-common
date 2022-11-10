@@ -17,13 +17,17 @@
 package com.grab.aapt.databinding.rclass
 
 import com.grab.aapt.databinding.di.AaptScope
-import com.grab.aapt.databinding.rclass.generator.ResToRClassGenerator
 import com.grab.aapt.databinding.rclass.generator.DefaultResToRClassGenerator
+import com.grab.aapt.databinding.rclass.generator.ResToRClassGenerator
 import com.grab.aapt.databinding.rclass.parser.DefaultResToRParser
 import com.grab.aapt.databinding.rclass.parser.ParserType
 import com.grab.aapt.databinding.rclass.parser.ResToRParser
 import com.grab.aapt.databinding.rclass.parser.ResourceFileParser
-import com.grab.aapt.databinding.rclass.parser.xml.*
+import com.grab.aapt.databinding.rclass.parser.xml.ArrayParser
+import com.grab.aapt.databinding.rclass.parser.xml.DeclareStyleableParser
+import com.grab.aapt.databinding.rclass.parser.xml.DefaultXmlParser
+import com.grab.aapt.databinding.rclass.parser.xml.IDParser
+import com.grab.aapt.databinding.rclass.parser.xml.StyleParser
 import dagger.Binds
 import dagger.MapKey
 import dagger.Module

@@ -16,11 +16,11 @@
 
 package com.grab.aapt.databinding.rclass.generator
 
-import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.binding.model.LayoutBindingData
 import com.grab.aapt.databinding.common.BASE_DIR
 import com.grab.aapt.databinding.common.Generator
 import com.grab.aapt.databinding.common.R_CLASS_OUTPUT_DIR
+import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.rclass.parser.DefaultRTxtParser
 import com.grab.aapt.databinding.rclass.parser.RFieldEntry
 import com.grab.aapt.databinding.rclass.parser.RTxtParser
@@ -34,7 +34,9 @@ import dagger.Module
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Named
-import javax.lang.model.element.Modifier.*
+import javax.lang.model.element.Modifier.FINAL
+import javax.lang.model.element.Modifier.PUBLIC
+import javax.lang.model.element.Modifier.STATIC
 
 //TODO: remove if not used
 interface RClassGenerator : Generator {

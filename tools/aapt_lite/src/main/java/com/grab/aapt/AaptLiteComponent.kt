@@ -22,7 +22,13 @@ import com.grab.aapt.databinding.binding.parser.BindingsParserModule
 import com.grab.aapt.databinding.binding.parser.LayoutBindingsParser
 import com.grab.aapt.databinding.brclass.BrClassGenerator
 import com.grab.aapt.databinding.brclass.BrClassModule
-import com.grab.aapt.databinding.common.*
+import com.grab.aapt.databinding.common.BASE_DIR
+import com.grab.aapt.databinding.common.CLASS_INFOS
+import com.grab.aapt.databinding.common.LAYOUT_FILES
+import com.grab.aapt.databinding.common.NON_TRANSITIVE_R
+import com.grab.aapt.databinding.common.PACKAGE_NAME
+import com.grab.aapt.databinding.common.RES_FILES
+import com.grab.aapt.databinding.common.R_TXTS
 import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.rclass.ResourceParserModule
 import com.grab.aapt.databinding.rclass.generator.RClassModule

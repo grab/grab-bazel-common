@@ -16,21 +16,30 @@
 
 package com.grab.aapt.databinding.binding.generator
 
-import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.binding.model.Binding
 import com.grab.aapt.databinding.binding.model.BindingType
 import com.grab.aapt.databinding.binding.model.LayoutBindingData
 import com.grab.aapt.databinding.common.BASE_DIR
 import com.grab.aapt.databinding.common.DATABINDING_PACKAGE
 import com.grab.aapt.databinding.common.Generator
+import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.util.capitalize
-import com.squareup.javapoet.*
+import com.squareup.javapoet.ClassName
+import com.squareup.javapoet.FieldSpec
+import com.squareup.javapoet.JavaFile
+import com.squareup.javapoet.MethodSpec
+import com.squareup.javapoet.ParameterSpec
 import com.squareup.javapoet.TypeName.BOOLEAN
 import com.squareup.javapoet.TypeName.INT
+import com.squareup.javapoet.TypeSpec
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Named
-import javax.lang.model.element.Modifier.*
+import javax.lang.model.element.Modifier.ABSTRACT
+import javax.lang.model.element.Modifier.FINAL
+import javax.lang.model.element.Modifier.PROTECTED
+import javax.lang.model.element.Modifier.PUBLIC
+import javax.lang.model.element.Modifier.STATIC
 
 interface BindingClassGenerator : Generator {
     fun generate(

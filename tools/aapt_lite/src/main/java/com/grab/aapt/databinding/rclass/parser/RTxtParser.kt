@@ -16,8 +16,8 @@
 
 package com.grab.aapt.databinding.rclass.parser
 
-import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.binding.model.LayoutBindingData
+import com.grab.aapt.databinding.di.AaptScope
 import javax.inject.Inject
 
 data class RFieldEntry(

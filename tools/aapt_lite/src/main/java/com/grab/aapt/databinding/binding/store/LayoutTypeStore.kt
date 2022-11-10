@@ -16,10 +16,10 @@
 
 package com.grab.aapt.databinding.binding.store
 
-import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.common.CLASS_INFOS
 import com.grab.aapt.databinding.common.LAYOUT_FILES
 import com.grab.aapt.databinding.common.PACKAGE_NAME
+import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.util.toLayoutBindingName
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.TypeName

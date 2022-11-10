@@ -16,9 +16,13 @@
 
 package com.grab.aapt.databinding.rclass.xml
 
-import com.grab.aapt.databinding.rclass.parser.*
-import com.grab.aapt.databinding.rclass.parser.xml.StyleParser
+import com.grab.aapt.databinding.rclass.parser.ParserResult
+import com.grab.aapt.databinding.rclass.parser.RFieldEntry
+import com.grab.aapt.databinding.rclass.parser.ResourceFileParser
 import com.grab.aapt.databinding.rclass.parser.SingleXmlEntry
+import com.grab.aapt.databinding.rclass.parser.Type
+import com.grab.aapt.databinding.rclass.parser.XmlTypeValues
+import com.grab.aapt.databinding.rclass.parser.xml.StyleParser
 import org.junit.Test
 import kotlin.test.assertEquals
 

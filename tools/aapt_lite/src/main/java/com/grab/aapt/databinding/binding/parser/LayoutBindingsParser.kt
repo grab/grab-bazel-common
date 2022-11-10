@@ -19,11 +19,14 @@ package com.grab.aapt.databinding.binding.parser
 import com.grab.aapt.databinding.binding.model.Binding
 import com.grab.aapt.databinding.binding.model.BindingType
 import com.grab.aapt.databinding.binding.model.LayoutBindingData
-import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.binding.store.DEPS
 import com.grab.aapt.databinding.binding.store.LOCAL
 import com.grab.aapt.databinding.binding.store.LayoutTypeStore
-import com.grab.aapt.databinding.util.*
+import com.grab.aapt.databinding.di.AaptScope
+import com.grab.aapt.databinding.util.attributesNameValue
+import com.grab.aapt.databinding.util.events
+import com.grab.aapt.databinding.util.extractPrimitiveType
+import com.grab.aapt.databinding.util.toLayoutBindingName
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.TypeName
 import dagger.Binds

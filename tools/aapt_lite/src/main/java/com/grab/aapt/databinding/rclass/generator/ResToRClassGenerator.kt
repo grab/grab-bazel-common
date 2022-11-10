@@ -29,7 +29,9 @@ import com.squareup.javapoet.TypeSpec
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Named
-import javax.lang.model.element.Modifier.*
+import javax.lang.model.element.Modifier.FINAL
+import javax.lang.model.element.Modifier.PUBLIC
+import javax.lang.model.element.Modifier.STATIC
 
 /**
  * [ResToRClassGenerator] takes list of resource files and dependencies R.txt directory and generates
