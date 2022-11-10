@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.grab.aapt.databinding.util
-
-import com.grab.aapt.databinding.rclass.parser.XmlTypeValues
+package com.grab.aapt.databinding.rclass.parser
 
 interface XmlEntry {
     /**

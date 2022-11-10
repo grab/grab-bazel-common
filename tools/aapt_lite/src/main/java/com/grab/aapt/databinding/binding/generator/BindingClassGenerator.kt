@@ -16,10 +16,10 @@
 
 package com.grab.aapt.databinding.binding.generator
 
-import com.grab.aapt.AaptScope
-import com.grab.aapt.databinding.binding.parser.Binding
-import com.grab.aapt.databinding.binding.parser.BindingType
-import com.grab.aapt.databinding.binding.parser.LayoutBindingData
+import com.grab.aapt.databinding.di.AaptScope
+import com.grab.aapt.databinding.binding.model.Binding
+import com.grab.aapt.databinding.binding.model.BindingType
+import com.grab.aapt.databinding.binding.model.LayoutBindingData
 import com.grab.aapt.databinding.common.BASE_DIR
 import com.grab.aapt.databinding.common.DATABINDING_PACKAGE
 import com.grab.aapt.databinding.common.Generator

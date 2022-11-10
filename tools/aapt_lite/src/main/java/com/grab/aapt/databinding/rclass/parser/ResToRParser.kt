@@ -16,9 +16,12 @@
 
 package com.grab.aapt.databinding.rclass.parser
 
-import com.grab.aapt.AaptScope
 import com.grab.aapt.databinding.common.NON_TRANSITIVE_R
-import com.grab.aapt.databinding.util.*
+import com.grab.aapt.databinding.di.AaptScope
+import com.grab.aapt.databinding.util.NAME
+import com.grab.aapt.databinding.util.attributeName
+import com.grab.aapt.databinding.util.attributesNameValue
+import com.grab.aapt.databinding.util.events
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.File
@@ -96,7 +99,6 @@ class DefaultResToRParser @Inject constructor(
 
     private fun collectRes(file: File) {
         val dirname = file.parentFile.name
-
         if (dirname.startsWith("values".substringBefore("-"))) { // for lang values like "values-in"
             processValues(file)
         } else {

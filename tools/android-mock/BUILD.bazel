@@ -12,7 +12,6 @@ kt_jvm_library(
         "@bazel_common_maven//:com_github_ajalt_clikt",
         "@bazel_common_maven//:org_ow2_asm_asm",
         "@bazel_common_maven//:org_ow2_asm_asm_tree",
-        "@com_github_jetbrains_kotlin//:kotlin-stdlib-jdk8",
     ],
 )
 

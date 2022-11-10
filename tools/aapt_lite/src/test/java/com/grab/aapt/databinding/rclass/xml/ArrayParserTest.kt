@@ -18,7 +18,7 @@ package com.grab.aapt.databinding.rclass.xml
 
 import com.grab.aapt.databinding.rclass.parser.*
 import com.grab.aapt.databinding.rclass.parser.xml.ArrayParser
-import com.grab.aapt.databinding.util.SingleXmlEntry
+import com.grab.aapt.databinding.rclass.parser.SingleXmlEntry
 import org.junit.Test
 import kotlin.test.assertEquals
 

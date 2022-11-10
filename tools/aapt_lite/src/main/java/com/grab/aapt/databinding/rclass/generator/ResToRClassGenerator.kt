@@ -16,10 +16,10 @@
 
 package com.grab.aapt.databinding.rclass.generator
 
-import com.grab.aapt.AaptScope
 import com.grab.aapt.databinding.common.BASE_DIR
 import com.grab.aapt.databinding.common.Generator
 import com.grab.aapt.databinding.common.R_CLASS_OUTPUT_DIR
+import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.rclass.parser.ResToRParser
 import com.squareup.javapoet.ArrayTypeName
 import com.squareup.javapoet.FieldSpec
@@ -48,7 +48,7 @@ interface ResToRClassGenerator : Generator {
 }
 
 @AaptScope
-class ResToRClassGeneratorImpl
+class DefaultResToRClassGenerator
 @Inject
 constructor(
     @Named(BASE_DIR)

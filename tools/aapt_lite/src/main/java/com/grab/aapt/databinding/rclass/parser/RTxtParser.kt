@@ -16,8 +16,8 @@
 
 package com.grab.aapt.databinding.rclass.parser
 
-import com.grab.aapt.AaptScope
-import com.grab.aapt.databinding.binding.parser.LayoutBindingData
+import com.grab.aapt.databinding.di.AaptScope
+import com.grab.aapt.databinding.binding.model.LayoutBindingData
 import javax.inject.Inject
 
 data class RFieldEntry(
@@ -80,6 +80,10 @@ enum class XmlTypeValues(val entry: String) {
     STRING("string"),
     STRING_ARRAY("string-array"),
     STYLE("style")
+}
+
+fun enumTypeValue(name: String): XmlTypeValues {
+    return enumValues<XmlTypeValues>().first { it.entry == name }
 }
 
 data class RSubClass(

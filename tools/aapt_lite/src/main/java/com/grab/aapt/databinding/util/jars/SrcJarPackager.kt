@@ -1,7 +1,6 @@
-package com.grab.aapt.databinding.common
+package com.grab.aapt.databinding.util.jars
 
-import com.grab.aapt.AaptScope
-import com.grab.aapt.databinding.util.jars.SourceJarCreator
+import com.grab.aapt.databinding.di.AaptScope
 import dagger.Binds
 import dagger.Module
 import java.io.File

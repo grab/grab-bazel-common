@@ -16,8 +16,6 @@
 
 package com.grab.aapt.databinding.rclass.parser
 
-import com.grab.aapt.databinding.util.XmlEntry
-
 const val DEFAULT_VALUE = "0"
 
 interface ResourceFileParser {

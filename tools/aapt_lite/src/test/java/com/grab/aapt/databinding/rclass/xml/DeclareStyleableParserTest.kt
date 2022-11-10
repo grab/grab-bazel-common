@@ -18,7 +18,7 @@ package com.grab.aapt.databinding.rclass.xml
 
 import com.grab.aapt.databinding.rclass.parser.*
 import com.grab.aapt.databinding.rclass.parser.xml.DeclareStyleableParser
-import com.grab.aapt.databinding.util.ParentXmlEntryImpl
+import com.grab.aapt.databinding.rclass.parser.ParentXmlEntryImpl
 import org.junit.Test
 import kotlin.test.assertEquals
 

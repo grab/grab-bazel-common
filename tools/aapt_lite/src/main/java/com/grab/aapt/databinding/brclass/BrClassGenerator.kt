@@ -16,8 +16,8 @@
 
 package com.grab.aapt.databinding.brclass
 
-import com.grab.aapt.AaptScope
-import com.grab.aapt.databinding.binding.parser.LayoutBindingData
+import com.grab.aapt.databinding.di.AaptScope
+import com.grab.aapt.databinding.binding.model.LayoutBindingData
 import com.grab.aapt.databinding.common.BASE_DIR
 import com.grab.aapt.databinding.common.Generator
 import com.grab.aapt.databinding.common.R_CLASS_OUTPUT_DIR

@@ -1,8 +1,8 @@
 package com.grab.aapt.databinding.mapper
 
-import com.grab.aapt.AaptScope
-import com.grab.aapt.databinding.common.SrcJarPackageModule
-import com.grab.aapt.databinding.common.SrcJarPackager
+import com.grab.aapt.databinding.di.AaptScope
+import com.grab.aapt.databinding.util.jars.SrcJarPackageModule
+import com.grab.aapt.databinding.util.jars.SrcJarPackager
 import dagger.Component
 
 @AaptScope

@@ -20,8 +20,8 @@ import com.grab.aapt.databinding.rclass.parser.ParserResult
 import com.grab.aapt.databinding.rclass.parser.RFieldEntry
 import com.grab.aapt.databinding.rclass.parser.ResourceFileParser
 import com.grab.aapt.databinding.rclass.parser.Type
-import com.grab.aapt.databinding.util.ParentXmlEntry
-import com.grab.aapt.databinding.util.XmlEntry
+import com.grab.aapt.databinding.rclass.parser.ParentXmlEntry
+import com.grab.aapt.databinding.rclass.parser.XmlEntry
 import javax.inject.Inject
 
 /**

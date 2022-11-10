@@ -16,7 +16,10 @@
 
 package com.grab.aapt.databinding.binding.parser
 
-import com.grab.aapt.AaptScope
+import com.grab.aapt.databinding.binding.model.Binding
+import com.grab.aapt.databinding.binding.model.BindingType
+import com.grab.aapt.databinding.binding.model.LayoutBindingData
+import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.binding.store.DEPS
 import com.grab.aapt.databinding.binding.store.LOCAL
 import com.grab.aapt.databinding.binding.store.LayoutTypeStore
@@ -30,45 +33,6 @@ import org.xmlpull.v1.XmlPullParserFactory
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Named
-
-/**
- * Type to represent binding type in a layout XML
- */
-sealed class BindingType {
-    object Variable : BindingType()
-    object View : BindingType()
-    data class IncludedLayout(
-        val layoutName: String,
-        /**
-         * Denote that included layout's type was not found in either local or in dependencies
-         */
-        val layoutMissing: Boolean = false
-    ) : BindingType()
-}
-
-/**
- * The type of binding and it's metadata
- */
-data class Binding(
-    val rawName: String,
-    val typeName: TypeName,
-    val name: String = rawName
-        .split("_")
-        .joinToString(
-            separator = "",
-            transform = String::capitalize
-        ).let { Character.toLowerCase(it.first()) + it.substring(1) },
-    val bindingType: BindingType
-)
-
-data class LayoutBindingData(
-    val layoutName: String,
-    val file: File,
-    // Layout declarations in layout xml
-    val bindings: List<Binding>,
-    // Variable declarations in layout xml
-    val bindables: List<Binding>
-)
 
 interface LayoutBindingsParser {
     fun parse(packageName: String, layoutFiles: List<File>): List<LayoutBindingData>

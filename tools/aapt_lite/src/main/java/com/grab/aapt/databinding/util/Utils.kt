@@ -16,7 +16,6 @@
 
 package com.grab.aapt.databinding.util
 
-import com.grab.aapt.databinding.rclass.parser.XmlTypeValues
 import com.squareup.javapoet.TypeName
 
 fun String.extractPrimitiveType(): TypeName? = when (this) {
@@ -43,6 +42,3 @@ fun String.toLayoutBindingName(): String {
         ) + "Binding"
 }
 
-fun enumTypeValue(name: String): XmlTypeValues {
-    return enumValues<XmlTypeValues>().first { it.entry == name }
-}

@@ -16,7 +16,7 @@
 
 package com.grab.aapt.databinding.binding
 
-import com.grab.aapt.databinding.binding.parser.BindingType
+import com.grab.aapt.databinding.binding.model.BindingType
 import com.grab.aapt.databinding.binding.parser.DefaultLayoutBindingsParser
 import com.grab.aapt.databinding.binding.store.LayoutTypeStore
 import com.grab.aapt.databinding.binding.store.LocalModuleLayoutTypeStore

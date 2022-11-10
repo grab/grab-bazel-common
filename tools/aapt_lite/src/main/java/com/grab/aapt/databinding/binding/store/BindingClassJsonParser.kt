@@ -16,7 +16,7 @@
 
 package com.grab.aapt.databinding.binding.store
 
-import com.grab.aapt.AaptScope
+import com.grab.aapt.databinding.di.AaptScope
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonReader.Token

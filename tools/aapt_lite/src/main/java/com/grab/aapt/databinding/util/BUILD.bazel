@@ -1,0 +1,17 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+    name = "util",
+    srcs = glob([
+        "*.kt",
+    ]),
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//:dagger",
+        "@bazel_common_maven//:com_squareup_javapoet",
+        "@bazel_common_maven//:net_sf_kxml_kxml2",
+        "@bazel_common_maven//:xmlpull_xmlpull",
+    ],
+)

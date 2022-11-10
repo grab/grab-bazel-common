@@ -16,9 +16,9 @@
 
 package com.grab.aapt.databinding.rclass
 
-import com.grab.aapt.AaptScope
+import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.rclass.generator.ResToRClassGenerator
-import com.grab.aapt.databinding.rclass.generator.ResToRClassGeneratorImpl
+import com.grab.aapt.databinding.rclass.generator.DefaultResToRClassGenerator
 import com.grab.aapt.databinding.rclass.parser.DefaultResToRParser
 import com.grab.aapt.databinding.rclass.parser.ParserType
 import com.grab.aapt.databinding.rclass.parser.ResToRParser
@@ -65,5 +65,5 @@ interface ResourceParserModule {
 
     @Binds
     @AaptScope
-    fun ResToRClassGeneratorImpl.resToRClassGenerator(): ResToRClassGenerator
+    fun DefaultResToRClassGenerator.resToRClassGenerator(): ResToRClassGenerator
 }

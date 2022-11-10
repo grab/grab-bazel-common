@@ -16,29 +16,29 @@
 
 package com.grab.aapt
 
+import com.grab.aapt.databinding.binding.BindingClassModule
 import com.grab.aapt.databinding.binding.generator.BindingClassGenerator
 import com.grab.aapt.databinding.binding.parser.BindingsParserModule
 import com.grab.aapt.databinding.binding.parser.LayoutBindingsParser
 import com.grab.aapt.databinding.brclass.BrClassGenerator
 import com.grab.aapt.databinding.brclass.BrClassModule
 import com.grab.aapt.databinding.common.*
+import com.grab.aapt.databinding.di.AaptScope
 import com.grab.aapt.databinding.rclass.ResourceParserModule
 import com.grab.aapt.databinding.rclass.generator.RClassModule
 import com.grab.aapt.databinding.rclass.generator.ResToRClassGenerator
+import com.grab.aapt.databinding.util.jars.SrcJarPackageModule
+import com.grab.aapt.databinding.util.jars.SrcJarPackager
 import dagger.BindsInstance
 import dagger.Component
 import java.io.File
 import javax.inject.Named
-import javax.inject.Scope
-
-@Scope
-annotation class AaptScope
 
 @AaptScope
 @Component(
     modules = [
         RClassModule::class,
-        com.grab.aapt.databinding.binding.BindingClassModule::class,
+        BindingClassModule::class,
         BrClassModule::class,
         BindingsParserModule::class,
         ResourceParserModule::class,
