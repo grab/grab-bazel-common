@@ -30,6 +30,10 @@ bazel_common_initialize(
     buildifier_version = "5.1.0",
 )
 
+load("@grab_bazel_common//android:maven.bzl", "pin_bazel_common_artifacts")
+
+pin_bazel_common_artifacts()
+
 load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
 
 # Bazel common uses few artifacts under @maven repository
