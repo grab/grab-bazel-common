@@ -1,0 +1,21 @@
+directories:
+  .
+  -bazel-cache
+
+# Automatically includes all relevant targets under the 'directories' above
+derive_targets_from_directories: true
+
+workspace_type: android
+
+java_language_level: 11
+
+additional_languages:
+  android
+  java
+  kotlin
+
+android_sdk_platform: android-30
+
+import_run_configurations:
+  project_views/Pin Artifacts.run.xml
+  project_views/Run all tests.run.xml

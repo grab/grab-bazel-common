@@ -1,0 +1,12 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+    name = "bazel_lib",
+    srcs = glob([
+        "src/main/kotlin/**/*.kt",
+        "src/main/kotlin/**/*.java",
+    ]),
+    visibility = [
+        "//visibility:public",
+    ],
+)

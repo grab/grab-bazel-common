@@ -9,7 +9,12 @@ load("@grab_bazel_common//android:initialize.bzl", "bazel_common_initialize")
 
 bazel_common_initialize(
     buildifier_version = "5.1.0",
+    pinned_maven_install = True,
 )
+
+load("@grab_bazel_common//android:maven.bzl", "pin_bazel_common_artifacts")
+
+pin_bazel_common_artifacts()
 
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories")
 

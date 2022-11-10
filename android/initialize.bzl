@@ -8,10 +8,9 @@ load("@grab_bazel_common//tools/buildifier:defs.bzl", "BUILDIFIER_DEFAULT_VERSIO
 load("@grab_bazel_common//android/tools:defs.bzl", "android_tools")
 load("@bazel_common_dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
 load("@rules_jvm_external//:defs.bzl", "maven_install")
-
 # load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
-# Setup android databinding compilation and optionally used patched android tools jar
+# Setup android databinding compilation and optionally use patched android tools jar
 def _android(patched_android_tools):
     native.bind(
         name = "databinding_annotation_processor",
@@ -22,7 +21,8 @@ def _android(patched_android_tools):
 
 def bazel_common_initialize(
         patched_android_tools = True,
-        buildifier_version = BUILDIFIER_DEFAULT_VERSION):
+        buildifier_version = BUILDIFIER_DEFAULT_VERSION,
+        pinned_maven_install = True):
     #rules_proto_dependencies()
     #rules_proto_toolchains()
 
@@ -32,8 +32,11 @@ def bazel_common_initialize(
         ),
     )
 
+    repo_name = "bazel_common_maven"
+    maven_install_json = "@grab_bazel_common//:%s_install.json" % repo_name if pinned_maven_install else None
+
     maven_install(
-        name = "bazel_common_maven",
+        name = repo_name,
         artifacts = DAGGER_ARTIFACTS + [
             "com.google.guava:guava:29.0-jre",
             "com.google.auto:auto-common:0.10",
@@ -60,6 +63,7 @@ def bazel_common_initialize(
             "https://maven.google.com",
         ],
         strict_visibility = True,
+        maven_install_json = maven_install_json,
     )
 
     _android(patched_android_tools)
