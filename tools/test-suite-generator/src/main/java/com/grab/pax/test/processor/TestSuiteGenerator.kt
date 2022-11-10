@@ -29,15 +29,15 @@ import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.Modifier.PUBLIC
 
 
-interface TestInfoExporter{
+interface TestInfoExporter {
     fun export(testData: Set<Element>)
 }
 
 @AutoService(Processor::class)
 class TestSuiteGenerator : BasicAnnotationProcessor(),
-        BasicAnnotationProcessor.ProcessingStep {
+    BasicAnnotationProcessor.ProcessingStep {
 
-    private val testInfoExporter : TestInfoExporter by lazy { TestSuiteExporter(processingEnv) }
+    private val testInfoExporter: TestInfoExporter by lazy { TestSuiteExporter(processingEnv) }
 
     override fun initSteps() = mutableListOf(this)
 
@@ -49,12 +49,12 @@ class TestSuiteGenerator : BasicAnnotationProcessor(),
 
     override fun process(elementsByAnnotation: SetMultimap<Class<out Annotation>, Element>): MutableSet<out Element> {
         supportedAnnotations.flatMap(elementsByAnnotation::get)
-                .asSequence()
-                .filterIsInstance<ExecutableElement>()
-                .filter { method -> method.modifiers.contains(PUBLIC) }
-                .map { method -> method.enclosingElement }
-                .toSet()
-                .run { testInfoExporter.export(this) }
+            .asSequence()
+            .filterIsInstance<ExecutableElement>()
+            .filter { method -> method.modifiers.contains(PUBLIC) }
+            .map { method -> method.enclosingElement }
+            .toSet()
+            .run { testInfoExporter.export(this) }
         return mutableSetOf()
     }
 }

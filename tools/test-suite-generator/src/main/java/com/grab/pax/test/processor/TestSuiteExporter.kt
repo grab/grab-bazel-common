@@ -32,21 +32,21 @@ private const val DEFAULT_TEST_SUITE_PACKAGE = "com.grazel.generated"
 class TestSuiteExporter(private val processingEnv: ProcessingEnvironment) : TestInfoExporter {
     override fun export(testData: Set<Element>) {
         val runWithAnnotationSpec = AnnotationSpec.builder(RunWith::class.java)
-                .addMember("value", "\$T.class", Suite::class.java)
-                .build()
+            .addMember("value", "\$T.class", Suite::class.java)
+            .build()
         val suiteAnnotationSpec = AnnotationSpec.builder(Suite.SuiteClasses::class.java)
-                .also {
-                    testData.forEach { clazz -> it.addMember("value", "\$T.class", clazz.asType()) }
-                }.build()
+            .also {
+                testData.forEach { clazz -> it.addMember("value", "\$T.class", clazz.asType()) }
+            }.build()
 
         val classType = TypeSpec
-                .classBuilder(DEFAULT_TEST_SUITE_CLASS)
-                .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(runWithAnnotationSpec)
-                .addAnnotation(suiteAnnotationSpec)
-                .build()
+            .classBuilder(DEFAULT_TEST_SUITE_CLASS)
+            .addModifiers(Modifier.PUBLIC)
+            .addAnnotation(runWithAnnotationSpec)
+            .addAnnotation(suiteAnnotationSpec)
+            .build()
         JavaFile.builder(DEFAULT_TEST_SUITE_PACKAGE, classType)
-                .build()
-                .writeTo(processingEnv.filer)
+            .build()
+            .writeTo(processingEnv.filer)
     }
 }

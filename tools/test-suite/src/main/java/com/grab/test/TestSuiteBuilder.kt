@@ -55,7 +55,7 @@ class TestSuiteBuilder {
     private fun getClassesRecursive(pkgNames: List<String>): Set<Class<*>> {
         val result: MutableSet<Class<*>> = LinkedHashSet()
         try {
-            for(pkg in pkgNames) {
+            for (pkg in pkgNames) {
                 for (clazz in Classpath.findClasses(pkg)) {
                     if (isTestClass(clazz)) {
                         result.add(clazz)
@@ -117,7 +117,6 @@ class TestSuiteBuilder {
                 } || (container.superclass?.interfaces?.any {
                     it.name == "junit.framework.Test"
                 } == true)
-
             } catch (e: ClassNotFoundException) {
                 false
             } catch (e: NoClassDefFoundError) {

@@ -2,9 +2,11 @@
 
 ## Intro
 
-Bazel at the moment does not support `@BindingAdapters` written in Kotlin. The reason being, databinding rules are currently coupled inside Bazel binary and current implementation only runs the annotation processor when the source files are provided in `srcs` and are in `.java`.
+Bazel at the moment does not support `@BindingAdapters` written in Kotlin. The reason being, databinding rules are currently coupled inside
+Bazel binary and current implementation only runs the annotation processor when the source files are provided in `srcs` and are in `.java`.
 
-This annotation processor helps in mitigating by generating proxy `@BindingAdapter` methods in Java. Through use of Kotlin to Java interop, it delegates the implementation to actual Kotlin class. 
+This annotation processor helps in mitigating by generating proxy `@BindingAdapter` methods in Java. Through use of Kotlin to Java interop,
+it delegates the implementation to actual Kotlin class.
 
 These generated `.java` files can be fed to an `android_library` rule to consider them during databinding compilation.
 
@@ -20,18 +22,20 @@ fun updateNode(textView: TextView, value: String) {
 ```
 
 For the above function, the annotation processor will generate:
+
 ```java
 public class UpdateNode_Binding_Adapter_Stub {
-  @BindingAdapter("test")
-  public static void updateNode(TextView textView, String value) {
-    BindingAdapterProcessorTestKt.updateNode(node, value);
-  }
+    @BindingAdapter("test")
+    public static void updateNode(TextView textView, String value) {
+        BindingAdapterProcessorTestKt.updateNode(node, value);
+    }
 }
 ```
 
 ## Non static @BindingAdapters
 
-Proxy generation only works since the typically `@BindingAdapter` are static and static method resolution is trivial when acessing Kotlin function. However databinding also supports non-static `@BindingAdapters`. In that, few extra steps are required to make them working.
+Proxy generation only works since the typically `@BindingAdapter` are static and static method resolution is trivial when acessing Kotlin
+function. However databinding also supports non-static `@BindingAdapters`. In that, few extra steps are required to make them working.
 
 ### Gradle
 
@@ -62,14 +66,12 @@ Doing so, will allow to use the binding like `app:cat="@{cat}"`.
 
 To acheive similar results with Bazel, couple of extra steps need to be taken as listed.
 
-1. Create a provider for class that has non-static binding adapter.
-   For example,
+1. Create a provider for class that has non-static binding adapter. For example,
    ```kotlin
    interface CatBindingAdapterHolderProvider {
         fun getCatBindingAdapterHolder(): CatBindingAdapterHolder
    ```
-2. Make the custom databinding component, implement the above provider.
-   Example,
+2. Make the custom databinding component, implement the above provider. Example,
    ```kotlin
    class CatDatabindingComponent : DataBindingComponent, CatBindingAdapterHolderProvider {
         override fun getCatBindingAdapterHolder() = CatBindingAdapterHolder()
@@ -84,8 +86,7 @@ To acheive similar results with Bazel, couple of extra steps need to be taken as
     }
    ```
    As shown, we are simply delegating to existing impl statically.
-4. Update layout xmls to use the static ones.
-   Example:
+4. Update layout xmls to use the static ones. Example:
    ```diff
    -app:cat="@{cat}"
    +app:catStatic="@{cat}"

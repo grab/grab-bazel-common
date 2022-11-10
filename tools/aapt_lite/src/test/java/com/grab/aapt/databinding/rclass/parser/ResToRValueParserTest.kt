@@ -93,7 +93,6 @@ class ResToRValueParserTest : BaseBindingStubTest() {
                 Type.BOOL to expectedBool
             ), result
         )
-
     }
 
     @Test

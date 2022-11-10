@@ -1,11 +1,11 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Pin Artifacts" type="BlazeCommandRunConfigurationType" factoryName="Bazel Command">
-    <blaze-settings handler-id="BlazeJavaRunConfigurationHandlerProvider" blaze-command="run" kind="java_binary">
-      <blaze-target>//tools/maven:maven_pinner</blaze-target>
-      <blaze-user-exe-flag>--maven_repo=bazel_common_maven</blaze-user-exe-flag>
-    </blaze-settings>
-    <method v="2">
-      <option name="Blaze.BeforeRunTask" enabled="true" />
-    </method>
-  </configuration>
+    <configuration name="Pin Artifacts" default="false" factoryName="Bazel Command" type="BlazeCommandRunConfigurationType">
+        <blaze-settings blaze-command="run" handler-id="BlazeJavaRunConfigurationHandlerProvider" kind="java_binary">
+            <blaze-target>//tools/maven:maven_pinner</blaze-target>
+            <blaze-user-exe-flag>--maven_repo=bazel_common_maven</blaze-user-exe-flag>
+        </blaze-settings>
+        <method v="2">
+            <option name="Blaze.BeforeRunTask" enabled="true" />
+        </method>
+    </configuration>
 </component>

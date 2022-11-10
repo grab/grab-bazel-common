@@ -1,8 +1,10 @@
 # Grab Bazel Common Android
 
-Common rules and macros for Grab's Android projects built with Bazel. This repo provides rules and macros to support some of Android Gradle Plugin features in Bazel.
+Common rules and macros for Grab's Android projects built with Bazel. This repo provides rules and macros to support some of Android Gradle
+Plugin features in Bazel.
 
-The repo also hosts a patched Bazel Android Tools jar with fixes for build reproducibility and databinding applied. See [/patches](https://github.com/grab/grab-bazel-common/tree/master/patches) for details.
+The repo also hosts a patched Bazel Android Tools jar with fixes for build reproducibility and databinding applied.
+See [/patches](https://github.com/grab/grab-bazel-common/tree/master/patches) for details.
 
 The rules are used by [Grazel](https://github.com/grab/Grazel) - Gradle plugin to automate migration to Bazel.
 
@@ -47,7 +49,9 @@ maven_install(
 # Features
 
 ### Build Config Fields
+
 `Build Config` support for android projects
+
 ```python
 load("@grab_bazel_common//tools/build_config:build_config.bzl", "build_config")
 
@@ -62,8 +66,9 @@ build_config(
     strings = {},
 )
 ```
-   
-### Res values   
+
+### Res values
+
 Gradle's `resValue` strings support for Android Projects
 
 ```python
@@ -82,9 +87,11 @@ android_library(
 )
 ```   
 
-### Databinding 
-Provides a macro which in most cases can be used as a drop-in replacement to `kt_android_library` to enable support for Kotlin code when using databinding. [Details](https://github.com/grab/grab-bazel-common/blob/documentation/tools/databinding/databinding.bzl).
-Worker support for some of the internal actions can be enabled by `build --strategy=DatabindingStubs=worker`.
+### Databinding
+
+Provides a macro which in most cases can be used as a drop-in replacement to `kt_android_library` to enable support for Kotlin code when
+using databinding. [Details](https://github.com/grab/grab-bazel-common/blob/documentation/tools/databinding/databinding.bzl). Worker support
+for some of the internal actions can be enabled by `build --strategy=DatabindingStubs=worker`.
 
 ```python
 load("@grab_bazel_common//tools/databinding:databinding.bzl", "kt_db_android_library")
@@ -125,9 +132,11 @@ build --experimental_google_legacy_api
 query --experimental_google_legacy_api
 ```
 
-
 ### Custom Resource Sets
-Bazel expects certain Android resource folder structure (should start with `res/`) and this can conflict with Android Gradle plugin's custom resource source set feature which does not have this validation. This macro helps to adapt the folder to Bazel expected structure so both build systems can function.
+
+Bazel expects certain Android resource folder structure (should start with `res/`) and this can conflict with Android Gradle plugin's custom
+resource source set feature which does not have this validation. This macro helps to adapt the folder to Bazel expected structure so both
+build systems can function.
 
 In Gradle, if you have:
 
@@ -162,9 +171,13 @@ android_binary(
 
 ### Unit Test Macros
 
-Provides macros to simplify migrating unit tests to Bazel and ports over Android Gradle Plugin's [return default values](https://developer.android.com/studio/test/index.html#test_options) feature. With default values, Android Unit tests can be executed without [Robolectric](http://robolectric.org) by relying on mocked `android.jar` as an alternative to `android_local_test` in Bazel.
+Provides macros to simplify migrating unit tests to Bazel and ports over Android Gradle
+Plugin's [return default values](https://developer.android.com/studio/test/index.html#test_options) feature. With default values, Android
+Unit tests can be executed without [Robolectric](http://robolectric.org) by relying on mocked `android.jar` as an alternative
+to `android_local_test` in Bazel.
 
-The below macros makes assumptions that files containing Kotlin tests are named `*Tests.kt` or `Test.kt` and class name matches the file name.
+The below macros makes assumptions that files containing Kotlin tests are named `*Tests.kt` or `Test.kt` and class name matches the file
+name.
 
 #### Kotlin Unit tests
 
@@ -185,7 +198,10 @@ grab_kt_jvm_test(
     ],
 )
 ```
-This will generate a single build target for all Kotlin files and individual `*Test` targets for each `*Test` class. [Reference](tools/binding-adapter-bridge/BUILD.bazel).
+
+This will generate a single build target for all Kotlin files and individual `*Test` targets for each `*Test`
+class. [Reference](tools/binding-adapter-bridge/BUILD.bazel).
+
 #### Android Unit tests
 
 Similarly for android unit tests, use `grab_android_local_test` to build and execute tests. [Reference](tools/test/android/BUILD.bazel).

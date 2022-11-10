@@ -18,6 +18,5 @@ package com.grab.test
 // An internal class to test access in test code via associates.
 internal class SampleClass {
     internal fun assert() {
-
     }
 }

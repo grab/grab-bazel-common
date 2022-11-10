@@ -40,107 +40,20 @@ import java.util.function.BiFunction;
  */
 public class WorkRequestHandler implements AutoCloseable {
     /**
-     * Contains the logic for reading {@link WorkRequest}s and writing {@link WorkResponse}s.
-     */
-    public interface WorkerMessageProcessor {
-        /**
-         * Reads the next incoming request from this worker's stdin.
-         */
-        WorkRequest readWorkRequest() throws IOException;
-
-        /**
-         * Writes the provided {@link WorkResponse} to this worker's stdout. This function is also
-         * responsible for flushing the stdout.
-         */
-        void writeWorkResponse(WorkResponse workResponse) throws IOException;
-
-        /**
-         * Clean up.
-         */
-        void close() throws IOException;
-    }
-
-    /**
-     * Holds information necessary to properly handle a request, especially for cancellation.
-     */
-    static class RequestInfo {
-        /**
-         * The thread handling the request.
-         */
-        final Thread thread;
-        /**
-         * If true, we have received a cancel request for this request.
-         */
-        private final AtomicBoolean cancelled = new AtomicBoolean(false);
-        /**
-         * The builder for the response to this request. Since only one response must be sent per
-         * request, this builder must be accessed through takeBuilder(), which zeroes this field and
-         * returns the builder.
-         */
-        private WorkResponse.Builder responseBuilder = WorkResponse.newBuilder();
-
-        RequestInfo(Thread thread) {
-            this.thread = thread;
-        }
-
-        /**
-         * Sets whether this request has been cancelled.
-         */
-        void setCancelled() {
-            cancelled.set(true);
-        }
-
-        /**
-         * Returns true if this request has been cancelled.
-         */
-        boolean isCancelled() {
-            return cancelled.get();
-        }
-
-        /**
-         * Returns the response builder. If called more than once on the same instance, subsequent calls
-         * will return {@code null}.
-         */
-        synchronized Optional<WorkResponse.Builder> takeBuilder() {
-            WorkResponse.Builder b = responseBuilder;
-            responseBuilder = null;
-            return Optional.ofNullable(b);
-        }
-
-        /**
-         * Adds {@code s} as output to when the response eventually gets built. Does nothing if the
-         * response has already been taken. There is no guarantee that the response hasn't already been
-         * taken, making this call a no-op. This may be called multiple times. No delimiters are added
-         * between strings from multiple calls.
-         */
-        synchronized void addOutput(String s) {
-            if (responseBuilder != null) {
-                responseBuilder.setOutput(responseBuilder.getOutput() + s);
-            }
-        }
-    }
-
-    /**
      * Requests that are currently being processed. Visible for testing.
      */
     final ConcurrentMap<Integer, RequestInfo> activeRequests = new ConcurrentHashMap<>();
-
+    final WorkerMessageProcessor messageProcessor;
     /**
      * The function to be called after each {@link WorkRequest} is read.
      */
     private final WorkRequestCallback callback;
-
     /**
      * This worker's stderr.
      */
     private final PrintStream stderr;
-
-    final WorkerMessageProcessor messageProcessor;
-
     private final BiConsumer<Integer, Thread> cancelCallback;
-
     private final CpuTimeBasedGcScheduler gcScheduler;
-
     /**
      * If set, this worker will stop handling requests and shut itself down. This can happen if
      * something throws an {@link Error}.
@@ -232,111 +145,6 @@ public class WorkRequestHandler implements AutoCloseable {
         this.messageProcessor = messageProcessor;
         this.gcScheduler = new CpuTimeBasedGcScheduler(cpuUsageBeforeGc);
         this.cancelCallback = cancelCallback;
-    }
-
-    /**
-     * A wrapper class for the callback BiFunction
-     */
-    public static class WorkRequestCallback {
-
-        /**
-         * Callback method for executing a single WorkRequest in a thread. The first argument to {@code
-         * callback} is the WorkRequest, the second is where all error messages and other user-oriented
-         * messages should be written to. The callback must return an exit code indicating success
-         * (zero) or failure (nonzero).
-         */
-        private final BiFunction<WorkRequest, PrintWriter, Integer> callback;
-
-        public WorkRequestCallback(BiFunction<WorkRequest, PrintWriter, Integer> callback) {
-            this.callback = callback;
-        }
-
-        public Integer apply(WorkRequest workRequest, PrintWriter printWriter)
-                throws InterruptedException {
-            Integer result = callback.apply(workRequest, printWriter);
-            if (Thread.interrupted()) {
-                throw new InterruptedException("Work request interrupted: " + workRequest.getRequestId());
-            }
-            return result;
-        }
-    }
-
-    /**
-     * Builder class for WorkRequestHandler. Required parameters are passed to the constructor.
-     */
-    public static class WorkRequestHandlerBuilder {
-        private final WorkRequestCallback callback;
-        private final PrintStream stderr;
-        private final WorkerMessageProcessor messageProcessor;
-        private Duration cpuUsageBeforeGc = Duration.ZERO;
-        private BiConsumer<Integer, Thread> cancelCallback;
-
-        /**
-         * Creates a {@code WorkRequestHandlerBuilder}.
-         *
-         * @param callback         Callback method for executing a single WorkRequest in a thread. The first
-         *                         argument to {@code callback} is the set of command-line arguments, the second is where
-         *                         all error messages and other user-oriented messages should be written to. The callback
-         *                         must return an exit code indicating success (zero) or failure (nonzero).
-         * @param stderr           Stream that log messages should be written to, typically the process' stderr.
-         * @param messageProcessor Object responsible for parsing {@code WorkRequest}s from the server
-         *                         and writing {@code WorkResponses} to the server.
-         * @deprecated use WorkRequestHandlerBuilder with WorkRequestCallback instead
-         */
-        @Deprecated
-        public WorkRequestHandlerBuilder(
-                BiFunction<List<String>, PrintWriter, Integer> callback,
-                PrintStream stderr,
-                WorkerMessageProcessor messageProcessor) {
-            this(
-                    new WorkRequestCallback((request, pw) -> callback.apply(request.getArgumentsList(), pw)),
-                    stderr,
-                    messageProcessor);
-        }
-
-        /**
-         * Creates a {@code WorkRequestHandlerBuilder}.
-         *
-         * @param callback         WorkRequestCallback object with Callback method for executing a single
-         *                         WorkRequest in a thread. The first argument to {@code callback} is the WorkRequest, the
-         *                         second is where all error messages and other user-oriented messages should be written to.
-         *                         The callback must return an exit code indicating success (zero) or failure (nonzero).
-         * @param stderr           Stream that log messages should be written to, typically the process' stderr.
-         * @param messageProcessor Object responsible for parsing {@code WorkRequest}s from the server
-         *                         and writing {@code WorkResponses} to the server.
-         */
-        public WorkRequestHandlerBuilder(
-                WorkRequestCallback callback, PrintStream stderr, WorkerMessageProcessor messageProcessor) {
-            this.callback = callback;
-            this.stderr = stderr;
-            this.messageProcessor = messageProcessor;
-        }
-
-        /**
-         * Sets the minimum amount of CPU time between explicit garbage collection calls. Pass
-         * Duration.ZERO to not do explicit garbage collection (the default).
-         */
-        public WorkRequestHandlerBuilder setCpuUsageBeforeGc(Duration cpuUsageBeforeGc) {
-            this.cpuUsageBeforeGc = cpuUsageBeforeGc;
-            return this;
-        }
-
-        /**
-         * Sets a callback will be called when a cancellation message has been received. The callback
-         * will be call with the request ID and the thread executing the request.
-         */
-        public WorkRequestHandlerBuilder setCancelCallback(BiConsumer<Integer, Thread> cancelCallback) {
-            this.cancelCallback = cancelCallback;
-            return this;
-        }
-
-        /**
-         * Returns a WorkRequestHandler instance with the values in this Builder.
-         */
-        public WorkRequestHandler build() {
-            return new WorkRequestHandler(
-                    callback, stderr, messageProcessor, cpuUsageBeforeGc, cancelCallback);
-        }
     }
 
     /**
@@ -520,27 +328,211 @@ public class WorkRequestHandler implements AutoCloseable {
     }
 
     /**
+     * Contains the logic for reading {@link WorkRequest}s and writing {@link WorkResponse}s.
+     */
+    public interface WorkerMessageProcessor {
+        /**
+         * Reads the next incoming request from this worker's stdin.
+         */
+        WorkRequest readWorkRequest() throws IOException;
+
+        /**
+         * Writes the provided {@link WorkResponse} to this worker's stdout. This function is also
+         * responsible for flushing the stdout.
+         */
+        void writeWorkResponse(WorkResponse workResponse) throws IOException;
+
+        /**
+         * Clean up.
+         */
+        void close() throws IOException;
+    }
+
+    /**
+     * Holds information necessary to properly handle a request, especially for cancellation.
+     */
+    static class RequestInfo {
+        /**
+         * The thread handling the request.
+         */
+        final Thread thread;
+        /**
+         * If true, we have received a cancel request for this request.
+         */
+        private final AtomicBoolean cancelled = new AtomicBoolean(false);
+        /**
+         * The builder for the response to this request. Since only one response must be sent per
+         * request, this builder must be accessed through takeBuilder(), which zeroes this field and
+         * returns the builder.
+         */
+        private WorkResponse.Builder responseBuilder = WorkResponse.newBuilder();
+
+        RequestInfo(Thread thread) {
+            this.thread = thread;
+        }
+
+        /**
+         * Sets whether this request has been cancelled.
+         */
+        void setCancelled() {
+            cancelled.set(true);
+        }
+
+        /**
+         * Returns true if this request has been cancelled.
+         */
+        boolean isCancelled() {
+            return cancelled.get();
+        }
+
+        /**
+         * Returns the response builder. If called more than once on the same instance, subsequent calls
+         * will return {@code null}.
+         */
+        synchronized Optional<WorkResponse.Builder> takeBuilder() {
+            WorkResponse.Builder b = responseBuilder;
+            responseBuilder = null;
+            return Optional.ofNullable(b);
+        }
+
+        /**
+         * Adds {@code s} as output to when the response eventually gets built. Does nothing if the
+         * response has already been taken. There is no guarantee that the response hasn't already been
+         * taken, making this call a no-op. This may be called multiple times. No delimiters are added
+         * between strings from multiple calls.
+         */
+        synchronized void addOutput(String s) {
+            if (responseBuilder != null) {
+                responseBuilder.setOutput(responseBuilder.getOutput() + s);
+            }
+        }
+    }
+
+    /**
+     * A wrapper class for the callback BiFunction
+     */
+    public static class WorkRequestCallback {
+
+        /**
+         * Callback method for executing a single WorkRequest in a thread. The first argument to {@code
+         * callback} is the WorkRequest, the second is where all error messages and other user-oriented
+         * messages should be written to. The callback must return an exit code indicating success
+         * (zero) or failure (nonzero).
+         */
+        private final BiFunction<WorkRequest, PrintWriter, Integer> callback;
+
+        public WorkRequestCallback(BiFunction<WorkRequest, PrintWriter, Integer> callback) {
+            this.callback = callback;
+        }
+
+        public Integer apply(WorkRequest workRequest, PrintWriter printWriter)
+                throws InterruptedException {
+            Integer result = callback.apply(workRequest, printWriter);
+            if (Thread.interrupted()) {
+                throw new InterruptedException("Work request interrupted: " + workRequest.getRequestId());
+            }
+            return result;
+        }
+    }
+
+    /**
+     * Builder class for WorkRequestHandler. Required parameters are passed to the constructor.
+     */
+    public static class WorkRequestHandlerBuilder {
+        private final WorkRequestCallback callback;
+        private final PrintStream stderr;
+        private final WorkerMessageProcessor messageProcessor;
+        private Duration cpuUsageBeforeGc = Duration.ZERO;
+        private BiConsumer<Integer, Thread> cancelCallback;
+
+        /**
+         * Creates a {@code WorkRequestHandlerBuilder}.
+         *
+         * @param callback         Callback method for executing a single WorkRequest in a thread. The first
+         *                         argument to {@code callback} is the set of command-line arguments, the second is where
+         *                         all error messages and other user-oriented messages should be written to. The callback
+         *                         must return an exit code indicating success (zero) or failure (nonzero).
+         * @param stderr           Stream that log messages should be written to, typically the process' stderr.
+         * @param messageProcessor Object responsible for parsing {@code WorkRequest}s from the server
+         *                         and writing {@code WorkResponses} to the server.
+         * @deprecated use WorkRequestHandlerBuilder with WorkRequestCallback instead
+         */
+        @Deprecated
+        public WorkRequestHandlerBuilder(
+                BiFunction<List<String>, PrintWriter, Integer> callback,
+                PrintStream stderr,
+                WorkerMessageProcessor messageProcessor) {
+            this(
+                    new WorkRequestCallback((request, pw) -> callback.apply(request.getArgumentsList(), pw)),
+                    stderr,
+                    messageProcessor);
+        }
+
+        /**
+         * Creates a {@code WorkRequestHandlerBuilder}.
+         *
+         * @param callback         WorkRequestCallback object with Callback method for executing a single
+         *                         WorkRequest in a thread. The first argument to {@code callback} is the WorkRequest, the
+         *                         second is where all error messages and other user-oriented messages should be written to.
+         *                         The callback must return an exit code indicating success (zero) or failure (nonzero).
+         * @param stderr           Stream that log messages should be written to, typically the process' stderr.
+         * @param messageProcessor Object responsible for parsing {@code WorkRequest}s from the server
+         *                         and writing {@code WorkResponses} to the server.
+         */
+        public WorkRequestHandlerBuilder(
+                WorkRequestCallback callback, PrintStream stderr, WorkerMessageProcessor messageProcessor) {
+            this.callback = callback;
+            this.stderr = stderr;
+            this.messageProcessor = messageProcessor;
+        }
+
+        /**
+         * Sets the minimum amount of CPU time between explicit garbage collection calls. Pass
+         * Duration.ZERO to not do explicit garbage collection (the default).
+         */
+        public WorkRequestHandlerBuilder setCpuUsageBeforeGc(Duration cpuUsageBeforeGc) {
+            this.cpuUsageBeforeGc = cpuUsageBeforeGc;
+            return this;
+        }
+
+        /**
+         * Sets a callback will be called when a cancellation message has been received. The callback
+         * will be call with the request ID and the thread executing the request.
+         */
+        public WorkRequestHandlerBuilder setCancelCallback(BiConsumer<Integer, Thread> cancelCallback) {
+            this.cancelCallback = cancelCallback;
+            return this;
+        }
+
+        /**
+         * Returns a WorkRequestHandler instance with the values in this Builder.
+         */
+        public WorkRequestHandler build() {
+            return new WorkRequestHandler(
+                    callback, stderr, messageProcessor, cpuUsageBeforeGc, cancelCallback);
+        }
+    }
+
+    /**
      * Class that performs GC occasionally, based on how much CPU time has passed. This strikes a
      * compromise between blindly doing GC after e.g. every request, which takes too much CPU, and not
      * doing explicit GC at all, which causes poor garbage collection in some cases.
      */
     private static class CpuTimeBasedGcScheduler {
         /**
-         * After this much CPU time has elapsed, we may force a GC run. Set to {@link Duration#ZERO} to
-         * disable.
-         */
-        private final Duration cpuUsageBeforeGc;
-
-        /**
-         * The total process CPU time at the last GC run (or from the start of the worker).
-         */
-        private final AtomicReference<Duration> cpuTimeAtLastGc;
-
-        /**
          * Used to get the CPU time used by this process.
          */
         private static final OperatingSystemMXBean bean =
                 (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        /**
+         * After this much CPU time has elapsed, we may force a GC run. Set to {@link Duration#ZERO} to
+         * disable.
+         */
+        private final Duration cpuUsageBeforeGc;
+        /**
+         * The total process CPU time at the last GC run (or from the start of the worker).
+         */
+        private final AtomicReference<Duration> cpuTimeAtLastGc;
 
         /**
          * Creates a new {@link CpuTimeBasedGcScheduler} that may perform GC after {@code

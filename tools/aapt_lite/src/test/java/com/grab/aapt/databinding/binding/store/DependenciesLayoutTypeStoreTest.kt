@@ -29,7 +29,6 @@ class DependenciesLayoutTypeStoreTest : BaseBindingStubTest() {
             bindingClassJsonParser = CachingBindingClassJsonParser()
         )
         dependenciesLayoutTypeStore.extractionDir = temporaryFolder.newFolder("extracted")
-
     }
 
     /**
