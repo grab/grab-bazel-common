@@ -16,21 +16,6 @@
 
 package com.grab.aapt.databinding.util
 
-import com.squareup.javapoet.TypeName
-
-fun String.extractPrimitiveType(): TypeName? = when (this) {
-    "void" -> TypeName.VOID
-    "boolean" -> TypeName.BOOLEAN
-    "byte" -> TypeName.BYTE
-    "short" -> TypeName.SHORT
-    "int" -> TypeName.INT
-    "long" -> TypeName.LONG
-    "char" -> TypeName.CHAR
-    "float" -> TypeName.FLOAT
-    "double" -> TypeName.DOUBLE
-    else -> null
-}
-
 /**
  * Convert a layout name in `layout_name` format to Databinding generated type i.e `LayoutNameBinding`
  */
@@ -41,4 +26,3 @@ fun String.toLayoutBindingName(): String {
             transform = String::capitalize
         ) + "Binding"
 }
-
