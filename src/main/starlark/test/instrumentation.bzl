@@ -9,6 +9,7 @@ def android_instrumentation_binary(
         instruments = None,
         manifest_values = {},
         resources = [],
+        resource_strip_prefix = "",
         resource_files = [],
         srcs = [],
         test_instrumentation_runner = "androidx.test.runner.AndroidJUnitRunner",
@@ -36,6 +37,7 @@ def android_instrumentation_binary(
         custom_package = custom_package,
         associates = associates,
         resources = resources,
+        resource_strip_prefix = resource_strip_prefix,
         resource_files = resource_files,
         visibility = [
             "//visibility:public",
