@@ -24,6 +24,7 @@ def _kt_android_artifact(
     """
     base_name = name + "_base"
     kt_name = name + "_kt"
+    testonly = kwargs.get("testonly", default = 0)
 
     # TODO(bazelbuild/rules_kotlin/issues/273): This should be retrieved from a provider.
     base_deps = [_ANDROID_SDK_JAR] + deps
@@ -40,10 +41,12 @@ def _kt_android_artifact(
         exec_properties = exec_properties,
         **kwargs
     )
+
     _kt_jvm_library(
         name = kt_name,
         srcs = srcs,
-        deps = [base_name] + base_deps,
+        # TODO: remove testonly check and ensure that reordering does not cause side effects
+        deps = base_deps + [base_name] if testonly else [base_name] + base_deps,
         resources = resources,
         resource_strip_prefix = resource_strip_prefix,
         plugins = plugins,
@@ -55,7 +58,9 @@ def _kt_android_artifact(
         tags = tags,
         exec_properties = exec_properties,
     )
-    return [base_name, kt_name]
+
+    # TODO: remove testonly check and ensure that reordering does not cause side effects
+    return [kt_name, base_name] if testonly else [base_name, kt_name]
 
 def kt_android_library(name, exports = [], visibility = None, exec_properties = None, **kwargs):
     """Creates an Android sandwich library.
