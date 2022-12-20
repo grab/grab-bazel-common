@@ -93,6 +93,7 @@ def kt_db_android_library(
     native.java_library(
         name = r_classes,
         srcs = [r_classes_sources],
+        tags = tags,
         neverlink = 1,  # Use the R classes only for compiling and not at runtime.
     )
 
@@ -139,6 +140,7 @@ def kt_db_android_library(
             srcs = [":" + kotlin_target + "-sources.jar"],
             outs = [kotlin_target + "_kt-sources.srcjar"],
             tools = [_zipper],
+            tags = tags,
             message = "Generating binding adapter stubs " + name,
             cmd = """
             TEMP="adapter-sources"
@@ -157,6 +159,7 @@ def kt_db_android_library(
     native.java_library(
         name = databinding_mapper,
         srcs = [databinding_stubs_target + "_mapper.srcjar"],
+        tags = tags,
         neverlink = 1,  # Use only in the compile classpath
         deps = _DATABINDING_DEPS + [
             "@grab_bazel_common//tools/android:android_sdk",
