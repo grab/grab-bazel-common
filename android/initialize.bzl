@@ -43,6 +43,9 @@ def bazel_common_initialize(
             "com.google.auto.service:auto-service:1.0-rc6",
             "com.google.protobuf:protobuf-java:3.6.0",
             "com.google.protobuf:protobuf-java-util:3.6.0",
+            "io.reactivex.rxjava3:rxjava:3.0.12",
+            "com.squareup.moshi:moshi-kotlin:1.14.0",
+            "com.squareup.okio:okio-jvm:3.2.0",
             "com.squareup:javapoet:1.13.0",
             "com.github.ajalt:clikt:2.8.0",
             "org.ow2.asm:asm:6.0",
@@ -61,6 +64,7 @@ def bazel_common_initialize(
         repositories = DAGGER_REPOSITORIES + [
             "https://jcenter.bintray.com/",
             "https://maven.google.com",
+            "https://repo1.maven.org/maven2",
         ],
         strict_visibility = True,
         maven_install_json = maven_install_json,

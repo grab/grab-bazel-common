@@ -14,6 +14,9 @@ kt_jvm_library(
         "//tools/worker/src/main/proto:worker_protocol",
         "@bazel_common_maven//:com_google_protobuf_protobuf_java",
         "@bazel_common_maven//:com_google_protobuf_protobuf_java_util",
+        "@bazel_common_maven//:com_squareup_moshi_moshi_kotlin",
+        "@bazel_common_maven//:com_squareup_okio_okio_jvm",
+        "@bazel_common_maven//:io_reactivex_rxjava3_rxjava",
     ],
 )
 

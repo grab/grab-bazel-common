@@ -117,6 +117,7 @@ def _databinding_stubs_impl(ctx):
         execution_requirements = {
             "supports-workers": "1",
             "supports-multiplex-workers": "1",
+            "requires-worker-protocol": "json",
             "worker-key-mnemonic": "DatabindingWorker",
         },
     )
@@ -141,6 +142,7 @@ def _databinding_stubs_impl(ctx):
         execution_requirements = {
             "supports-workers": "1",
             "supports-multiplex-workers": "1",
+            "requires-worker-protocol": "json",
             "worker-key-mnemonic": "DatabindingWorker",
         },
     )

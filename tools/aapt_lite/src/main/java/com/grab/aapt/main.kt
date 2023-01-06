@@ -17,7 +17,6 @@
 package com.grab.aapt
 
 import com.grab.aapt.databinding.mapper.GenerateMapperCommand
-import io.bazel.Status
 import io.bazel.Worker
 
 
@@ -37,14 +36,8 @@ enum class Tool {
 }
 
 fun main(args: Array<String>) {
-    Worker.from(args = args.toList()).run { cliArgs ->
-        try {
-            Tool.valueOf(cliArgs.first())
-                .call(cliArgs.drop(1).toTypedArray())
-            Status.Success
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Status.Failure
-        }
-    }
+    Worker.create(args) { cliArgs ->
+        Tool.valueOf(cliArgs.first())
+            .call(cliArgs.drop(1).toTypedArray())
+    }.run()
 }
