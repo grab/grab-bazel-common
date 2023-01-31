@@ -4,9 +4,8 @@ _INT_TYPE = "ints"
 _LONG_TYPE = "longs"
 
 def _build_cmd_options(
-    flag,
-    value_dict = {},
-):
+        flag,
+        value_dict = {}):
     cmd_options = ""
     if len(value_dict) > 0:
         cmd_options += " --%s " % flag
@@ -19,7 +18,7 @@ def _build_cmd_options(
                 is_first = False
             else:
                 cmd_options += ",%s=" % key
-            
+
             if type(value) == "select":
                 cmd_options += value
             else:
@@ -34,8 +33,7 @@ def _build_cmd_options(
     return cmd_options
 
 def _generate_final_strings(
-    strings = {}
-):
+        strings = {}):
     if (strings.get("VERSION_NAME", default = None) == None):
         # If the VERSION_NAME is not available, we auto add a default version name
         return dict(strings, VERSION_NAME = "VERSION_NAME", BUILD_TYPE = "debug")
@@ -77,19 +75,19 @@ def build_config(
     )
 
     cmd += _build_cmd_options(
-        _STRING_TYPE, 
-        _generate_final_strings(strings)
+        _STRING_TYPE,
+        _generate_final_strings(strings),
     )
 
     dbg = "true" if debug else "false"
 
     cmd += _build_cmd_options(
-        _BOOLEAN_TYPE, 
-        dict(booleans, DEBUG = dbg)
+        _BOOLEAN_TYPE,
+        dict(booleans, DEBUG = dbg),
     )
     cmd += _build_cmd_options(_INT_TYPE, ints)
     cmd += _build_cmd_options(_LONG_TYPE, longs)
-    
+
     native.genrule(
         name = "_%s_gen" % name,
         outs = [build_config_file_path],
@@ -98,7 +96,7 @@ def build_config(
         tools = [build_config_generator],
         message = "Generating %s's build config class" % (native.package_name()),
     )
-    
+
     native.java_library(
         name = name,
         srcs = [build_config_file_path],
