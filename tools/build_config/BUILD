@@ -1,6 +1,17 @@
 load(":build_config.bzl", "build_config")
 load("@grab_bazel_common//tools/test:test.bzl", "grab_kt_jvm_test")
 
+java_binary(
+    name = "build_config_generator",
+    main_class = "com.grab.buildconfig.MainKt",
+    visibility = [
+        "//visibility:public",
+    ],
+    runtime_deps = [
+        "//tools/build_config/src/main/java/com/grab/buildconfig",
+    ],
+)
+
 build_config(
     name = "build-config-sample",
     package_name = "com.grab.buildconfig.sample",

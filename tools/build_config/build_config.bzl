@@ -1,47 +1,46 @@
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+_STRING_TYPE = "strings"
+_BOOLEAN_TYPE = "booleans"
+_INT_TYPE = "ints"
+_LONG_TYPE = "longs"
 
-_STRING_TYPE = "String"
-_BOOLEAN_TYPE = "Boolean"
-_INT_TYPE = "Int"
-_LONG_TYPE = "Long"
+def _build_cmd_options(
+    flag,
+    value_dict = {},
+):
+    cmd_options = ""
+    if len(value_dict) > 0:
+        cmd_options += " --%s " % flag
+        cmd_options += "\""
 
-def _raw_string(original):
-    """
-    Wraps the given original string to
-        * Kotlin's raw string literal
-        * Escape $ in Kotlin multi line string
+        is_first = True
+        for key, value in value_dict.items():
+            if is_first:
+                cmd_options += "%s=" % key
+                is_first = False
+            else:
+                cmd_options += ",%s=" % key
+            
+            if type(value) == "select":
+                cmd_options += value
+            else:
+                cmd_options += "{}".format(
+                    str(value)
+                        .replace("\\$", "$")  # Unescape existing dollar symbol
+                        .replace("$", "\\$$"),  # Escape dollars for Make substitution
+                )
 
-    See: https://kotlinlang.org/docs/reference/basic-types.html#string-templates
-    """
-    return '"""' + original.replace("$", "${'$'}") + '"""'
+        cmd_options += "\""
 
-def _generate_final_strings(strings = {}):
+    return cmd_options
+
+def _generate_final_strings(
+    strings = {}
+):
     if (strings.get("VERSION_NAME", default = None) == None):
         # If the VERSION_NAME is not available, we auto add a default version name
         return dict(strings, VERSION_NAME = "VERSION_NAME", BUILD_TYPE = "debug")
     else:
         return dict(strings, BUILD_TYPE = "debug")
-
-def _build_statement(type, items, quote = True):
-    statements = ""
-    for variable_name, value in items.items():
-        const = "const"
-        if quote:
-            value = "{}".format(_raw_string(value))
-        if type == _BOOLEAN_TYPE:
-            value = "{}.toBoolean()".format(value)
-            const = "@JvmField"
-
-        statements += """
-    {} val {}: {} = {}""".format(
-            const,
-            variable_name,
-            type,
-            str(value)
-                .replace("\\$", "$")  # Unescape existing dollar symbol
-                .replace("$", "\\$$"),  # Escape dollars for Make substitution
-        )
-    return statements
 
 def build_config(
         name,
@@ -51,11 +50,11 @@ def build_config(
         booleans = {},
         ints = {},
         longs = {}):
-    """Generates a kt_jvm_library target containing build config fields just like AGP.
+    """Generates a java_library target containing build config fields just like AGP.
 
     Usage:
     Add the field variables in the relevant dicts like (strings, booleans etc) and add a dependency
-    on this target.
+    on this target. Values of fields are configurable (supports select())
 
     Args:
         name: Name for this target
@@ -66,56 +65,41 @@ def build_config(
         ints: Build config field of type Int
         longs: Build config field of type longs
     """
+    build_config_file_path = "%s/src/main/java/BuildConfig.java" % (name)
 
-    build_config = "BuildConfig"
-    build_config_file_path = "src/main/%s/%s.kt" % (name, build_config)
+    build_config_generator = "@grab_bazel_common//tools/build_config:build_config_generator"
+    cmd = """
+    $(location {build_config_generator}) \
+    --package \"{package_name}\" \
+    """.format(
+        build_config_generator = build_config_generator,
+        package_name = package_name,
+    )
 
-    strings_statements = _build_statement(
-        _STRING_TYPE,
-        _generate_final_strings(strings),
+    cmd += _build_cmd_options(
+        _STRING_TYPE, 
+        _generate_final_strings(strings)
     )
 
     dbg = "true" if debug else "false"
 
-    booleans_statements = _build_statement(
-        _BOOLEAN_TYPE,
-        dict(booleans, DEBUG = dbg),
+    cmd += _build_cmd_options(
+        _BOOLEAN_TYPE, 
+        dict(booleans, DEBUG = dbg)
     )
-    ints_statements = _build_statement(_INT_TYPE, ints, False)
-    longs_statements = _build_statement(_LONG_TYPE, longs, False)
-
-    # Cmd for genrule. Generates BuildConfig.
-    cmd = """
-cat << EOF > $@
-/**
- * Generated file do not modify
- */
-package {package_name}
-object {build_config} {{
-    // Generated custom fields
-    {strings_statements}
-    {booleans_statements}
-    {ints_statements}
-    {longs_statements}
-}}
-EOF""".format(
-        build_config = build_config,
-        build_config_file_path = build_config_file_path,
-        package_name = package_name,
-        strings_statements = strings_statements,
-        booleans_statements = booleans_statements,
-        ints_statements = ints_statements,
-        longs_statements = longs_statements,
-    )
-
+    cmd += _build_cmd_options(_INT_TYPE, ints)
+    cmd += _build_cmd_options(_LONG_TYPE, longs)
+    
     native.genrule(
         name = "_%s_gen" % name,
         outs = [build_config_file_path],
-        cmd = cmd,
+        cmd = cmd + " > $@",
+        toolchains = ["@bazel_tools//tools/jdk:current_java_runtime"],
+        tools = [build_config_generator],
         message = "Generating %s's build config class" % (native.package_name()),
     )
-
-    kt_jvm_library(
+    
+    native.java_library(
         name = name,
         srcs = [build_config_file_path],
     )
