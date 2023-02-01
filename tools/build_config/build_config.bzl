@@ -1,3 +1,5 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
 _STRING_TYPE = "strings"
 _BOOLEAN_TYPE = "booleans"
 _INT_TYPE = "ints"
@@ -97,7 +99,7 @@ def build_config(
         message = "Generating %s's build config class" % (native.package_name()),
     )
 
-    native.java_library(
+    kt_jvm_library(
         name = name,
         srcs = [build_config_file_path],
     )
