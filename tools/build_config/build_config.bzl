@@ -1,31 +1,33 @@
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
-def _flatten_dict_to_key_value_pair(dict = {}):
-    key_value_pairs = []
-    for key, value in dict.items():
-        key_value_pairs.append(
+def _flatten_key_value_pair(keys = [], values = []):
+    result = []
+    for index, key in enumerate(keys):
+        value = values[index]
+        result.append(
             "{key}={value}".format(
                 key = key,
                 value = value,
             )
         )
 
-    return key_value_pairs
-
-def _generate_final_strings(
-        strings = {}):
-    if (strings.get("VERSION_NAME", default = None) == None):
-        # If the VERSION_NAME is not available, we auto add a default version name
-        return dict(strings, VERSION_NAME = "VERSION_NAME", BUILD_TYPE = "debug")
-    else:
-        return dict(strings, BUILD_TYPE = "debug")
+    return result
 
 def _build_config_generator_impl(ctx):
     package_name = ctx.attr.package_name
-    strings = ctx.attr.strings
-    booleans = ctx.attr.booleans
-    ints = ctx.attr.ints
-    longs = ctx.attr.longs
+    string_keys = ctx.attr.string_keys
+    string_values = ctx.attr.string_values
+    boolean_keys = ctx.attr.boolean_keys
+    boolean_values = ctx.attr.boolean_values
+    int_keys = ctx.attr.int_keys
+    int_values = ctx.attr.int_values
+    long_keys = ctx.attr.long_keys
+    long_values = ctx.attr.long_values
+
+    strings = _flatten_key_value_pair(string_keys, string_values)
+    booleans = _flatten_key_value_pair(boolean_keys, boolean_values)
+    ints = _flatten_key_value_pair(int_keys, int_values)
+    longs = _flatten_key_value_pair(long_keys, long_values)
 
     args = ctx.actions.args()
     args.set_param_file_format("multiline")
@@ -91,10 +93,14 @@ _build_config_generator = rule(
     implementation = _build_config_generator_impl,
     attrs = {
         "package_name": attr.string(mandatory = True),
-        "strings": attr.string_list(),
-        "booleans": attr.string_list(),
-        "ints": attr.string_list(),
-        "longs": attr.string_list(),
+        "string_keys": attr.string_list(),
+        "string_values": attr.string_list(),
+        "boolean_keys": attr.string_list(),
+        "boolean_values": attr.string_list(),
+        "int_keys": attr.string_list(),
+        "int_values": attr.string_list(),
+        "long_keys": attr.string_list(),
+        "long_values": attr.string_list(),
         "_compiler": attr.label(
             default = Label("@grab_bazel_common//tools/build_config:build_config_generator"),
             executable = True,
@@ -102,6 +108,34 @@ _build_config_generator = rule(
         ),
     },
 )
+
+def _convert_to_keys_values_tuple(dict = {}):
+    """Converts the given dict into a tuple with a list of keys and a list of values.
+    
+    Static values and dynamic (select()) values are being separated and finally
+    combined with dynamic keys and values getting pushed to the back of the list
+    """
+    statics = {}
+    dynamics = {}
+    for key, value in dict.items():
+        if type(value) == "select":
+            dynamics[key] = value
+        else:
+            statics[key] = str(value)
+    
+    keys = statics.keys() + dynamics.keys()
+    values = statics.values()
+    for dynamic_value in dynamics.values():
+        values += dynamic_value
+    return (keys, values)
+
+def _generate_final_strings(
+        strings = {}):
+    if (strings.get("VERSION_NAME", default = None) == None):
+        # If the VERSION_NAME is not available, we auto add a default version name
+        return dict(strings, VERSION_NAME = "VERSION_NAME", BUILD_TYPE = "debug")
+    else:
+        return dict(strings, BUILD_TYPE = "debug")
 
 def build_config(
         name,
@@ -129,18 +163,29 @@ def build_config(
 
     dbg = "true" if debug else "false"
 
+    (string_keys, string_values) = _convert_to_keys_values_tuple(
+        _generate_final_strings(strings)
+    )
+
+    (boolean_keys, boolean_values) = _convert_to_keys_values_tuple(
+        dict(booleans, DEBUG = dbg)
+    )
+
+    (int_keys, int_values) = _convert_to_keys_values_tuple(ints)
+    (long_keys, long_values) = _convert_to_keys_values_tuple(longs)
+
     build_config_target = "_%s_gen" % name
     _build_config_generator(
         name = build_config_target,
         package_name = package_name,
-        strings = _flatten_dict_to_key_value_pair(
-            _generate_final_strings(strings)
-        ),
-        booleans = _flatten_dict_to_key_value_pair(
-            dict(booleans, DEBUG = dbg)
-        ),
-        ints = _flatten_dict_to_key_value_pair(ints),
-        longs = _flatten_dict_to_key_value_pair(longs),
+        string_keys = string_keys,
+        string_values = string_values,
+        boolean_keys = boolean_keys,
+        boolean_values = boolean_values,
+        int_keys = int_keys,
+        int_values = int_values,
+        long_keys = long_keys,
+        long_values = long_values,
     )
 
     kt_jvm_library(
