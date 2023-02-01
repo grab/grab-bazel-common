@@ -8,7 +8,7 @@ def _flatten_key_value_pair(keys = [], values = []):
             "{key}={value}".format(
                 key = key,
                 value = value,
-            )
+            ),
         )
 
     return result
@@ -37,22 +37,22 @@ def _build_config_generator_impl(ctx):
     args.add_joined(
         "--strings",
         strings,
-        join_with = ","
+        join_with = ",",
     )
     args.add_joined(
         "--booleans",
         booleans,
-        join_with = ","
+        join_with = ",",
     )
     args.add_joined(
         "--ints",
         ints,
-        join_with = ","
+        join_with = ",",
     )
     args.add_joined(
         "--longs",
         longs,
-        join_with = ","
+        join_with = ",",
     )
 
     output_directory = ctx.actions.declare_directory(ctx.label.name)
@@ -62,7 +62,7 @@ def _build_config_generator_impl(ctx):
         "{name}/{package_name}/BuildConfig.java".format(
             name = ctx.label.name,
             package_name = package_name.replace(".", "/"),
-        )
+        ),
     )
 
     mnemonic = "BuildConfigGeneration"
@@ -85,8 +85,8 @@ def _build_config_generator_impl(ctx):
 
     return [
         DefaultInfo(files = depset([
-            output
-        ]))
+            output,
+        ])),
     ]
 
 _build_config_generator = rule(
@@ -104,14 +104,14 @@ _build_config_generator = rule(
         "_compiler": attr.label(
             default = Label("@grab_bazel_common//tools/build_config:build_config_generator"),
             executable = True,
-            cfg = "exec"
+            cfg = "exec",
         ),
     },
 )
 
 def _convert_to_keys_values_tuple(dict = {}):
     """Converts the given dict into a tuple with a list of keys and a list of values.
-    
+
     Static values and dynamic (select()) values are being separated and finally
     combined with dynamic keys and values getting pushed to the back of the list
     """
@@ -122,7 +122,7 @@ def _convert_to_keys_values_tuple(dict = {}):
             dynamics[key] = value
         else:
             statics[key] = str(value)
-    
+
     keys = statics.keys() + dynamics.keys()
     values = statics.values()
     for dynamic_value in dynamics.values():
@@ -164,11 +164,11 @@ def build_config(
     dbg = "true" if debug else "false"
 
     (string_keys, string_values) = _convert_to_keys_values_tuple(
-        _generate_final_strings(strings)
+        _generate_final_strings(strings),
     )
 
     (boolean_keys, boolean_values) = _convert_to_keys_values_tuple(
-        dict(booleans, DEBUG = dbg)
+        dict(booleans, DEBUG = dbg),
     )
 
     (int_keys, int_values) = _convert_to_keys_values_tuple(ints)
@@ -190,5 +190,5 @@ def build_config(
 
     kt_jvm_library(
         name = name,
-        srcs = [build_config_target]
+        srcs = [build_config_target],
     )
