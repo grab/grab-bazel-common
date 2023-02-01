@@ -11,5 +11,7 @@ package com.grab.buildconfig
 import io.bazel.Worker
 
 fun main(args: Array<String>) {
-    GeneratorCommand().main(args)
+    Worker.create(args) { cliArgs ->
+        GeneratorCommand().main(cliArgs)
+    }.run()
 }

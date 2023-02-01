@@ -54,7 +54,7 @@ class BuildConfigTest {
             "String with special characters"
         )
         assertEquals(
-            "\$ Hello",
+            "\\$ Hello",
             BuildConfig.FIELD_WITH_ESCAPED_DOLLAR,
             "String with existing escaped dollar"
         )

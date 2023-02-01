@@ -1,38 +1,16 @@
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
-_STRING_TYPE = "strings"
-_BOOLEAN_TYPE = "booleans"
-_INT_TYPE = "ints"
-_LONG_TYPE = "longs"
+def _flatten_dict_to_key_value_pair(dict = {}):
+    key_value_pairs = []
+    for key, value in dict.items():
+        key_value_pairs.append(
+            "{key}={value}".format(
+                key = key,
+                value = value,
+            )
+        )
 
-def _build_cmd_options(
-        flag,
-        value_dict = {}):
-    cmd_options = ""
-    if len(value_dict) > 0:
-        cmd_options += " --%s " % flag
-        cmd_options += "\""
-
-        is_first = True
-        for key, value in value_dict.items():
-            if is_first:
-                cmd_options += "%s=" % key
-                is_first = False
-            else:
-                cmd_options += ",%s=" % key
-
-            if type(value) == "select":
-                cmd_options += value
-            else:
-                cmd_options += "{}".format(
-                    str(value)
-                        .replace("\\$", "$")  # Unescape existing dollar symbol
-                        .replace("$", "\\$$"),  # Escape dollars for Make substitution
-                )
-
-        cmd_options += "\""
-
-    return cmd_options
+    return key_value_pairs
 
 def _generate_final_strings(
         strings = {}):
@@ -41,6 +19,89 @@ def _generate_final_strings(
         return dict(strings, VERSION_NAME = "VERSION_NAME", BUILD_TYPE = "debug")
     else:
         return dict(strings, BUILD_TYPE = "debug")
+
+def _build_config_generator_impl(ctx):
+    package_name = ctx.attr.package_name
+    strings = ctx.attr.strings
+    booleans = ctx.attr.booleans
+    ints = ctx.attr.ints
+    longs = ctx.attr.longs
+
+    args = ctx.actions.args()
+    args.set_param_file_format("multiline")
+    args.use_param_file("--flagfile=%s", use_always = True)
+
+    args.add("--package", package_name)
+    args.add_joined(
+        "--strings",
+        strings,
+        join_with = ","
+    )
+    args.add_joined(
+        "--booleans",
+        booleans,
+        join_with = ","
+    )
+    args.add_joined(
+        "--ints",
+        ints,
+        join_with = ","
+    )
+    args.add_joined(
+        "--longs",
+        longs,
+        join_with = ","
+    )
+
+    output_directory = ctx.actions.declare_directory(ctx.label.name)
+    args.add("--output", output_directory.path)
+
+    output = ctx.actions.declare_file(
+        "{name}/{package_name}/BuildConfig.java".format(
+            name = ctx.label.name,
+            package_name = package_name.replace(".", "/"),
+        )
+    )
+
+    mnemonic = "BuildConfigGeneration"
+    ctx.actions.run(
+        mnemonic = mnemonic,
+        outputs = [
+            output_directory,
+            output,
+        ],
+        executable = ctx.executable._compiler,
+        arguments = [args],
+        progress_message = "%s %s" % (mnemonic, ctx.label),
+        execution_requirements = {
+            "supports-workers": "1",
+            "supports-multiplex-workers": "1",
+            "requires-worker-protocol": "json",
+            "worker-key-mnemonic": "BuildConfigGenerationWorker",
+        },
+    )
+
+    return [
+        DefaultInfo(files = depset([
+            output
+        ]))
+    ]
+
+_build_config_generator = rule(
+    implementation = _build_config_generator_impl,
+    attrs = {
+        "package_name": attr.string(mandatory = True),
+        "strings": attr.string_list(),
+        "booleans": attr.string_list(),
+        "ints": attr.string_list(),
+        "longs": attr.string_list(),
+        "_compiler": attr.label(
+            default = Label("@grab_bazel_common//tools/build_config:build_config_generator"),
+            executable = True,
+            cfg = "exec"
+        ),
+    },
+)
 
 def build_config(
         name,
@@ -65,41 +126,24 @@ def build_config(
         ints: Build config field of type Int
         longs: Build config field of type longs
     """
-    build_config_file_path = "%s/src/main/java/BuildConfig.java" % (name)
-
-    build_config_generator = "@grab_bazel_common//tools/build_config:build_config_generator"
-    cmd = """
-    $(location {build_config_generator}) \
-    --package \"{package_name}\" \
-    """.format(
-        build_config_generator = build_config_generator,
-        package_name = package_name,
-    )
-
-    cmd += _build_cmd_options(
-        _STRING_TYPE,
-        _generate_final_strings(strings),
-    )
 
     dbg = "true" if debug else "false"
 
-    cmd += _build_cmd_options(
-        _BOOLEAN_TYPE,
-        dict(booleans, DEBUG = dbg),
-    )
-    cmd += _build_cmd_options(_INT_TYPE, ints)
-    cmd += _build_cmd_options(_LONG_TYPE, longs)
-
-    native.genrule(
-        name = "_%s_gen" % name,
-        outs = [build_config_file_path],
-        cmd = cmd + " > $@",
-        toolchains = ["@bazel_tools//tools/jdk:current_java_runtime"],
-        tools = [build_config_generator],
-        message = "Generating %s's build config class" % (native.package_name()),
+    build_config_target = "_%s_gen" % name
+    _build_config_generator(
+        name = build_config_target,
+        package_name = package_name,
+        strings = _flatten_dict_to_key_value_pair(
+            _generate_final_strings(strings)
+        ),
+        booleans = _flatten_dict_to_key_value_pair(
+            dict(booleans, DEBUG = dbg)
+        ),
+        ints = _flatten_dict_to_key_value_pair(ints),
+        longs = _flatten_dict_to_key_value_pair(longs),
     )
 
     kt_jvm_library(
         name = name,
-        srcs = [build_config_file_path],
+        srcs = [build_config_target]
     )
