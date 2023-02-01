@@ -50,7 +50,7 @@ def build_config(
         booleans = {},
         ints = {},
         longs = {}):
-    """Generates a java_library target containing build config fields just like AGP.
+    """Generates a kt_jvm_library target containing build config fields just like AGP.
 
     Usage:
     Add the field variables in the relevant dicts like (strings, booleans etc) and add a dependency
