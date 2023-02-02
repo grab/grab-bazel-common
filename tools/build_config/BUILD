@@ -12,6 +12,13 @@ java_binary(
     ],
 )
 
+config_setting(
+    name = "build_config_alternative",
+    define_values = {
+        "alternate_values": "true",
+    },
+)
+
 build_config(
     name = "build-config-sample",
     package_name = "com.grab.buildconfig.sample",
@@ -32,6 +39,10 @@ build_config(
         "SPECIAL_CHARACTERS": "!@#$%^&*()$",
         "FIELD_WITH_ESCAPED_DOLLAR": "\\$ Hello",
         "REWARD_URL": "https://reward.com/hc/%1$s/test",
+        "SELECT": select({
+            ":build_config_alternative": ["alternate value"],
+            "//conditions:default": ["default value"],
+        }),
     },
 )
 

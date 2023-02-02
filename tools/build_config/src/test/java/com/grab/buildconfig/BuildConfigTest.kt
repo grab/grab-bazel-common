@@ -81,4 +81,9 @@ class BuildConfigTest {
     fun `assert generated longs in build config`() {
         assertEquals(123, BuildConfig.LONG, "Generated long is 0")
     }
+
+    @Test
+    fun `assert default config selected`() {
+        assertEquals("default value", BuildConfig.SELECT, "default value is selected")
+    }
 }
