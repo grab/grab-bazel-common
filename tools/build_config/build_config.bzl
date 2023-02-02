@@ -72,7 +72,7 @@ def _build_config_generator_impl(ctx):
             output_directory,
             output,
         ],
-        executable = ctx.executable._compiler,
+        executable = ctx.executable._generator,
         arguments = [args],
         progress_message = "%s %s" % (mnemonic, ctx.label),
         execution_requirements = {
@@ -101,7 +101,7 @@ _build_config_generator = rule(
         "int_values": attr.string_list(),
         "long_keys": attr.string_list(),
         "long_values": attr.string_list(),
-        "_compiler": attr.label(
+        "_generator": attr.label(
             default = Label("@grab_bazel_common//tools/build_config:build_config_generator"),
             executable = True,
             cfg = "exec",
