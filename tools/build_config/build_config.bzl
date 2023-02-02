@@ -55,21 +55,18 @@ def _build_config_generator_impl(ctx):
         join_with = ",",
     )
 
-    output_directory = ctx.actions.declare_directory(ctx.label.name)
-    args.add("--output", output_directory.path)
-
     output = ctx.actions.declare_file(
         "{name}/{package_name}/BuildConfig.java".format(
             name = ctx.label.name,
             package_name = package_name.replace(".", "/"),
         ),
     )
+    args.add("--output", output)
 
     mnemonic = "BuildConfigGeneration"
     ctx.actions.run(
         mnemonic = mnemonic,
         outputs = [
-            output_directory,
             output,
         ],
         executable = ctx.executable._generator,
@@ -79,7 +76,7 @@ def _build_config_generator_impl(ctx):
             "supports-workers": "1",
             "supports-multiplex-workers": "1",
             "requires-worker-protocol": "json",
-            "worker-key-mnemonic": "BuildConfigGenerationWorker",
+            "worker-key-mnemonic": "%sWorker" % mnemonic,
         },
     )
 

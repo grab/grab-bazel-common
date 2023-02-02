@@ -51,9 +51,8 @@ class GeneratorCommand : CliktCommand() {
     private val output by option(
         "-o",
         "--output",
-        help = "The output directory that the generated BuildConfig class will be written to. " +
-                "Will write to standard output if option not present",
-    ).convert { File(it) }
+        help = "The BuildConfig.java location that the generated class will be written to."
+    ).convert { File(it) }.required()
 
     override fun run() {
         BuildConfigGenerator().generate(

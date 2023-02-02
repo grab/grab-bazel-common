@@ -15,6 +15,7 @@ import com.squareup.javapoet.TypeSpec
 import java.io.File
 import java.lang.reflect.Type
 import javax.lang.model.element.Modifier
+import kotlin.io.path.createTempDirectory
 
 class BuildConfigGenerator {
 
@@ -66,7 +67,7 @@ class BuildConfigGenerator {
 
     fun generate(
         packageName: String,
-        output: File? = null,
+        output: File,
         strings: List<String>,
         booleans: List<String>,
         ints: List<String>,
@@ -106,12 +107,16 @@ class BuildConfigGenerator {
                 JavaFile
                     .builder(packageName, typeSpec)
                     .build()
+            }.let { javaFile ->
+                val outputDir = createTempDirectory()
+                javaFile.writeTo(outputDir)
+                return@let outputDir
+            }.apply {
+                toFile()
+                    .walkTopDown()
+                    .first { it.isFile }
                     .apply {
-                        if (output != null) {
-                            writeTo(output)
-                        } else {
-                            writeTo(System.out)
-                        }
+                        copyTo(output)
                     }
             }
     }
