@@ -15,6 +15,7 @@ kt_jvm_library(
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/di:aapt_scope",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/mapper",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/rclass",
+        "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/util",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/util/jars",
         "//tools/worker:worker_lib",
     ],
