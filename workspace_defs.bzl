@@ -1,6 +1,6 @@
 GRAB_BAZEL_COMMON_ARTIFACTS = [
-    "org.jetbrains.kotlin:kotlin-parcelize-compiler:1.6.10",
-    "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.6.10",
+    "org.jetbrains.kotlin:kotlin-parcelize-compiler:1.6.21",
+    "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.6.21",
     "androidx.databinding:databinding-adapters:7.1.2",
     "androidx.databinding:databinding-common:7.1.2",
     "androidx.databinding:databinding-runtime:7.1.2",
