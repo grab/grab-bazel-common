@@ -6,7 +6,7 @@
     <instrumentation
         android:label="Tests for {{.PACKAGE_NAME}}"
         android:name="{{.INSTRUMENTATION_RUNNER}}"
-        android:targetPackage="{{.PACKAGE_NAME}}" />
+        android:targetPackage="{{.TARGET_PACKAGE_NAME}}" />
 
     <queries>
 
