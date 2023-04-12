@@ -8,6 +8,7 @@ load("@grab_bazel_common//tools/buildifier:defs.bzl", "BUILDIFIER_DEFAULT_VERSIO
 load("@grab_bazel_common//android/tools:defs.bzl", "android_tools")
 load("@bazel_common_dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
 load("@rules_jvm_external//:defs.bzl", "maven_install")
+load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
 # load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
 # Setup android databinding compilation and optionally use patched android tools jar
@@ -18,6 +19,15 @@ def _android(patched_android_tools):
     )
     if patched_android_tools:
         android_tools()
+
+def _kotlin():
+    kotlin_repositories(
+        compiler_release = kotlinc_version(
+            release = "1.6.21",
+            sha256 = "632166fed89f3f430482f5aa07f2e20b923b72ef688c8f5a7df3aa1502c6d8ba",
+        ),
+    )
+    native.register_toolchains("//:kotlin_toolchain")
 
 def bazel_common_initialize(
         patched_android_tools = True,
@@ -71,3 +81,4 @@ def bazel_common_initialize(
     )
 
     _android(patched_android_tools)
+    _kotlin()

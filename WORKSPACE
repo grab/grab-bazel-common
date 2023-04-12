@@ -16,14 +16,6 @@ load("@grab_bazel_common//android:maven.bzl", "pin_bazel_common_artifacts")
 
 pin_bazel_common_artifacts()
 
-load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories")
-
-kotlin_repositories()
-
-load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
-
-kt_register_toolchains()
-
 android_sdk_repository(
     name = "androidsdk",
 )
