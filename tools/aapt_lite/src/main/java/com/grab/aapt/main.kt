@@ -17,8 +17,8 @@
 package com.grab.aapt
 
 import com.grab.aapt.databinding.mapper.GenerateMapperCommand
+import com.google.devtools.build.android.ResourceMergerCommand
 import io.bazel.Worker
-
 
 enum class Tool {
     AAPT_LITE {
@@ -30,6 +30,11 @@ enum class Tool {
         override fun call(args: Array<String>) {
             GenerateMapperCommand().main(args)
         }
+    },
+    RESOURCE_MERGER {
+        override fun call(args: Array<String>) {
+            ResourceMergerCommand().main(args)
+        }
     };
 
     abstract fun call(args: Array<String>)
@@ -37,7 +42,6 @@ enum class Tool {
 
 fun main(args: Array<String>) {
     Worker.create(args) { cliArgs ->
-        Tool.valueOf(cliArgs.first())
-            .call(cliArgs.drop(1).toTypedArray())
+        Tool.valueOf(cliArgs.first()).call(cliArgs.drop(1).toTypedArray())
     }.run()
 }

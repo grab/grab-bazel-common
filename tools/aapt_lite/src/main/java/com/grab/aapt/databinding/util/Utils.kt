@@ -26,3 +26,21 @@ fun String.toLayoutBindingName(): String {
             transform = String::capitalize
         ) + "Binding"
 }
+
+fun commonPath(vararg paths: String): String {
+    var commonPath = ""
+    val folders: Array<Array<String>> = Array(paths.size) {
+        emptyArray()
+    }
+    for (i in paths.indices) {
+        folders[i] = paths[i].split("/").toTypedArray()
+    }
+    for (j in folders[0].indices) {
+        val s = folders[0][j]
+        for (i in 1 until paths.size) {
+            if (s != folders[i][j]) return commonPath
+        }
+        commonPath += "$s/"
+    }
+    return commonPath
+}
