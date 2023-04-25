@@ -40,6 +40,7 @@ def android_library(
     resource_files = build_resources(
         name = name,
         resource_files = attrs.get("resource_files", default = []),
+        resources = attrs.get("resources", default = {}),
         res_values = res_values,
     )
 

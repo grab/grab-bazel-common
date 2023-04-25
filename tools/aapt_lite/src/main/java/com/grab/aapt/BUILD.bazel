@@ -10,6 +10,7 @@ kt_jvm_library(
     ],
     deps = [
         "//:dagger",
+        "//tools/aapt_lite/src/main/java/com/google/devtools/build/android:resource",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/binding",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/brclass",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/di:aapt_scope",

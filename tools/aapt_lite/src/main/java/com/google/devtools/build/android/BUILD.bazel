@@ -1,0 +1,37 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+    name = "source_set",
+    srcs = [
+        "SourceSet.kt",
+    ],
+)
+
+java_library(
+    name = "merger",
+    srcs = glob([
+        "*.java",
+    ]),
+    deps = [
+        ":source_set",
+        "//tools/android:android_tools",
+    ],
+)
+
+kt_jvm_library(
+    name = "resource",
+    srcs = [
+        "OutputFixer.kt",
+        "ResourceMergerCommand.kt",
+    ],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        ":merger",
+        ":source_set",
+        "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/util",
+        "@bazel_common_maven//:com_github_ajalt_clikt",
+        "@bazel_common_maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core",
+    ],
+)

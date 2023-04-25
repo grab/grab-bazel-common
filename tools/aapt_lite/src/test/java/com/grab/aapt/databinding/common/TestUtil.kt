@@ -16,6 +16,7 @@
 
 package com.grab.aapt.databinding.common
 
+import okio.Path.Companion.toPath
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import java.io.File
@@ -37,4 +38,19 @@ abstract class BaseBindingStubTest {
             }
         }
     }
+
+    class TestResourceBuilder(private val root: File) {
+        val files = mutableListOf<File>()
+        operator fun String.invoke(content: () -> String) {
+            File(root, this).apply {
+                parentFile.mkdirs()
+                writeText(content())
+            }.let(files::add)
+        }
+    }
+
+    fun buildTestRes(
+        root: File = temporaryFolder.newFolder(random.nextInt().toString()),
+        testResourceBuilder: TestResourceBuilder.() -> Unit
+    ): List<File> = TestResourceBuilder(root = root).apply(testResourceBuilder).files
 }

@@ -1,10 +1,18 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
+
+alias(
+    name = "android_tools",
+    actual = "@bazel_tools//src/tools/android/java/com/google/devtools/build/android:all_android_tools",
+    visibility = ["//visibility:public"],
+)
+
 java_plugin(
     name = "compiler_annotation_processor",
     generates_api = False,
     processor_class = "android.databinding.annotationprocessor.ProcessDataBinding",
     visibility = ["//visibility:public"],
     deps = [
-        "@bazel_tools//src/tools/android/java/com/google/devtools/build/android:all_android_tools",
+        ":android_tools",
     ],
 )
 
