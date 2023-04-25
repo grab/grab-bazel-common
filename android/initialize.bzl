@@ -65,6 +65,7 @@ def bazel_common_initialize(
             "com.squareup.moshi:moshi:1.11.0",
             "org.jetbrains.kotlin:kotlin-parcelize-compiler:1.6.10",
             "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.6.10",
+            "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4",
             "com.github.tschuchortdev:kotlin-compile-testing:1.3.1",
             "com.google.android.material:material:1.2.1",
             "javax.inject:javax.inject:1",

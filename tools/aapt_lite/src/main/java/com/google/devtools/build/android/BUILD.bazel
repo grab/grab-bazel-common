@@ -32,5 +32,6 @@ kt_jvm_library(
         ":source_set",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/util",
         "@bazel_common_maven//:com_github_ajalt_clikt",
+        "@bazel_common_maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core",
     ],
 )

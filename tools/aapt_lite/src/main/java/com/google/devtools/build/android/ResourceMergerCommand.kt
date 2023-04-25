@@ -8,7 +8,6 @@ import com.github.ajalt.clikt.parameters.options.split
 import com.google.devtools.build.android.SourceSet.Companion.SOURCE_SET_FORMAT
 import com.grab.aapt.databinding.util.commonPath
 import java.io.File
-import java.nio.file.Files
 
 class ResourceMergerCommand : CliktCommand() {
 
@@ -33,23 +32,11 @@ class ResourceMergerCommand : CliktCommand() {
     override fun run() {
         val sourceSets = sourceSets.map { arg -> SourceSet.from(target, arg) }
         val outputPath = commonPath(*outputs.toTypedArray()).split("/res/").first()
-        outputs.forEach {
-            println(": $it")
-        }
-        println("-------")
         val outputDir = File(outputPath).apply {
             deleteRecursively()
             parentFile?.mkdirs()
         }
         ResourceMerger.merge(/* sourceSets = */ sourceSets, /* outputDir = */ outputDir)
-        OutputFixer.removeQualifiers(outputDir)
-
-
-        outputDir.walkTopDown()
-            .sorted()
-            .filter { !it.isDirectory }
-            .forEach {
-                println(it.path)
-            }
+        OutputFixer.process(outputDir = outputDir, declaredOutputs = outputs)
     }
 }

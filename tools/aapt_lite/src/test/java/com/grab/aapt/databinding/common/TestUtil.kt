@@ -39,20 +39,18 @@ abstract class BaseBindingStubTest {
         }
     }
 
-    class TestResourceBuilder(private val temporaryFolder: TemporaryFolder) {
+    class TestResourceBuilder(private val root: File) {
         val files = mutableListOf<File>()
-        private val random = Random()
         operator fun String.invoke(content: () -> String) {
-            val path = toPath()
-            val resourceDir = temporaryFolder.newFolder(random.nextInt().toString() + path.parent!!.toString())
-            File(resourceDir, path.name).apply {
-                delete()
+            File(root, this).apply {
+                parentFile.mkdirs()
                 writeText(content())
-            }
+            }.let(files::add)
         }
     }
 
-    fun buildTestRes(testResourceBuilder: TestResourceBuilder.() -> Unit): List<File> {
-        return TestResourceBuilder(temporaryFolder).apply(testResourceBuilder).files
-    }
+    fun buildTestRes(
+        root: File = temporaryFolder.newFolder(random.nextInt().toString()),
+        testResourceBuilder: TestResourceBuilder.() -> Unit
+    ): List<File> = TestResourceBuilder(root = root).apply(testResourceBuilder).files
 }
