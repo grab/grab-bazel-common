@@ -23,8 +23,8 @@ def _android(patched_android_tools):
 def _kotlin():
     kotlin_repositories(
         compiler_release = kotlinc_version(
-            release = "1.6.21",
-            sha256 = "632166fed89f3f430482f5aa07f2e20b923b72ef688c8f5a7df3aa1502c6d8ba",
+            release = "1.7.21",
+            sha256 = "8412b31b808755f0c0d336dbb8c8443fa239bf32ddb3cdb81b305b25f0ad279e",
         ),
     )
     native.register_toolchains("//:kotlin_toolchain")
@@ -63,8 +63,8 @@ def bazel_common_initialize(
             "xmlpull:xmlpull:1.1.3.1",
             "net.sf.kxml:kxml2:2.3.0",
             "com.squareup.moshi:moshi:1.11.0",
-            "org.jetbrains.kotlin:kotlin-parcelize-compiler:1.6.10",
-            "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.6.10",
+            "org.jetbrains.kotlin:kotlin-parcelize-compiler:1.7.21",
+            "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.7.21",
             "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4",
             "com.github.tschuchortdev:kotlin-compile-testing:1.3.1",
             "com.google.android.material:material:1.2.1",
