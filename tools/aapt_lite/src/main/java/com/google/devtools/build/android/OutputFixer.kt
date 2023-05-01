@@ -9,10 +9,12 @@ object OutputFixer {
 
         // Merged directories will have qualifiers added by bazel which will not match the path specified in declaredOutputs, manually
         // walk and remove the suffixes like v4, v13 etc from the resource bucket directories.
+        // If provided output already contains version qualifiers then they can be allowed
+        val resDirs = declaredOutputs.map { it.substringBeforeLast("/").substringAfterLast("/") }.groupBy { it }
         outputDir.walk()
             .filter { it != outputDirPath }
             .filter { it.parentFile?.parentFile?.toPath() == outputDirPath }
-            .filter { it.isDirectory && it.name.matches(Regex(".*-v\\d+$")) }
+            .filter { it.isDirectory && it.name.matches(Regex(".*-v\\d+$")) && it.name !in resDirs }
             .forEach { resBucket ->
                 val newName = resBucket.name.split("-").dropLast(1).joinToString(separator = "-")
                 resBucket.renameTo(File(resBucket.parent, newName))
