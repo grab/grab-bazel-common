@@ -47,4 +47,21 @@ class OutputFixerTest : BaseBindingStubTest() {
                 .all { it == EMPTY_RES_CONTENT }
         }
     }
+
+    @Test
+    fun `assert qualifiers are retained if provided output file paths already contain them`() {
+        val tmp = Files.createTempDirectory("tmp").toFile()
+        buildTestRes(tmp) {
+            "res/values-v4/strings.xml" {
+                """<?xml version="1.0" encoding="UTF-8" standalone="no"?><resources/>"""
+            }
+        }
+        OutputFixer.process(
+            outputDir = tmp,
+            declaredOutputs = listOf("res/values-v4/strings.xml")
+        )
+        assertTrue("Qualifiers are retained in merged directory") {
+            tmp.walk().any { it.name == "values-v4" && it.isDirectory }
+        }
+    }
 }
