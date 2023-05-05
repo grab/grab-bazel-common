@@ -55,7 +55,10 @@ def build_resources(
 
         if (len(resources) == 1):
             resource_dir = resources.keys()[0]
-            return native.glob([resource_dir + "/**"]) + generated_resources
+            return native.glob(
+                include = [resource_dir + "/**"],
+                exclude = ["**/.DS_Store"],
+            ) + generated_resources
 
         source_sets = []  # Source sets in the format res_dir::manifest
         all_resources = []  # All resources
@@ -63,7 +66,12 @@ def build_resources(
 
         for resource_dir in resources.keys():
             resource_dict = resources.get(resource_dir)
-            all_resources.extend(native.glob([resource_dir + "/**"]))
+            all_resources.extend(
+                native.glob(
+                    include = [resource_dir + "/**"],
+                    exclude = ["**/.DS_Store"],
+                ),
+            )
 
             manifest = resource_dict.get("manifest", "")
             if manifest != "":
