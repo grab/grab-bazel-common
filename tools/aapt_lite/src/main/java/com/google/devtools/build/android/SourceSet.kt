@@ -13,9 +13,15 @@ data class SourceSet(
         fun from(target: String, inputArg: String): SourceSet {
             val chunks = inputArg.split(":")
             require(chunks.size == 3) { "Invalid format, should be $SOURCE_SET_FORMAT" }
+
+            fun String.chunkToPaths() = when {
+                trim().isEmpty() -> emptyList<Path>()
+                else -> listOf(File(target, this).toPath())
+            }
+
             return SourceSet(
-                resourceDirs = listOf(File(target, chunks[0]).toPath()),
-                assetDirs = listOf(File(target, chunks[1]).toPath()),
+                resourceDirs = chunks[0].chunkToPaths(),
+                assetDirs = chunks[1].chunkToPaths(),
                 manifest = File(target, chunks[2])
             )
         }
