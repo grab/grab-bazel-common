@@ -2,10 +2,6 @@
 build --disk_cache=bazel-cache
 
 build --verbose_failures
-build --define=android_incremental_dexing_tool=d8_dexbuilder
-build --nouse_workers_with_dexbuilder
-build --incompatible_disable_depset_items
-build --strategy=Desugar=sandboxed
 
 # Databinding flags
 build --experimental_android_databinding_v2

@@ -15,9 +15,9 @@ def _maven():
         url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
     )
 
-    DAGGER_TAG = "2.42"
+    DAGGER_TAG = "2.46.1"
 
-    DAGGER_SHA = "8121789cc443f177005f683bdbed8f36273a5ceb96fb16a9528fd76bb2c35c79"
+    DAGGER_SHA = "bbd75275faa3186ebaa08e6779dc5410741a940146d43ef532306eb2682c13f7"
 
     http_archive(
         name = "bazel_common_dagger",
@@ -27,9 +27,9 @@ def _maven():
     )
 
 def _kotlin():
-    RULES_KOTLIN_VERSION = "1.7.0"
+    RULES_KOTLIN_VERSION = "1.8-RC-12"
 
-    RULES_KOTLIN_SHA = "15afe2d727f0dba572e0ce58f1dac20aec1441422ca65f7c3f7671b47fd483bf"
+    RULES_KOTLIN_SHA = "8e5c8ab087e0fa3fbb58e1f6b99d8fe40f75bac44994c3d208eba723284465d6"
 
     http_archive(
         name = "io_bazel_rules_kotlin",
