@@ -8,7 +8,7 @@ bazel_common_dependencies()
 load("@grab_bazel_common//android:initialize.bzl", "bazel_common_initialize")
 
 bazel_common_initialize(
-    buildifier_version = "5.1.0",
+    buildifier_version = "6.0.1",
     pinned_maven_install = True,
 )
 
