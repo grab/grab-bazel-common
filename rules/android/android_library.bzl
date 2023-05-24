@@ -68,7 +68,7 @@ def android_library(
         assets = attrs.get("assets", default = None),
         assets_dir = attrs.get("assets_dir", default = None),
         visibility = attrs.get("visibility", default = None),
-        deps = attrs.get("deps", default = []) + [build_config_target],
         tags = attrs.get("tags", default = None),
+        deps = attrs.get("deps", default = []) + [build_config_target],
         plugins = attrs.get("plugins", default = None),
     )
