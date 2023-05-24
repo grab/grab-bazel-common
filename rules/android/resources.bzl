@@ -41,10 +41,13 @@ def build_resources(
     Conversely if resource_files are used then sources are returned as is. In both cases, generated resources passed via res_values are
     accounted for.
     """
-    generated_resources = res_value(
-        name = name + "_res_value",
-        strings = res_values.get("strings", default = {}),
-    )
+    generated_resources = []
+    res_value_strings = res_values.get("strings", default = {})
+    if len(res_value_strings) != 0:
+        generated_resources = res_value(
+            name = name + "_res_value",
+            strings = res_value_strings,
+        )
 
     if (len(resources) != 0 and len(resource_files) != 0):
         fail("Either resources or resource_files should be specified but not both")
@@ -61,7 +64,7 @@ def build_resources(
             ) + generated_resources
 
         source_sets = []  # Source sets in the format res_dir::manifest
-        all_resources = []  # All resources
+        all_resources = []
         all_manifests = []
 
         for resource_dir in resources.keys():
