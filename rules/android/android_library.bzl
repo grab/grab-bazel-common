@@ -55,7 +55,7 @@ def android_library(
     if enable_data_binding:
         rule_type = kt_db_android_library
     elif len(srcs) == 0 and len(resource_files) != 0:
-        rules_type = android_library
+        rules_type = native.android_library
     elif len(srcs) != 0:
         rule_type = kt_android_library
 
