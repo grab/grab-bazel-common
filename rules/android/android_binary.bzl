@@ -13,6 +13,7 @@ def android_binary(
         custom_package = {},
         res_values = {},
         enable_data_binding = False,
+        enable_compose = True,
         **attrs):
     """
     `android_binary` wrapper that adds Kotlin, build config, databinding and res values support. The attrs are passed to native `android_binary`
@@ -24,6 +25,8 @@ def android_binary(
                     build config fields
     - res_value: `dict` accepting `string` key and their values. The value will be used to generate android resources and then adds as a
                  resource for `android_binary`.
+    - enable_data_binding: Enable android databinding support for this target
+    - enable_compose: Enable Jetpack Compose support for this target
     """
 
     build_config_target = name + "_build_cfg"
@@ -46,6 +49,10 @@ def android_binary(
 
     # Kotlin compilation with kt_android_library
     kotlin_target = "lib_" + name
+    kotlin_library_deps = attrs.get("deps", default = []) + [build_config_target]
+    if enable_compose:
+        kotlin_library_deps.extend(["@grab_bazel_common//rules/android/compose:compose-plugin"])
+
     kt_android_library(
         name = kotlin_target,
         srcs = attrs.get("srcs", default = []),
@@ -55,7 +62,7 @@ def android_binary(
         manifest = attrs.get("manifest", default = None),
         resource_files = resource_files,
         visibility = attrs.get("visibility", default = None),
-        deps = attrs.get("deps", default = []) + [build_config_target],
+        deps = kotlin_library_deps,
     )
 
     # Build deps

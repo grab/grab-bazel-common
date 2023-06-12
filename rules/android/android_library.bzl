@@ -14,6 +14,7 @@ def android_library(
         custom_package = {},
         res_values = {},
         enable_data_binding = False,
+        enable_compose = False,
         **attrs):
     """
     `android_library` wrapper that adds Kotlin, build config, databinding and res values support.
@@ -24,6 +25,8 @@ def android_library(
                     build config fields
     - res_value: `dict` accepting `string` key and their values. The value will be used to generate android resources and then adds as a
                  resource for `android_library`.
+    - enable_data_binding: Enable android databinding support for this target
+    - enable_compose: Enable Jetpack Compose support for this target
     """
 
     build_config_target = name + "_build_cfg"
@@ -43,6 +46,11 @@ def android_library(
         resources = attrs.get("resources", default = {}),
         res_values = res_values,
     )
+
+    # Build deps
+    android_library_deps = attrs.get("deps", default = []) + [build_config_target]
+    if enable_compose:
+        android_library_deps.extend(["@grab_bazel_common//rules/android/compose:compose-plugin"])
 
     # For now we delegate to existing macros to build the modules, as android library implementation matures, we can remove this and just
     # have one implementation of android_library that does all esp databinding and Kotlin support.
@@ -69,6 +77,6 @@ def android_library(
         assets_dir = attrs.get("assets_dir", default = None),
         visibility = attrs.get("visibility", default = None),
         tags = attrs.get("tags", default = None),
-        deps = attrs.get("deps", default = []) + [build_config_target],
+        deps = android_library_deps,
         plugins = attrs.get("plugins", default = None),
     )
