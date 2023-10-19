@@ -1,8 +1,15 @@
 name: 'Run Bazel Command'
 description: 'Ensures bazelisk, mounts Bazel Cache from artifacts and runs Bazel command'
 inputs:
+  bazel-config:
+    description: 'The bazel configuration to use.'
+    required: false
+    default: "--config=ci"
   bazel-command:
     description: 'The bazel command to run. Typically the arguments after bazelisk'
+    required: true
+  bazel-targets:
+    description: 'The bazel targets'
     required: true
   cache-key:
     description: 'The cache key to uniquely identify this build'
@@ -26,4 +33,4 @@ runs:
 
     - name: Run bazel command
       shell: bash
-      run: bazelisk ${{ inputs.bazel-command }} --config=ci
+      run: bazelisk ${{ inputs.bazel-command }} ${{ inputs.bazel-config }} ${{ inputs.bazel-target }}
