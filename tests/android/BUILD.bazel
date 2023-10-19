@@ -1,0 +1,27 @@
+load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
+load("@grab_bazel_common//rules:defs.bzl", "android_unit_test")
+
+kt_android_library(
+    name = "android_test_sample",
+    srcs = glob([
+        "src/main/java/**/*.kt",
+    ]),
+    deps = [
+        "@bazel_common_maven//:com_google_android_material_material",
+    ],
+)
+
+android_unit_test(
+    name = "android_unit_test",
+    srcs = glob([
+        "src/test/java/**/*.kt",
+    ]),
+    associates = [
+        ":android_test_sample_kt",
+    ],
+    deps = [
+        ":android_test_sample",
+        "@maven//:junit_junit",
+        "@maven//:org_json_json",
+    ],
+)

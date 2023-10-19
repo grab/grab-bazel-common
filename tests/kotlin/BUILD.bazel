@@ -1,0 +1,22 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_test")
+
+kt_jvm_library(
+    name = "kotlin_test_lib",
+    srcs = glob([
+        "src/main/java/**/*.kt",
+    ]),
+)
+
+kotlin_test(
+    name = "kotlin_test",
+    srcs = glob([
+        "src/test/java/**/*.kt",
+    ]),
+    associates = [
+        ":kotlin_test_lib",
+    ],
+    deps = [
+        "@maven//:junit_junit",
+    ],
+)

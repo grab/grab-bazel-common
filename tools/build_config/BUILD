@@ -1,5 +1,5 @@
 load(":build_config.bzl", "build_config")
-load("@grab_bazel_common//tools/test:test.bzl", "grab_kt_jvm_test")
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_test")
 
 java_binary(
     name = "build_config_generator",
@@ -46,7 +46,7 @@ build_config(
     },
 )
 
-grab_kt_jvm_test(
+kotlin_test(
     name = "build-config-test",
     srcs = [
         "src/test/java/com/grab/buildconfig/BuildConfigTest.kt",
@@ -67,7 +67,7 @@ build_config(
     },
 )
 
-grab_kt_jvm_test(
+kotlin_test(
     name = "build-config-replace-default-test",
     size = "small",
     srcs = [

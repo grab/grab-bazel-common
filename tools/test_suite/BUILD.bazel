@@ -1,0 +1,15 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+    name = "test_suite",
+    srcs = glob([
+        "src/main/java/**/*.kt",
+    ]),
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "@bazel_common_maven//:com_google_guava_guava",
+        "@bazel_common_maven//:junit_junit",
+    ],
+)

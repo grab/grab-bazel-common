@@ -182,10 +182,10 @@ name.
 #### Kotlin Unit tests
 
 ```python
-load("@grab_bazel_common//tools/test:test.bzl", "grab_kt_jvm_test")
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_test")
 
-grab_kt_jvm_test(
-    name = "binding-adapter-processor-test",
+kotlin_test(
+    name = "kotlin_test",
     srcs = glob([
         "src/test/java/**/*.kt",
     ]),
@@ -200,17 +200,17 @@ grab_kt_jvm_test(
 ```
 
 This will generate a single build target for all Kotlin files and individual `*Test` targets for each `*Test`
-class. [Reference](tools/binding-adapter-bridge/BUILD.bazel).
+class
 
 #### Android Unit tests
 
-Similarly for android unit tests, use `grab_android_local_test` to build and execute tests. [Reference](tools/test/android/BUILD.bazel).
+Similarly for android unit tests, use `android_unit_test` to build and execute tests
 
 ```python
-load("@grab_bazel_common//tools/test:test.bzl", "grab_android_local_test")
+load("@grab_bazel_common//rules:defs.bzl", "android_unit_test")
 
-grab_android_local_test(
-    name = "grab_android_local_test",
+android_unit_test(
+    name = "android_unit_test",
     srcs = glob([
         "src/test/java/**/*.kt",
     ]),

@@ -1,0 +1,45 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library", "kt_jvm_test")
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_test")
+
+kt_jvm_library(
+    name = "test_suite_generator_lib",
+    srcs = glob([
+        "src/main/java/**/*.kt",
+    ]),
+    deps = [
+        "//third_party/auto-service",
+        "@bazel_common_maven//:com_google_auto_auto_common",
+        "@bazel_common_maven//:com_google_auto_service_auto_service",
+        "@bazel_common_maven//:com_squareup_javapoet",
+        "@bazel_common_maven//:junit_junit",
+    ],
+)
+
+java_plugin(
+    name = "test_suite_generator_plugin",
+    generates_api = True,
+    processor_class = "com.grab.pax.test.processor.TestSuiteGenerator",
+    deps = [
+        ":test_suite_generator_lib",
+    ],
+)
+
+java_library(
+    name = "test_suite_generator",
+    exported_plugins = ["test_suite_generator_plugin"],
+    visibility = ["//visibility:public"],
+)
+
+kotlin_test(
+    name = "test_suite_generator_test",
+    size = "small",
+    srcs = glob([
+        "src/test/java/**/*.kt",
+    ]),
+    test_class = "com.grazel.generated.TestSuite",
+    deps = [
+        ":test_suite_generator",
+        "@bazel_common_maven//:junit_junit",
+        "@com_github_jetbrains_kotlin//:kotlin-test",
+    ],
+)

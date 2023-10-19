@@ -1,7 +1,6 @@
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(":databinding_stubs.bzl", "databinding_stubs")
-load("@grab_bazel_common//tools/java:java_library_no_header.bzl", "java_library_no_header")
 # load(":databinding_aar.bzl", "databinding_aar")
 
 # TODO(arun) Replace with configurable maven targets
