@@ -1,0 +1,10 @@
+java_binary(
+    name = "lint_cli",
+    main_class = "com.grab.lint.MainKt",
+    visibility = [
+        "//visibility:public",
+    ],
+    runtime_deps = [
+        "//tools/lint/src/main/java/com/grab/lint",
+    ],
+)

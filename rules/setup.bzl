@@ -58,6 +58,7 @@ def bazel_common_setup(
     maven_install(
         name = repo_name,
         artifacts = DAGGER_ARTIFACTS + [
+            "com.android.tools.lint:lint:31.0.2",
             "com.google.guava:guava:29.0-jre",
             "com.google.auto:auto-common:0.10",
             "com.google.auto.service:auto-service:1.0-rc6",
@@ -89,6 +90,7 @@ def bazel_common_setup(
         ],
         strict_visibility = True,
         maven_install_json = maven_install_json,
+        fetch_sources = True,
     )
 
     _android(patched_android_tools)

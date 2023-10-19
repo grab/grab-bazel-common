@@ -1,0 +1,17 @@
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_library")
+
+kotlin_library(
+    name = "lint",
+    srcs = glob([
+        "*.kt",
+    ]),
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//:dagger",
+        "//tools/worker:worker_lib",
+        "@bazel_common_maven//:com_android_tools_lint_lint",
+        "@bazel_common_maven//:com_github_ajalt_clikt",
+    ],
+)

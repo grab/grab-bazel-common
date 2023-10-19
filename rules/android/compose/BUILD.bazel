@@ -1,4 +1,4 @@
-load("@grab_bazel_common//rules:defs.bzl", "kt_compiler_plugin", "kt_jvm_library")
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_library", "kt_compiler_plugin")
 
 kt_compiler_plugin(
     name = "compose-compiler-plugin",
@@ -9,7 +9,7 @@ kt_compiler_plugin(
     ],
 )
 
-kt_jvm_library(
+kotlin_library(
     name = "compose-plugin",
     exported_compiler_plugins = [":compose-compiler-plugin"],
     visibility = ["//visibility:public"],

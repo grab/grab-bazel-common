@@ -16,6 +16,6 @@ android_instrumentation_binary = _android_instrumentation_binary
 android_unit_test = _android_unit_test
 
 # Kotlin
-kt_jvm_library = _kt_jvm_library
+kotlin_library = _kt_jvm_library
 kt_compiler_plugin = _kt_compiler_plugin
 kotlin_test = _kotlin_test
