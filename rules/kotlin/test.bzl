@@ -10,9 +10,8 @@ def kotlin_test(
     """A macro that generates test targets to execute all Kotlin unit tests.
 
     Usage:
-        The macro creates a single build target to compile all unit test classes and then creates
-        multiple parallel test targets for each Test class. The name of the test class is derived from
-        test class name and location of the file disk.
+        The macro creates a single build target to compile all unit test classes and then creates a test target containing each Test class.
+        The name of the test target is derived from test class name and location of the file on disk.
 
     Args:
         name: name for the test target,
