@@ -8,7 +8,6 @@ build --experimental_android_databinding_v2
 build --android_databinding_use_v3_4_args
 build --android_databinding_use_androidx
 
-# Flags to enable latest android providers in rules
 build --experimental_google_legacy_api
 query --experimental_google_legacy_api
 
@@ -16,5 +15,9 @@ test --test_output=errors # Print test logs for failed tests
 test --build_tests_only
 
 run --ui_event_filters=-info,-stdout --noshow_progress
+
+# Ci Config
+common:ci --noshow_progress
+common:ci --color=no
 
 try-import local.bazelrc
