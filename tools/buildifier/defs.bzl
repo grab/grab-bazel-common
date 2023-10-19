@@ -13,8 +13,8 @@
 # limitations under the License.
 """"""
 
-BUILDIFIER_DEFAULT_VERSION = "5.1.0"
-BUILDIFIER_RELEASE_URL_TEMPLATE = "https://github.com/bazelbuild/buildtools/releases/download/{version}/buildifier-{os}-{arch}"
+BUILDIFIER_DEFAULT_VERSION = "6.3.3"
+BUILDIFIER_RELEASE_URL_TEMPLATE = "https://github.com/bazelbuild/buildtools/releases/download/v{version}/buildifier-{os}-{arch}"
 
 BuildifierVersionInfo = provider(
     "Provides information about the buildifier release",

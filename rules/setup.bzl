@@ -3,12 +3,22 @@ load(
     "register_common_toolchains",
     _buildifier_version = "buildifier_version",
 )
+
+# Internal
 load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
 load("@grab_bazel_common//tools/buildifier:defs.bzl", "BUILDIFIER_DEFAULT_VERSION")
 load("@grab_bazel_common//android/tools:defs.bzl", "android_tools")
+
+# Dagger
 load("@bazel_common_dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
+
+# Rules Jvm External
 load("@rules_jvm_external//:defs.bzl", "maven_install")
+
+# Kotlin
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
+
+# Proto
 # load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
 # Setup android databinding compilation and optionally use patched android tools jar
@@ -29,7 +39,7 @@ def _kotlin():
     )
     native.register_toolchains("//:kotlin_toolchain")
 
-def bazel_common_initialize(
+def bazel_common_setup(
         patched_android_tools = True,
         buildifier_version = BUILDIFIER_DEFAULT_VERSION,
         pinned_maven_install = True):

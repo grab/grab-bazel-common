@@ -27,14 +27,14 @@ bazel_common_dependencies()
 
 load("@grab_bazel_common//android:initialize.bzl", "bazel_common_initialize")
 
-bazel_common_initialize(
+bazel_common_setup(
     patched_android_tools = True, # Optionally use patched android_tools jars
-    buildifier_version = "5.1.0",
+    buildifier_version = "6.3.3",
 )
 
-load("@grab_bazel_common//android:maven.bzl", "pin_bazel_common_artifacts")
+load("@grab_bazel_common//android:maven.bzl", "pin_bazel_common_dependencies")
 
-pin_bazel_common_artifacts()
+pin_bazel_common_dependencies()
 
 load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
 
