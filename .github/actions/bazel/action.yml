@@ -33,4 +33,4 @@ runs:
 
     - name: Run bazel command
       shell: bash
-      run: bazelisk ${{ inputs.bazel-command }} ${{ inputs.bazel-config }} ${{ inputs.bazel-target }}
+      run: bazelisk ${{ inputs.bazel-command }} ${{ inputs.bazel-config }} ${{ inputs.bazel-targets }}

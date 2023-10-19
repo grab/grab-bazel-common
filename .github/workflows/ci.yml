@@ -15,7 +15,7 @@ jobs:
         uses: ./.github/actions/bazel
         with:
           bazel-command: run
-          bazel-target: //:buildifier -- --mode=check -r $(pwd)
+          bazel-targets: //:buildifier -- --mode=check -r $(pwd)
           cache-key: bazel-lint
   build:
     runs-on: ubuntu-latest
@@ -25,7 +25,7 @@ jobs:
         uses: ./.github/actions/bazel
         with:
           bazel-command: build
-          bazel-target: //...
+          bazel-targets: //...
           cache-key: bazel-build
   test:
     runs-on: ubuntu-latest
@@ -35,5 +35,5 @@ jobs:
         uses: ./.github/actions/bazel
         with:
           bazel-command: test
-          bazel-target: //...
+          bazel-targets: //...
           cache-key: bazel-test
