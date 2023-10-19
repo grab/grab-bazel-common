@@ -1,4 +1,5 @@
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
+load("@grab_bazel_common//rules/android/private:test_manifest.bzl", "generate_manifest_xml")
 
 def android_instrumentation_binary(
         name,
@@ -30,7 +31,7 @@ def android_instrumentation_binary(
         package_name = manifest_values["applicationId"]
 
     test_manifest = name + "_manifest"
-    _generate_manifest_xml(
+    generate_manifest_xml(
         name = test_manifest,
         output = name + ".AndroidTestManifest.xml",
         package_name = package_name,
@@ -39,6 +40,8 @@ def android_instrumentation_binary(
     )
 
     android_library_name = name + "_lib"
+
+    # TODO: Migrate to android_library
     kt_android_library(
         name = android_library_name,
         srcs = srcs,
@@ -56,6 +59,7 @@ def android_instrumentation_binary(
         deps = deps,
     )
 
+    # TODO: Migrate to android_library
     native.android_binary(
         name = name,
         instruments = instruments,
@@ -71,32 +75,3 @@ def android_instrumentation_binary(
         deps = [android_library_name],
         **kwargs
     )
-
-def _generate_manifest_xml_impl(ctx):
-    ctx.actions.expand_template(
-        template = ctx.file._template,
-        output = ctx.outputs.output,
-        substitutions = {
-            "{{.PACKAGE_NAME}}": ctx.attr.package_name,
-            "{{.TARGET_PACKAGE_NAME}}": ctx.attr.target_package_name,
-            "{{.INSTRUMENTATION_RUNNER}}": ctx.attr.test_instrumentation_runner,
-        },
-    )
-    return [
-        DefaultInfo(files = depset([ctx.outputs.output])),
-    ]
-
-_generate_manifest_xml = rule(
-    implementation = _generate_manifest_xml_impl,
-    attrs = {
-        "package_name": attr.string(mandatory = True),
-        "target_package_name": attr.string(mandatory = True),
-        "test_instrumentation_runner": attr.string(mandatory = True),
-        "output": attr.output(mandatory = True),
-        "_template": attr.label(
-            doc = "Android Test Manifest template",
-            default = ":AndroidTestManifest.xml.tpl",
-            allow_single_file = True,
-        ),
-    },
-)
