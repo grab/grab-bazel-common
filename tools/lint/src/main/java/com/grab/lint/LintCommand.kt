@@ -13,33 +13,37 @@ class LintCommand : CliktCommand() {
     private val projectXml by option(
         "-p",
         "--project-xml",
-        help = "Project XML containing lint config"
+        help = "Project descriptor XML"
     ).convert { File(it) }.required()
 
     private val lintConfig by option(
         "-l",
         "--lint-config",
-        help = "Path to lint config "
+        help = "Path to lint config"
     ).convert { File(it) }
+
+    private val outputXml by option(
+        "-o",
+        "--output-xml",
+        help = "Lint output xml"
+    ).convert { File(it) }.required()
 
     override fun run() {
         val outputDir = File(".").toPath()
         val baselineFile = outputDir.resolve("baseline.xml")
+
+        // TODO: Get this from rule itself
         val lintConfig = outputDir.resolve("lint.xml").writeLines(
             listOf(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
                 "<lint checkTestSources=\"true\">",
+                "   <issue id=\"all\" severity=\"error\" />",
+                "   <issue id=\"MissingSuperCall\" severity=\"error\" />",
                 "</lint>"
             )
         )
-        val outputXml = outputDir.resolve("output.xml")
-        val projectXml = outputDir.resolve("project.xml").writeLines(
-            listOf(
-                "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n",
-                "<project>\n",
-                "</project>\n"
-            )
-        )
+
+        outputXml.createNewFile()
 
         val lintCli = LintCli()
         lintCli.run(

@@ -3,6 +3,7 @@ load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "kt_db_android_library")
 load(":resources.bzl", "build_resources")
+load(":lint.bzl", "lint")
 
 """Enhanced android_library rule with support for build configs, res values, Kotlin compilation and databinding support"""
 
@@ -79,4 +80,14 @@ def android_library(
         tags = attrs.get("tags", default = None),
         deps = android_library_deps,
         plugins = attrs.get("plugins", default = None),
+    )
+
+    lint(
+        name = name + ".lint",
+        srcs = srcs,
+        resources = resource_files,
+        manifest = attrs.get("manifest"),
+        deps = android_library_deps,
+        android = False,
+        library = True,
     )
