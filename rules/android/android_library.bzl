@@ -84,10 +84,5 @@ def android_library(
 
     lint(
         name = name + ".lint",
-        srcs = srcs,
-        resources = resource_files,
-        manifest = attrs.get("manifest"),
-        deps = android_library_deps,
-        android = False,
-        library = True,
+        target = name,
     )
