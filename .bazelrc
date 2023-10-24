@@ -11,6 +11,8 @@ build --android_databinding_use_androidx
 build --experimental_google_legacy_api
 query --experimental_google_legacy_api
 
+common --strategy=AndroidLint=sandboxed
+
 test --test_output=errors # Print test logs for failed tests
 test --build_tests_only
 
