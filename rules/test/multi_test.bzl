@@ -1,4 +1,4 @@
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_library")
 load(":runtime_resources.bzl", "runtime_resources")
 
 # Unused

@@ -1,6 +1,6 @@
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_library")
 
-kt_jvm_library(
+kotlin_library(
     name = "maven_lib",
     srcs = glob([
         "src/main/kotlin/**/*.kt",

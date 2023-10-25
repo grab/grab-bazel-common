@@ -13,6 +13,7 @@ android_library(
         },
     },
     deps = [
+        "//:parcelize",
         "@bazel_common_maven//:com_google_android_material_material",
     ],
 )

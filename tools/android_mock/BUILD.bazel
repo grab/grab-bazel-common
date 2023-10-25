@@ -1,6 +1,6 @@
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library", "kt_jvm_test")
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_library")
 
-kt_jvm_library(
+kotlin_library(
     name = "mocked_android_jar_lib",
     srcs = glob([
         "src/main/java/**/*.kt",

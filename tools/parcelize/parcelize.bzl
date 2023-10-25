@@ -1,4 +1,4 @@
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_library")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
 
 def parcelize_rules():
@@ -31,7 +31,7 @@ def parcelize_rules():
         ],
     )
 
-    kt_jvm_library(
+    kotlin_library(
         name = "parcelize",
         exported_compiler_plugins = [":parcelize_plugin"],
         visibility = ["//visibility:public"],
