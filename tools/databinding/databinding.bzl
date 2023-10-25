@@ -97,7 +97,7 @@ def kt_db_android_library(
     )
 
     # Create an intermediate target for compiling all Kotlin classes used in Databinding
-    kotlin_target = name + "-kotlin"
+    kotlin_target = name + "_kt"
     kotlin_targets = []
 
     # List for holding binding adapter sources

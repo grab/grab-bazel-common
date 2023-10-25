@@ -6,6 +6,7 @@ android_library(
         "src/main/java/**/*.kt",
     ]),
     custom_package = "com.grab.test",
+    enable_data_binding = True,
     manifest = "src/main/AndroidManifest.xml",
     resources = {
         "src/main/res": {
