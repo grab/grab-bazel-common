@@ -120,26 +120,17 @@ def _dep_lint_infos(ctx):
     """
     Collect dependencies lint info from the transitive closure and extract relevant information like `partial_results_dir`.
     """
-    result = []
-    for target in ctx.rule.attr.deps:
-        if AndroidLintInfo in target:
-            lint_info = target[AndroidLintInfo]
-            if (lint_info.enabled or True):
-                result.append({
-                    "module": str(target.label).lstrip("@"),
-                    "android": lint_info.android,
-                    "library": lint_info.library,
-                    "partial_results_dir": lint_info.partial_results_dir,
-                    "lint_result_xml": lint_info.lint_result_xml,
-                })
-    return result
-
-def _collect_partial_results(ctx):
     return [
-        target[AndroidLintInfo].partial_results_dir
+        {
+            "module": str(target.label).lstrip("@"),
+            "android": target[AndroidLintInfo].android,
+            "library": target[AndroidLintInfo].library,
+            "partial_results_dir": target[AndroidLintInfo].partial_results_dir,
+            "lint_result_xml": target[AndroidLintInfo].lint_result_xml,
+        }
         for attr in _LINT_ASPECTS_ATTR
         for target in getattr(ctx.rule.attr, attr, [])
-        if AndroidLintInfo in target and target[AndroidLintInfo].enabled
+        if AndroidLintInfo in target  # and target[AndroidLintInfo].enabled
     ]
 
 def _module_xml_content(name, android, library, partial_results_dir):
@@ -355,7 +346,7 @@ def _lint_aspect_impl(target, ctx):
 
 lint_aspect = aspect(
     implementation = _lint_aspect_impl,
-    attr_aspects = ["deps", "exports", "runtime_deps"],  # Define attributes that aspect will propagate to
+    attr_aspects = _LINT_ASPECTS_ATTR,  # Define attributes that aspect will propagate to
     attrs = {
         "_lint_cli": attr.label(
             executable = True,
