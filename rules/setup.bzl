@@ -52,6 +52,8 @@ def bazel_common_setup(
         ),
     )
 
+    native.register_toolchains("@rules_android_lint//toolchains:android_lint_default_toolchain")
+
     repo_name = "bazel_common_maven"
     maven_install_json = "@grab_bazel_common//:%s_install.json" % repo_name if pinned_maven_install else None
 
@@ -91,6 +93,31 @@ def bazel_common_setup(
         strict_visibility = True,
         maven_install_json = maven_install_json,
         fetch_sources = True,
+    )
+
+    maven_install(
+        name = "rules_android_lint_deps",
+        artifacts = [
+            # Testing
+            "org.assertj:assertj-core:3.24.2",
+            "junit:junit:4.13.2",
+            # Worker Dependencies
+            "com.squareup.moshi:moshi:1.15.0",
+            "com.squareup.moshi:moshi-kotlin:1.15.0",
+            "com.squareup.okio:okio-jvm:3.6.0",
+            "io.reactivex.rxjava3:rxjava:3.1.8",
+            "com.xenomachina:kotlin-argparser:2.0.7",
+            # Lint Dependencies
+            "com.android.tools.lint:lint:31.3.0-alpha09",
+            "com.android.tools.lint:lint-api:31.3.0-alpha09",
+            "com.android.tools.lint:lint-checks:31.3.0-alpha09",
+            "com.android.tools.lint:lint-model:31.3.0-alpha09",
+        ],
+        #maven_install_json = "@rules_android_lint//:maven_install.json",
+        repositories = [
+            "https://maven.google.com",
+            "https://repo1.maven.org/maven2",
+        ],
     )
 
     _android(patched_android_tools)

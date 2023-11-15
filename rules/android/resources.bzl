@@ -94,3 +94,6 @@ def build_resources(
         return merged_resources + generated_resources
     else:
         return resource_files + generated_resources
+
+def resources_xml(resource_files):
+    return [file for file in resource_files if file.endswith(".xml")]

@@ -1,5 +1,6 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", _http_archive = "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 def http_archive(name, **kwargs):
     maybe(_http_archive, name = name, **kwargs)
@@ -66,7 +67,23 @@ def _proto():
         ],
     )
 
+def _lint():
+    git_repository(
+        name = "rules_android_lint",
+        commit = "012f2b1b0a8ffcad878111d6e2e8b903bc29f985",
+        remote = "https://github.com/Bencodes/rules_android_lint.git",
+        workspace_file = "@grab_bazel_common//third_party/rules_android_lint:WORKSPACE.bazelignore",
+        patch_cmds = [
+            "rm WORKSPACE.bazel",
+            "echo \"common --experimental_google_legacy_api\" > .bazelrc",
+        ],
+        repo_mapping = {
+            "@rules_kotlin": "@io_bazel_rules_kotlin",
+        },
+    )
+
 def bazel_common_dependencies():
     #_proto
     _maven()
     _kotlin()
+    _lint()

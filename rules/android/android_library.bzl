@@ -2,8 +2,9 @@ load("@grab_bazel_common//tools/build_config:build_config.bzl", _build_config = 
 load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "kt_db_android_library")
-load(":resources.bzl", "build_resources")
 load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint_sources", "lint_test")
+load("@rules_android_lint//rules:defs.bzl", "android_lint_test")
+load(":resources.bzl", "build_resources")
 
 """Enhanced android_library rule with support for build configs, res values, Kotlin compilation and databinding support"""
 
@@ -93,4 +94,12 @@ def android_library(
     lint_test(
         name = name + ".lint",
         target = name,
+    )
+
+    android_lint_test(
+        name = name + "_lint_test",
+        srcs = attrs.get("srcs", default = []),
+        resource_files = [file for file in resource_files if file.endswith(".xml")],
+        lib = name,
+        deps = android_library_deps,
     )
