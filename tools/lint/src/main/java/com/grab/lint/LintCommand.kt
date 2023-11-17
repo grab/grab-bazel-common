@@ -1,8 +1,10 @@
 package com.grab.lint
 
+import com.android.tools.lint.LintCliFlags.ERRNO_CREATED_BASELINE
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.parameters.options.convert
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import java.io.File
@@ -33,29 +35,36 @@ class LintCommand : CliktCommand() {
         "--partial-results",
     ).convert { File(it) }.required()
 
+    private val baselineXml by option(
+        "-b",
+        "--baseline-xml",
+    ).convert { File(it) }.default(
+        File("baseline.xml")
+    )
+
     override fun run() {
         runLint(analyzeOnly = true)
         val statusCode = runLint(analyzeOnly = false)
-        throw ProgramResult(statusCode)
+
+        when (statusCode) {
+            ERRNO_CREATED_BASELINE -> println("A new baseline file was created at ${baselineXml.absoluteFile}")
+            else -> throw ProgramResult(statusCode)
+        }
     }
 
     private fun runLint(analyzeOnly: Boolean = false): Int {
-        val outputDir = File(".").toPath()
-        val baselineFile = outputDir.resolve("baseline.xml")
         return LintCli().run(
             mutableListOf(
                 "--project", this.projectXml.toString(),
                 "--xml", this.outputXml.toString(),
-                "--baseline", baselineFile.toString(),
+                "--baseline", this.baselineXml.toString(),
                 "--config", this.lintConfig.toString(),
                 "--update-baseline",
                 "--client-id", "test"
             ).apply {
                 if (analyzeOnly) {
                     add("--analyze-only")
-                } /*else {
-                    add("--report-only")
-                }*/
+                }
             }.toTypedArray()
         )
     }
