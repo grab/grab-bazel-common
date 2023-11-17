@@ -1,6 +1,7 @@
 package com.grab.lint
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
@@ -34,14 +35,14 @@ class LintCommand : CliktCommand() {
 
     override fun run() {
         runLint(analyzeOnly = true)
-        runLint(analyzeOnly = false)
-        // TODO Post process the results and fail the action
+        val statusCode = runLint(analyzeOnly = false)
+        throw ProgramResult(statusCode)
     }
 
-    private fun runLint(analyzeOnly: Boolean = false) {
+    private fun runLint(analyzeOnly: Boolean = false): Int {
         val outputDir = File(".").toPath()
         val baselineFile = outputDir.resolve("baseline.xml")
-        LintCli().run(
+        return LintCli().run(
             mutableListOf(
                 "--project", this.projectXml.toString(),
                 "--xml", this.outputXml.toString(),
