@@ -5,6 +5,7 @@ AndroidLintInfo = provider(
         "library": "True if this is a library module",
         "enabled": "True if linter is supposed to run on this target",
         "partial_results_dir": "The partial results dir for library modules",
+        "transitive_partial_results_dirs": "The partial results dir for transitive closure",
         "lint_result_xml": "The lint result XML",
         "generator_name": "The macro that generated this target",
         "srcs": "The sources of this target",
@@ -12,7 +13,7 @@ AndroidLintInfo = provider(
     },
 )
 
-_LINT_ASPECTS_ATTR = ["deps", "runtime_deps", "exports"]
+_LINT_ASPECTS_ATTR = ["deps", "runtime_deps", "exports", "associates"]
 
 def _get_target_outputs(target, generator_name):
     result = []
@@ -59,6 +60,17 @@ def _transitive_sources(target, ctx, source_attribute):
         _get_files(ctx.rule.attr, source_attribute),
         transitive = [
             getattr(t[AndroidLintInfo], source_attribute)
+            for attr in _LINT_ASPECTS_ATTR
+            for t in getattr(ctx.rule.attr, attr, [])
+            if AndroidLintInfo in t
+        ],
+    )
+
+def _transitive_partial_results(target, ctx, partial_results_dir):
+    return depset(
+        [partial_results_dir],
+        transitive = [
+            t[AndroidLintInfo].transitive_partial_results_dirs
             for attr in _LINT_ASPECTS_ATTR
             for t in getattr(ctx.rule.attr, attr, [])
             if AndroidLintInfo in t
@@ -121,81 +133,17 @@ def _dep_lint_infos(ctx):
     Collect dependencies lint info from the transitive closure and extract relevant information like `partial_results_dir`.
     """
     return [
-        {
-            "module": str(target.label).lstrip("@"),
-            "android": target[AndroidLintInfo].android,
-            "library": target[AndroidLintInfo].library,
-            "partial_results_dir": target[AndroidLintInfo].partial_results_dir,
-            "lint_result_xml": target[AndroidLintInfo].lint_result_xml,
-        }
+        struct(
+            module = str(target.label).lstrip("@"),
+            android = target[AndroidLintInfo].android,
+            library = target[AndroidLintInfo].library,
+            partial_results_dir = target[AndroidLintInfo].partial_results_dir,
+            lint_result_xml = target[AndroidLintInfo].lint_result_xml,
+        )
         for attr in _LINT_ASPECTS_ATTR
         for target in getattr(ctx.rule.attr, attr, [])
         if AndroidLintInfo in target  # and target[AndroidLintInfo].enabled
     ]
-
-def _module_xml_content(name, android, library, partial_results_dir):
-    return "<module name=\"{0}\" android=\"{1}\" library=\"{2}\" partial-results-dir=\"{3}\">\n".format(
-        name,
-        android,
-        library,
-        partial_results_dir,
-    )
-
-def _project_xml_content(
-        name = None,
-        android = True,
-        library = False,
-        srcs = [],
-        resources = [],
-        is_test = False,
-        classpath = [],
-        manifest = [],
-        merged_manifest = [],
-        partial_results_dir = None,
-        dep_lint_infos = []):
-    """
-    Project descriptor XML acts as the overall input arg file for Lint CLI. This method constructs the XML content
-    from various inputs. No absolute path is used for passing the files.
-    """
-    project_xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
-    project_xml += "<project>\n"
-    project_xml += _module_xml_content(
-        name,
-        android,
-        library,
-        partial_results_dir.path,
-    )
-    for file in srcs:
-        project_xml += "  <src file=\"{0}\" ".format(file.path)
-        if is_test:
-            project_xml += "test=\"true\" "
-        project_xml += "/>\n"
-    for file in resources:
-        project_xml += "  <resource file=\"{0}\"/>\n".format(file.path)
-    for file in classpath.to_list():
-        project_xml += "  <classpath jar=\"{0}\" />\n".format(file.path)
-
-    if len(manifest) != 0:
-        project_xml += "  <manifest file=\"{0}\"/>\n".format(manifest[0].file.path)
-    if len(merged_manifest) != 0:
-        project_xml += "  <merged-manifest file=\"{0}\"/>\n".format(merged_manifest[0].file.path)
-
-    for dep_info in dep_lint_infos:
-        project_xml += "  <dep module=\"{0}\" />\n".format(dep_info["module"])
-    project_xml += "</module>\n"
-
-    # Dependency info
-    for dep_info in dep_lint_infos:
-        project_xml += _module_xml_content(
-            dep_info["module"],
-            dep_info["android"],
-            dep_info["library"],
-            dep_info["partial_results_dir"].path,
-        )
-        project_xml += "</module>\n"
-
-    project_xml += "</project>\n"
-    return project_xml
 
 def _lint_config_content():
     lint_config_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -203,21 +151,60 @@ def _lint_config_content():
     lint_config_xml += "</lint>"
     return lint_config_xml
 
+def _to_path(f):
+    return f.path
+
 def _lint_action(
         ctx,
-        project_xml_file,
-        lint_result_xml_file,
+        android,
+        library,
+        srcs,
+        resources,
+        classpath,
+        manifest,
+        merged_manifest,
+        dependencies,
         lint_config_xml_file,
+        lint_result_xml_file,
         partial_results_dir,
         inputs):
     args = ctx.actions.args()
     args.set_param_file_format("multiline")
     args.use_param_file("--flagfile=%s", use_always = True)
 
-    args.add("--project-xml", project_xml_file.path)
+    args.add("--name", ctx.label.name)
+    if android:
+        args.add("--android")
+    if library:
+        args.add("--library")
+
+    args.add_joined(
+        "--sources",
+        srcs,
+        join_with = ",",
+        map_each = _to_path,
+    )
+    args.add_joined(
+        "--resource-files",
+        resources,
+        join_with = ",",
+        map_each = _to_path,
+    )
+    args.add_joined(
+        "--classpath",
+        classpath,
+        join_with = ",",
+        map_each = _to_path,
+    )
+
+    if len(manifest) != 0:
+        args.add("--manifest", manifest[0].file.path)
+    if len(merged_manifest) != 0:
+        args.add("--merged-manifest", merged_manifest[0].file.path)
+
     args.add("--output-xml", lint_result_xml_file.path)
     args.add("--lint-config", lint_config_xml_file.path)
-    args.add("--partial-results", partial_results_dir.path)
+    args.add("--partial-results-dir", partial_results_dir.path)
 
     mnemonic = "AndroidLint"
     ctx.actions.run(
@@ -251,9 +238,10 @@ def _lint_aspect_impl(target, ctx):
         partial_results_dir = ctx.actions.declare_directory(target.label.name + "_partial_results_dir")
         lint_result_xml_file = ctx.actions.declare_file(target.label.name + "_lint_result.xml")
 
-        # Data
         generator_name = ctx.rule.attr.generator_name
         rule_kind = ctx.rule.kind
+
+        # Data
         android = rule_kind == "android_library" or rule_kind == "android_binary" or True
         library = rule_kind != "android_binary"
         is_test = rule_kind.endswith("_test")
@@ -262,6 +250,7 @@ def _lint_aspect_impl(target, ctx):
         transitive_resources = _transitive_sources(target, ctx, "resource_files")
         srcs = _direct_sources(transitive_srcs, generator_name)
         resources = _direct_sources(transitive_resources, generator_name)
+        transitive_partial_results = _transitive_partial_results(target, ctx, partial_results_dir)
 
         # Manifest
         manifest = _get_files(ctx.rule.attr, "manifest")
@@ -271,40 +260,30 @@ def _lint_aspect_impl(target, ctx):
             classpath = _classpath(target)
             dep_lint_infos = _dep_lint_infos(ctx)  # Collect dependencies' lint data
 
-            project_xml_file = ctx.actions.declare_file(target.label.name + "_project.xml")
             lint_config_xml_file = ctx.actions.declare_file(target.label.name + "_lint_config.xml")
-
-            project_xml = _project_xml_content(
-                name = ctx.label.name,
-                android = str(android).lower(),
-                library = str(library).lower(),
-                srcs = srcs,
-                resources = resources,
-                is_test = is_test,
-                classpath = classpath,
-                manifest = manifest,
-                merged_manifest = merged_manifest,
-                partial_results_dir = partial_results_dir,
-                dep_lint_infos = dep_lint_infos,
-            )
-            ctx.actions.write(output = project_xml_file, content = project_xml)
             ctx.actions.write(output = lint_config_xml_file, content = _lint_config_content())
 
             # Lint Action
             _lint_action(
-                ctx,
-                project_xml_file,
-                lint_result_xml_file,
-                lint_config_xml_file,
-                partial_results_dir,
+                ctx = ctx,
+                android = android,
+                library = library,
+                srcs = srcs,
+                resources = resources,
+                classpath = classpath,
+                manifest = manifest,
+                merged_manifest = merged_manifest,
+                dependencies = [],
+                lint_config_xml_file = lint_config_xml_file,
+                lint_result_xml_file = lint_result_xml_file,
+                partial_results_dir = partial_results_dir,
                 inputs = depset(
                     srcs +
                     resources +
-                    [project_xml_file] +
-                    [dep_info["partial_results_dir"] for dep_info in dep_lint_infos] +
                     [lint_config_xml_file] +
                     [src.file for src in manifest] +
-                    [src.file for src in merged_manifest],
+                    [src.file for src in merged_manifest] +
+                    [dep_info.partial_results_dir for dep_info in dep_lint_infos],
                     transitive = [classpath],
                 ),
             )
@@ -316,6 +295,7 @@ def _lint_aspect_impl(target, ctx):
                     library = library,
                     enabled = enabled,
                     partial_results_dir = partial_results_dir,
+                    transitive_partial_results_dirs = transitive_partial_results,
                     lint_result_xml = lint_result_xml_file,
                     generator_name = generator_name,
                     srcs = transitive_srcs,
@@ -337,6 +317,7 @@ def _lint_aspect_impl(target, ctx):
                     library = library,
                     enabled = enabled,
                     partial_results_dir = partial_results_dir,
+                    transitive_partial_results_dirs = transitive_partial_results,
                     lint_result_xml = lint_result_xml_file,
                     generator_name = generator_name,
                     srcs = transitive_srcs,
