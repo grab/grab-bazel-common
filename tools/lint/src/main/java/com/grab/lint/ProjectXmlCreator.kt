@@ -22,7 +22,8 @@ class ProjectXmlCreator {
         classpath: List<String>,
         manifest: File?,
         mergedManifest: File?,
-        dependencies: List<Dependency>
+        dependencies: List<Dependency>,
+        verbose: Boolean
     ): File {
         val tempDir = Files.createTempDirectory("tmp").toFile()
         val projectXml = File(tempDir, "project.xml")
@@ -46,14 +47,18 @@ class ProjectXmlCreator {
                 appendLine("  <merged-manifest file=\"$mergedManifest\" />")
             }
             dependencies.forEach { dependency ->
-                appendLine("  <dep module=\"$dependency\" />")
+                appendLine("  <dep module=\"${dependency.name}\" />")
             }
             appendLine("</module>")
             dependencies.forEach { dependency ->
                 appendLine(moduleXml(dependency.name, dependency.android, dependency.library, dependency.partialDir) + "</module>")
             }
             appendLine("</project>")
-        }.also(::println)
+        }.also {
+            if (verbose) {
+                println(it)
+            }
+        }
         projectXml.writeText(contents)
         return projectXml
     }

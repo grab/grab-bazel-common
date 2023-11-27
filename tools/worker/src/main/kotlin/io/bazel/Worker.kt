@@ -6,10 +6,10 @@ import io.bazel.value.WorkRequest
 import io.bazel.value.WorkResponse
 import io.reactivex.rxjava3.core.Scheduler
 import io.reactivex.rxjava3.schedulers.Schedulers
-import kotlin.system.exitProcess
-import java.nio.file.Files
-import java.nio.file.FileSystems
 import java.nio.charset.StandardCharsets
+import java.nio.file.FileSystems
+import java.nio.file.Files
+import kotlin.system.exitProcess
 
 const val PERSISTENT_WORKER = "--persistent_worker"
 

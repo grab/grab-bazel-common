@@ -8,7 +8,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
 import java.io.File
-import java.nio.file.Files
 import com.android.tools.lint.Main as LintCli
 
 data class Dependency(
@@ -88,6 +87,11 @@ class LintCommand : CliktCommand() {
         "--partial-results-dir",
     ).convert { File(it) }.required()
 
+    private val verbose by option(
+        "-v",
+        "--verbose",
+    ).flag(default = false)
+
     override fun run() {
         val projectXml = ProjectXmlCreator()
             .create(
@@ -100,16 +104,14 @@ class LintCommand : CliktCommand() {
                 classpath,
                 manifest,
                 mergedManifest,
-                dependencies.map { Dependency("", true, true, File("")) }
+                dependencies.map { dependency ->
+                    val (name, android, library, partialResultsDir) = dependency.split("^")
+                    Dependency(name, android.toBoolean(), library.toBoolean(), File(partialResultsDir))
+                },
+                verbose
             )
         runLint(projectXml, analyzeOnly = true)
         runLint(projectXml, analyzeOnly = false)
-    }
-
-    private fun createProjectXml(): File {
-        val tempDir = Files.createTempDirectory("tmp").toFile()
-        val projectXml = File(tempDir, "project.xml")
-        return projectXml
     }
 
     private fun runLint(projectXml: File, analyzeOnly: Boolean = false) {
@@ -129,7 +131,16 @@ class LintCommand : CliktCommand() {
                 } /*else {
                     add("--report-only")
                 }*/
+                System.getenv("ANDROID_HOME")?.let {
+                    add("--sdk-home")
+                    add(it)
+                }
             }.toTypedArray()
         )
+        if (verbose) {
+            if (outputXml.exists()) {
+                println(outputXml.readText())
+            }
+        }
     }
 }
