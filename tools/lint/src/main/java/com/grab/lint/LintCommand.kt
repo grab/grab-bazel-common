@@ -93,23 +93,22 @@ class LintCommand : CliktCommand() {
     ).flag(default = false)
 
     override fun run() {
-        val projectXml = ProjectXmlCreator()
-            .create(
-                name,
-                android,
-                library,
-                partialResults,
-                srcs,
-                resources,
-                classpath,
-                manifest,
-                mergedManifest,
-                dependencies.map { dependency ->
-                    val (name, android, library, partialResultsDir) = dependency.split("^")
-                    Dependency(name, android.toBoolean(), library.toBoolean(), File(partialResultsDir))
-                },
-                verbose
-            )
+        val projectXml = ProjectXmlCreator().create(
+            name,
+            android,
+            library,
+            partialResults,
+            srcs,
+            resources,
+            classpath,
+            manifest,
+            mergedManifest,
+            dependencies.map { dependency ->
+                val (name, android, library, partialResultsDir) = dependency.split("^")
+                Dependency(name, android.toBoolean(), library.toBoolean(), File(partialResultsDir))
+            },
+            verbose
+        )
         runLint(projectXml, analyzeOnly = true)
         runLint(projectXml, analyzeOnly = false)
     }
@@ -138,9 +137,8 @@ class LintCommand : CliktCommand() {
             }.toTypedArray()
         )
         if (verbose) {
-            if (outputXml.exists()) {
-                println(outputXml.readText())
-            }
+            if (outputXml.exists()) println(outputXml.readText())
+            if (partialResults.exists()) partialResults.walkTopDown().forEach(::println)
         }
     }
 }

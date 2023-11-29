@@ -3,7 +3,7 @@ load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "DATABINDING_DEPS")
 load(":resources.bzl", "build_resources")
-load(":lint.bzl", "lint")
+load(":lint2.bzl", "lint")
 
 """Enhanced android_binary rule with support for build configs, res values, Kotlin compilation and databinding support"""
 
@@ -92,5 +92,8 @@ def android_binary(
 
     lint(
         name = name + ".lint",
+        srcs = attrs.get("srcs", default = None),
+        resources = [file for file in resource_files if file.endswith(".xml")],
+        manifest = attrs.get("manifest"),
         target = name,
     )
