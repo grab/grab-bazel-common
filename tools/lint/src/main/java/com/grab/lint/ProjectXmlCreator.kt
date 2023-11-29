@@ -10,7 +10,7 @@ class ProjectXmlCreator {
         android: Boolean,
         library: Boolean,
         partialResults: File
-    ) = "<module name=\"$name\" android=\"$android\" library=\"$library\" partial-results-dir=\"$partialResults\">"
+    ) = "<module name=\"$name\" android=\"$android\" library=\"$library\" partial-results-dir=\"$partialResults\" desugar=\"full\">"
 
     fun create(
         name: String,

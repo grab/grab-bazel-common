@@ -1,4 +1,4 @@
-load(":utils.bzl", "utils")
+load("@grab_bazel_common//rules/android:utils.bzl", "utils")
 
 _LINT_ASPECTS_ATTR = ["deps", "runtime_deps", "exports", "associates"]
 
@@ -170,9 +170,26 @@ def _lint_impl(ctx):
             transitive = [classpath],
         ),
     )
-    return [DefaultInfo(files = depset([lint_result_xml_file]))]
 
-lint = rule(
+    ctx.actions.write(
+        output = ctx.outputs.launcher_script,
+        is_executable = False,
+        content = """
+    #!/bin/bash
+    # TODO: Post process lint
+    cat {lint_result}
+            """.format(
+            lint_result = lint_result_xml_file.short_path,
+        ),
+    )
+
+    return [DefaultInfo(
+        executable = ctx.outputs.launcher_script,
+        runfiles = ctx.runfiles(files = [lint_result_xml_file]),
+        files = depset([ctx.outputs.launcher_script, ctx.outputs.lint_result]),
+    )]
+
+lint_test = rule(
     implementation = _lint_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = True),
@@ -186,7 +203,9 @@ lint = rule(
             default = Label("//tools/lint:lint_cli"),
         ),
     },
+    test = True,
     outputs = dict(
+        launcher_script = "%{name}.sh",
         lint_result = "%{name}_result.xml",
     ),
 )
