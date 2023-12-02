@@ -22,6 +22,16 @@ def _encode_dependency(dependency_info):
         dependency_info.partial_results_dir.path,
     )
 
+def _compile_sdk_version(sdk_target):
+    android_jar = sdk_target[AndroidSdkInfo].android_jar.path
+    if not android_jar.startswith("external/androidsdk/platforms/android-"):
+        return None
+    if not android_jar.endswith("/android.jar"):
+        return None
+    level = android_jar.removeprefix("external/androidsdk/platforms/android-")
+    level = level.removesuffix("/android.jar")
+    return level
+
 # Pass this via lint.xml from rule
 def _lint_config_content():
     lint_config_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -33,6 +43,7 @@ def _lint_action(
         ctx,
         android,
         library,
+        compile_sdk_version,
         srcs,
         resources,
         classpath,
@@ -53,6 +64,8 @@ def _lint_action(
         args.add("--android")
     if library:
         args.add("--library")
+    if compile_sdk_version:
+        args.add("--compile-sdk-version", compile_sdk_version)
 
     args.add_joined(
         "--sources",
@@ -136,21 +149,21 @@ def _lint_impl(ctx):
     lint_config_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_config.xml")
     ctx.actions.write(output = lint_config_xml_file, content = _lint_config_content())
 
-    utils.inspect(target[AndroidManifestInfo])
-
+    # Inputs
     srcs = ctx.files.srcs
     resources = ctx.files.resources
     manifest = ctx.files.manifest
-
     classpath = _classpath(target)
     merged_manifest = []
     if AndroidManifestInfo in target:
         merged_manifest.append(target[AndroidManifestInfo].manifest)
+    compile_sdk_version = _compile_sdk_version(ctx.attr._android_sdk)
 
     _lint_action(
         ctx = ctx,
         android = True,
         library = False,
+        compile_sdk_version = compile_sdk_version,
         srcs = srcs,
         resources = resources,
         classpath = classpath,
@@ -202,6 +215,7 @@ lint_test = rule(
             cfg = "exec",
             default = Label("//tools/lint:lint_cli"),
         ),
+        "_android_sdk": attr.label(default = "@androidsdk//:sdk"),  # Use toolchains later
     },
     test = True,
     outputs = dict(

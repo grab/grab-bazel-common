@@ -31,6 +31,11 @@ class LintCommand : CliktCommand() {
         "--android",
     ).flag(default = true)
 
+    private val compileSdkVersion: String? by option(
+        "-cs",
+        "--compile-sdk-version",
+    )
+
     private val library: Boolean by option(
         "-l",
         "--library",
@@ -99,6 +104,7 @@ class LintCommand : CliktCommand() {
             name,
             android,
             library,
+            compileSdkVersion,
             partialResults,
             srcs,
             resources,

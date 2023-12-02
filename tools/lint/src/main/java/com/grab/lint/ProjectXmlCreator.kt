@@ -9,13 +9,21 @@ class ProjectXmlCreator {
         name: String,
         android: Boolean,
         library: Boolean,
+        compileSdkVersion: String?,
         partialResults: File
-    ) = "<module name=\"$name\" android=\"$android\" library=\"$library\" partial-results-dir=\"$partialResults\" desugar=\"full\">"
+    ) = """<module 
+        |  name="$name" 
+        |  android="$android" 
+        |  library="$library" 
+        |  partial-results-dir="$partialResults" 
+        |  ${compileSdkVersion?.let { """compile-sdk-version="$compileSdkVersion"""" }}
+        |  desugar="full">""".trimMargin()
 
     fun create(
         name: String,
         android: Boolean,
         library: Boolean,
+        compileSdkVersion: String?,
         partialResults: File,
         srcs: List<String>,
         resources: List<String>,
@@ -30,7 +38,7 @@ class ProjectXmlCreator {
         val contents = buildString {
             appendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
             appendLine("<project>")
-            appendLine(moduleXml(name, android, library, partialResults))
+            appendLine(moduleXml(name, android, library, compileSdkVersion, partialResults))
             srcs.forEach { src ->
                 appendLine("  <src file=\"$src\" test=\"false\" />")
             }
@@ -51,7 +59,15 @@ class ProjectXmlCreator {
             }
             appendLine("</module>")
             dependencies.forEach { dependency ->
-                appendLine(moduleXml(dependency.name, dependency.android, dependency.library, dependency.partialDir) + "</module>")
+                appendLine(
+                    moduleXml(
+                        dependency.name,
+                        dependency.android,
+                        dependency.library,
+                        compileSdkVersion,
+                        dependency.partialDir
+                    ) + "</module>"
+                )
             }
             appendLine("</project>")
         }.also {
