@@ -8,6 +8,8 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
 import java.io.File
+import kotlin.io.path.exists
+import kotlin.io.path.readText
 import com.android.tools.lint.Main as LintCli
 
 data class Dependency(
@@ -119,9 +121,9 @@ class LintCommand : CliktCommand() {
         LintCli().run(
             mutableListOf(
                 "--project", projectXml.toString(),
-                "--xml", this.outputXml.toString(),
+                "--xml", outputXml.toString(),
                 "--baseline", baselineFile.toString(),
-                "--config", this.lintConfig.toString(),
+                "--config", lintConfig.toString(),
                 "--update-baseline",
                 "--client-id", "test"
             ).apply {
@@ -139,6 +141,7 @@ class LintCommand : CliktCommand() {
         if (verbose) {
             if (outputXml.exists()) println(outputXml.readText())
             if (partialResults.exists()) partialResults.walkTopDown().forEach(::println)
+            if (baselineFile.exists()) println(baselineFile.readText())
         }
     }
 }
