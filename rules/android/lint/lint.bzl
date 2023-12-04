@@ -1,15 +1,7 @@
 load("@grab_bazel_common//rules/android:utils.bzl", "utils")
-load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo", "AndroidLintSourcesInfo")
+load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo", "AndroidLintNodeInfo", "AndroidLintSourcesInfo")
 
 _LINT_ASPECTS_ATTR = ["deps", "runtime_deps", "exports", "associates"]
-
-def _encode_dependency(dependency_info):
-    return "%s^%s^%s^%s" % (
-        dependency_info.module,
-        dependency_info.android,
-        dependency_info.library,
-        dependency_info.partial_results_dir.path,
-    )
 
 def _compile_sdk_version(sdk_target):
     android_jar = sdk_target[AndroidSdkInfo].android_jar.path
@@ -51,15 +43,39 @@ def _collect_sources(target, ctx):
         fail("Only one lint_sources allowed as dependency")
     return sources[0]
 
-def _transitive_partial_results(target, ctx, partial_results_dir):
+def _transitive_lint_node_infos(ctx):
     return depset(
-        [partial_results_dir],
         transitive = [
-            t[AndroidLintInfo].transitive_partial_results_dirs
-            for attr in _LINT_ASPECTS_ATTR
-            for t in getattr(ctx.rule.attr, attr, [])
-            if AndroidLintInfo in t
+            lint_info.transitive_nodes
+            for lint_info in utils.collect_providers(
+                AndroidLintInfo,
+                getattr(ctx.rule.attr, "deps", []),
+                getattr(ctx.rule.attr, "exports", []),
+            )
         ],
+    )
+
+def _dep_lint_node_infos(target, transitive_lint_node_infos):
+    # From the transitive lint node infos, only process targets which have lint enabled
+    # and return a struct containing all data needed for lint dependencies
+    return [
+        struct(
+            module = str(target.label).lstrip("@"),
+            android = lint_node_info.android,
+            library = lint_node_info.library,
+            partial_results_dir = lint_node_info.partial_results_dir,
+            lint_result_xml = lint_node_info.lint_result_xml,
+        )
+        for lint_node_info in transitive_lint_node_infos.to_list()
+        if lint_node_info.enabled
+    ]
+
+def _encode_dependency(dependency_info):
+    return "%s^%s^%s^%s" % (
+        dependency_info.module,
+        dependency_info.android,
+        dependency_info.library,
+        dependency_info.partial_results_dir.path,
     )
 
 def _lint_action(
@@ -72,7 +88,7 @@ def _lint_action(
         classpath,
         manifest,
         merged_manifest,
-        dep_lint_infos,
+        dep_lint_node_infos,
         lint_config_xml_file,
         lint_result_xml_file,
         partial_results_dir,
@@ -111,7 +127,7 @@ def _lint_action(
 
     args.add_joined(
         "--dependencies",
-        dep_lint_infos,
+        dep_lint_node_infos,
         join_with = ",",
         map_each = _encode_dependency,
     )
@@ -156,16 +172,23 @@ def _lint_aspect_impl(target, ctx):
         partial_results_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_partial_results_dir")
         lint_result_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result.xml")
 
+        # Current target info
         rule_kind = ctx.rule.kind
         android = rule_kind == "android_library" or rule_kind == "android_binary"
         library = rule_kind != "android_binary"
 
         enabled = "lint_enabled" in ctx.rule.attr.tags and android  # Currently only android targets
 
+        # Dependency info
+        transitive_lint_node_infos = _transitive_lint_node_infos(ctx)
+
+        # Result
+        android_lint_info = None  # Current target's AndroidLintNodeInfo
         if enabled:
             sources = _collect_sources(target, ctx)
             compile_sdk_version = _compile_sdk_version(ctx.attr._android_sdk)
-            transitive_partial_results_dirs = _transitive_partial_results(target, ctx, partial_results_dir)
+            dep_lint_node_infos = _dep_lint_node_infos(target, transitive_lint_node_infos)
+            partial_results = [info.partial_results_dir for info in dep_lint_node_infos]
 
             _lint_action(
                 ctx = ctx,
@@ -177,7 +200,7 @@ def _lint_aspect_impl(target, ctx):
                 classpath = sources.classpath,
                 manifest = sources.manifest,
                 merged_manifest = sources.merged_manifest,
-                dep_lint_infos = [],
+                dep_lint_node_infos = dep_lint_node_infos,
                 lint_config_xml_file = sources.lint_config_xml,
                 lint_result_xml_file = lint_result_xml_file,
                 partial_results_dir = partial_results_dir,
@@ -187,40 +210,43 @@ def _lint_aspect_impl(target, ctx):
                     sources.resources +
                     sources.manifest +
                     sources.merged_manifest +
-                    [sources.lint_config_xml],
+                    [sources.lint_config_xml] +
+                    partial_results,
                     transitive = [sources.classpath],
                 ),
             )
-            return [
-                AndroidLintInfo(
-                    name = target.label.name,
-                    android = android,
-                    library = library,
-                    enabled = enabled,
-                    partial_results_dir = partial_results_dir,
-                    transitive_partial_results_dirs = transitive_partial_results_dirs,
-                    lint_result_xml = lint_result_xml_file,
-                ),
-            ]
+
+            android_lint_info = AndroidLintNodeInfo(
+                name = target.label.name,
+                android = android,
+                library = library,
+                enabled = enabled,
+                partial_results_dir = partial_results_dir,
+                lint_result_xml = lint_result_xml_file,
+            )
         else:
             # No linting to do, just propagate transitive data
             ctx.actions.run_shell(
                 outputs = [partial_results_dir],
                 command = ("mkdir -p %s" % (partial_results_dir.path)),
             )
-            transitive_partial_results_dirs = _transitive_partial_results(target, ctx, partial_results_dir)
             ctx.actions.write(output = lint_result_xml_file, content = "")
-            return [
-                AndroidLintInfo(
-                    name = target.label.name,
-                    android = android,
-                    library = library,
-                    enabled = enabled,
-                    partial_results_dir = None,
-                    transitive_partial_results_dirs = transitive_partial_results_dirs,
-                    lint_result_xml = lint_result_xml_file,
-                ),
-            ]
+
+            android_lint_info = AndroidLintNodeInfo(
+                name = target.label.name,
+                android = android,
+                library = library,
+                enabled = enabled,
+                partial_results_dir = None,
+                lint_result_xml = lint_result_xml_file,
+            )
+        return AndroidLintInfo(
+            info = android_lint_info,
+            transitive_nodes = depset(
+                [android_lint_info],
+                transitive = [depset(transitive = [transitive_lint_node_infos])],
+            ),
+        )
 
 lint_aspect = aspect(
     implementation = _lint_aspect_impl,
@@ -233,6 +259,9 @@ lint_aspect = aspect(
         ),
         "_android_sdk": attr.label(default = "@androidsdk//:sdk"),  # Use toolchains later
     },
+    provides = [
+        #AndroidLintInfo,
+    ],
 )
 
 def _lint_test_impl(ctx):
@@ -242,7 +271,7 @@ def _lint_test_impl(ctx):
 
     # Aspect would have calculated the results already, simply symlink it
     ctx.actions.symlink(
-        target_file = ctx.attr.target[AndroidLintInfo].lint_result_xml,
+        target_file = ctx.attr.target[AndroidLintInfo].info.lint_result_xml,
         output = ctx.outputs.lint_result,
     )
 
