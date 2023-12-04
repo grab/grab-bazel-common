@@ -146,7 +146,7 @@ class LintCommand : CliktCommand() {
         )
         if (verbose) {
             if (outputXml.exists()) println(outputXml.readText())
-            if (partialResults.exists()) partialResults.walkTopDown().forEach(::println)
+            if (partialResults.exists()) partialResults.walkTopDown().forEach { println("\t$it") }
             if (baselineFile.exists()) println(baselineFile.readText())
         }
     }

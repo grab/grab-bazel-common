@@ -1,5 +1,5 @@
 load("@grab_bazel_common//rules/android:utils.bzl", "utils")
-load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo", "AndroidLintNodeInfo", "AndroidLintSourcesInfo")
+load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo", "AndroidLintNodeInfo", "AndroidLintSourcesInfo", "LINT_ENABLED")
 
 _LINT_ASPECTS_ATTR = ["deps", "runtime_deps", "exports", "associates"]
 
@@ -15,7 +15,7 @@ def _compile_sdk_version(sdk_target):
 
 def _lint_sources_classpath(target, ctx):
     transitive = [
-        dep[JavaInfo].compile_jars
+        dep[JavaInfo].transitive_compile_time_jars
         for dep in ctx.rule.attr.deps
         if JavaInfo in dep
     ]
@@ -60,7 +60,7 @@ def _dep_lint_node_infos(target, transitive_lint_node_infos):
     # and return a struct containing all data needed for lint dependencies
     return [
         struct(
-            module = str(target.label).lstrip("@"),
+            module = str(lint_node_info.name).lstrip("@"),
             android = lint_node_info.android,
             library = lint_node_info.library,
             partial_results_dir = lint_node_info.partial_results_dir,
@@ -177,7 +177,7 @@ def _lint_aspect_impl(target, ctx):
         android = rule_kind == "android_library" or rule_kind == "android_binary"
         library = rule_kind != "android_binary"
 
-        enabled = "lint_enabled" in ctx.rule.attr.tags and android  # Currently only android targets
+        enabled = LINT_ENABLED in ctx.rule.attr.tags and android  # Currently only android targets
 
         # Dependency info
         transitive_lint_node_infos = _transitive_lint_node_infos(ctx)
@@ -217,7 +217,7 @@ def _lint_aspect_impl(target, ctx):
             )
 
             android_lint_info = AndroidLintNodeInfo(
-                name = target.label.name,
+                name = str(target.label),
                 android = android,
                 library = library,
                 enabled = enabled,
@@ -233,7 +233,7 @@ def _lint_aspect_impl(target, ctx):
             ctx.actions.write(output = lint_result_xml_file, content = "")
 
             android_lint_info = AndroidLintNodeInfo(
-                name = target.label.name,
+                name = str(target.label),
                 android = android,
                 library = library,
                 enabled = enabled,

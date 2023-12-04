@@ -29,3 +29,5 @@ AndroidLintSourcesInfo = provider(
         lint_config = "Lint config XML",
     ),
 )
+
+LINT_ENABLED = "lint_enabled"

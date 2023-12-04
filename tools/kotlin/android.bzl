@@ -2,6 +2,7 @@ load(
     "@io_bazel_rules_kotlin//kotlin:jvm.bzl",
     _kt_jvm_library = "kt_jvm_library",
 )
+load("@grab_bazel_common//rules/android/lint:defs.bzl", "LINT_ENABLED")
 
 _ANDROID_SDK_JAR = "@io_bazel_rules_kotlin//third_party:android_sdk"
 
@@ -37,7 +38,7 @@ def _kt_android_artifact(
         exports = base_deps,
         deps = deps if enable_data_binding else [],
         enable_data_binding = enable_data_binding,
-        tags = tags,
+        tags = [tag for tag in tags if tag != LINT_ENABLED],
         exec_properties = exec_properties,
         **kwargs
     )
@@ -74,7 +75,7 @@ def kt_android_library(name, exports = [], visibility = None, exec_properties = 
         name = name,
         exports = exports + _kt_android_artifact(name, exec_properties = exec_properties, **kwargs),
         visibility = visibility,
-        tags = kwargs.get("tags", default = None),
+        tags = [tag for tag in kwargs.get("tags", default = []) if tag != LINT_ENABLED],
         testonly = kwargs.get("testonly", default = 0),
         exec_properties = exec_properties,
     )
