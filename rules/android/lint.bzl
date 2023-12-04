@@ -348,7 +348,7 @@ lint_aspect = aspect(
     attrs = {
         "_lint_cli": attr.label(
             executable = True,
-            cfg = "target",
+            cfg = "exec",
             default = Label("//tools/lint:lint_cli"),
         ),
     },
@@ -367,7 +367,7 @@ lint = rule(
         "target": attr.label(aspects = [lint_aspect]),
         "_lint_cli": attr.label(
             executable = True,
-            cfg = "target",
+            cfg = "exec",
             default = Label("//tools/lint:lint_cli"),
         ),
     },
