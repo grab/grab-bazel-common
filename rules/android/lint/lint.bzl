@@ -21,8 +21,18 @@ def _compile_sdk_version(sdk_target):
     level = level.removesuffix("/android.jar")
     return level
 
+def _lint_sources_classpath(target, ctx):
+    transitive = [
+        dep[JavaInfo].compile_jars
+        for dep in ctx.rule.attr.deps
+        if JavaInfo in dep
+    ]
+    if AndroidLibraryResourceClassJarProvider in target:
+        transitive.append(target[AndroidLibraryResourceClassJarProvider].jars)
+    return depset(transitive = transitive)
+
 def _collect_sources(target, ctx):
-    classpath = target[JavaInfo].transitive_compile_time_jars
+    classpath = _lint_sources_classpath(target, ctx)
     merged_manifest = [target[AndroidManifestInfo].manifest] if AndroidManifestInfo in target else []
     sources = [
         struct(
