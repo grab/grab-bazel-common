@@ -2,7 +2,7 @@ load("@grab_bazel_common//tools/build_config:build_config.bzl", _build_config = 
 load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "DATABINDING_DEPS")
-load("@grab_bazel_common//rules/android/lint:lint.bzl", "lint_test")
+load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint_sources", "lint_test")
 load(":resources.bzl", "build_resources")
 
 """Enhanced android_binary rule with support for build configs, res values, Kotlin compilation and databinding support"""
@@ -66,8 +66,16 @@ def android_binary(
         deps = kotlin_library_deps,
     )
 
+    lint_sources_target = "_" + name + "_lint_sources"
+    lint_sources(
+        name = lint_sources_target,
+        srcs = attrs.get("srcs", default = []),
+        resources = [file for file in resource_files if file.endswith(".xml")],
+        manifest = attrs.get("manifest"),
+    )
+
     # Build deps
-    android_binary_deps = [kotlin_target]
+    android_binary_deps = [kotlin_target, lint_sources_target]
     if enable_data_binding:
         android_binary_deps.extend(DATABINDING_DEPS)
 
@@ -87,13 +95,11 @@ def android_binary(
         multidex = attrs.get("multidex", default = None),
         manifest_values = attrs.get("manifest_values", default = None),
         plugins = attrs.get("plugins", default = None),
+        tags = ["lint_enabled"],
         visibility = attrs.get("visibility", default = None),
     )
 
     lint_test(
         name = name + ".lint",
-        srcs = attrs.get("srcs", default = None),
-        resources = [file for file in resource_files if file.endswith(".xml")],
-        manifest = attrs.get("manifest"),
         target = name,
     )

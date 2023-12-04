@@ -3,7 +3,7 @@ load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "kt_db_android_library")
 load(":resources.bzl", "build_resources")
-load(":lint.bzl", "lint")
+load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint_sources", "lint_test")
 
 """Enhanced android_library rule with support for build configs, res values, Kotlin compilation and databinding support"""
 
@@ -48,8 +48,16 @@ def android_library(
         res_values = res_values,
     )
 
+    lint_sources_target = "_" + name + "_lint_sources"
+    lint_sources(
+        name = lint_sources_target,
+        srcs = attrs.get("srcs", default = []),
+        resources = [file for file in resource_files if file.endswith(".xml")],
+        manifest = attrs.get("manifest"),
+    )
+
     # Build deps
-    android_library_deps = attrs.get("deps", default = []) + [build_config_target]
+    android_library_deps = attrs.get("deps", default = []) + [build_config_target, lint_sources_target]
     if enable_compose:
         android_library_deps.extend(["@grab_bazel_common//rules/android/compose:compose-plugin"])
 
@@ -77,12 +85,12 @@ def android_library(
         assets = attrs.get("assets", default = None),
         assets_dir = attrs.get("assets_dir", default = None),
         visibility = attrs.get("visibility", default = None),
-        tags = attrs.get("tags", default = None),
+        tags = attrs.get("tags", default = []) + ["lint_enabled"],
         deps = android_library_deps,
         plugins = attrs.get("plugins", default = None),
     )
 
-    lint(
+    lint_test(
         name = name + ".lint",
         target = name,
     )

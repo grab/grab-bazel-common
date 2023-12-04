@@ -1,18 +1,7 @@
 load("@grab_bazel_common//rules/android:utils.bzl", "utils")
+load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo", "AndroidLintSourcesInfo")
 
 _LINT_ASPECTS_ATTR = ["deps", "runtime_deps", "exports", "associates"]
-
-def _classpath(target):
-    classpath = depset()
-    if JavaInfo in target:
-        classpath = depset(
-            transitive = [
-                classpath,
-                target[JavaInfo].transitive_runtime_jars,
-                target[JavaInfo].transitive_compile_time_jars,
-            ],
-        )
-    return classpath
 
 def _encode_dependency(dependency_info):
     return "%s^%s^%s^%s" % (
@@ -32,12 +21,36 @@ def _compile_sdk_version(sdk_target):
     level = level.removesuffix("/android.jar")
     return level
 
-# Pass this via lint.xml from rule
-def _lint_config_content():
-    lint_config_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-    lint_config_xml += "<lint checkTestSources=\"true\">"
-    lint_config_xml += "</lint>"
-    return lint_config_xml
+def _collect_sources(target, ctx):
+    classpath = target[JavaInfo].transitive_compile_time_jars
+    merged_manifest = [target[AndroidManifestInfo].manifest] if AndroidManifestInfo in target else []
+    sources = [
+        struct(
+            srcs = dep[AndroidLintSourcesInfo].srcs,
+            resources = dep[AndroidLintSourcesInfo].resources,
+            manifest = dep[AndroidLintSourcesInfo].manifest,
+            merged_manifest = merged_manifest,
+            baseline = dep[AndroidLintSourcesInfo].baseline,
+            lint_config_xml = dep[AndroidLintSourcesInfo].lint_config[0],
+            classpath = classpath,
+        )
+        for dep in ctx.rule.attr.deps
+        if AndroidLintSourcesInfo in dep
+    ]
+    if len(sources) > 1:
+        fail("Only one lint_sources allowed as dependency")
+    return sources[0]
+
+def _transitive_partial_results(target, ctx, partial_results_dir):
+    return depset(
+        [partial_results_dir],
+        transitive = [
+            t[AndroidLintInfo].transitive_partial_results_dirs
+            for attr in _LINT_ASPECTS_ATTR
+            for t in getattr(ctx.rule.attr, attr, [])
+            if AndroidLintInfo in t
+        ],
+    )
 
 def _lint_action(
         ctx,
@@ -124,8 +137,80 @@ def _lint_action(
     )
     return
 
-def _lint_aspect_impl(aspect_ctx):
-    return []
+def _lint_aspect_impl(target, ctx):
+    if target.label.workspace_root.startswith("external"):
+        # Run lint only on internal targets
+        return []
+    else:
+        # Output
+        partial_results_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_partial_results_dir")
+        lint_result_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result.xml")
+
+        rule_kind = ctx.rule.kind
+        android = rule_kind == "android_library" or rule_kind == "android_binary"
+        library = rule_kind != "android_binary"
+
+        enabled = "lint_enabled" in ctx.rule.attr.tags and android  # Currently only android targets
+
+        if enabled:
+            sources = _collect_sources(target, ctx)
+            compile_sdk_version = _compile_sdk_version(ctx.attr._android_sdk)
+            transitive_partial_results_dirs = _transitive_partial_results(target, ctx, partial_results_dir)
+
+            _lint_action(
+                ctx = ctx,
+                android = android,
+                library = library,
+                compile_sdk_version = compile_sdk_version,
+                srcs = sources.srcs,
+                resources = sources.resources,
+                classpath = sources.classpath,
+                manifest = sources.manifest,
+                merged_manifest = sources.merged_manifest,
+                dep_lint_infos = [],
+                lint_config_xml_file = sources.lint_config_xml,
+                lint_result_xml_file = lint_result_xml_file,
+                partial_results_dir = partial_results_dir,
+                verbose = True,
+                inputs = depset(
+                    sources.srcs +
+                    sources.resources +
+                    sources.manifest +
+                    sources.merged_manifest +
+                    [sources.lint_config_xml],
+                    transitive = [sources.classpath],
+                ),
+            )
+            return [
+                AndroidLintInfo(
+                    name = target.label.name,
+                    android = android,
+                    library = library,
+                    enabled = enabled,
+                    partial_results_dir = partial_results_dir,
+                    transitive_partial_results_dirs = transitive_partial_results_dirs,
+                    lint_result_xml = lint_result_xml_file,
+                ),
+            ]
+        else:
+            # No linting to do, just propagate transitive data
+            ctx.actions.run_shell(
+                outputs = [partial_results_dir],
+                command = ("mkdir -p %s" % (partial_results_dir.path)),
+            )
+            transitive_partial_results_dirs = _transitive_partial_results(target, ctx, partial_results_dir)
+            ctx.actions.write(output = lint_result_xml_file, content = "")
+            return [
+                AndroidLintInfo(
+                    name = target.label.name,
+                    android = android,
+                    library = library,
+                    enabled = enabled,
+                    partial_results_dir = None,
+                    transitive_partial_results_dirs = transitive_partial_results_dirs,
+                    lint_result_xml = lint_result_xml_file,
+                ),
+            ]
 
 lint_aspect = aspect(
     implementation = _lint_aspect_impl,
@@ -136,56 +221,23 @@ lint_aspect = aspect(
             cfg = "target",
             default = Label("//tools/lint:lint_cli"),
         ),
+        "_android_sdk": attr.label(default = "@androidsdk//:sdk"),  # Use toolchains later
     },
 )
 
-def _lint_impl(ctx):
-    # Collect sources and perform lint
+def _lint_test_impl(ctx):
     target = ctx.attr.target
-
-    # Outputs
-    partial_results_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_partial_results_dir")
     lint_result_xml_file = ctx.outputs.lint_result
-    lint_config_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_config.xml")
-    ctx.actions.write(output = lint_config_xml_file, content = _lint_config_content())
+    executable = ctx.actions.declare_file("%s_lint.sh" % target.label.name)
 
-    # Inputs
-    srcs = ctx.files.srcs
-    resources = ctx.files.resources
-    manifest = ctx.files.manifest
-    classpath = _classpath(target)
-    merged_manifest = []
-    if AndroidManifestInfo in target:
-        merged_manifest.append(target[AndroidManifestInfo].manifest)
-    compile_sdk_version = _compile_sdk_version(ctx.attr._android_sdk)
-
-    _lint_action(
-        ctx = ctx,
-        android = True,
-        library = False,
-        compile_sdk_version = compile_sdk_version,
-        srcs = srcs,
-        resources = resources,
-        classpath = classpath,
-        manifest = manifest,
-        merged_manifest = merged_manifest,
-        dep_lint_infos = [],
-        lint_config_xml_file = lint_config_xml_file,
-        lint_result_xml_file = lint_result_xml_file,
-        partial_results_dir = partial_results_dir,
-        verbose = True,
-        inputs = depset(
-            srcs +
-            resources +
-            manifest +
-            merged_manifest +
-            [lint_config_xml_file],
-            transitive = [classpath],
-        ),
+    # Aspect would have calculated the results already, simply symlink it
+    ctx.actions.symlink(
+        target_file = ctx.attr.target[AndroidLintInfo].lint_result_xml,
+        output = ctx.outputs.lint_result,
     )
 
     ctx.actions.write(
-        output = ctx.outputs.launcher_script,
+        output = executable,
         is_executable = False,
         content = """
     #!/bin/bash
@@ -197,19 +249,17 @@ def _lint_impl(ctx):
     )
 
     return [DefaultInfo(
-        executable = ctx.outputs.launcher_script,
+        executable = executable,
         runfiles = ctx.runfiles(files = [lint_result_xml_file]),
-        files = depset([ctx.outputs.launcher_script, ctx.outputs.lint_result]),
+        files = depset([
+            ctx.outputs.lint_result,
+        ]),
     )]
 
 lint_test = rule(
-    implementation = _lint_impl,
+    implementation = _lint_test_impl,
     attrs = {
-        "srcs": attr.label_list(allow_files = True),
-        "resources": attr.label_list(allow_files = True),
-        "manifest": attr.label(allow_single_file = True),
-        "target": attr.label(),
-        "deps": attr.label(aspects = [lint_aspect]),
+        "target": attr.label(aspects = [lint_aspect]),
         "_lint_cli": attr.label(
             executable = True,
             cfg = "exec",
@@ -219,7 +269,6 @@ lint_test = rule(
     },
     test = True,
     outputs = dict(
-        launcher_script = "%{name}.sh",
         lint_result = "%{name}_result.xml",
     ),
 )
