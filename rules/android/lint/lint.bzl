@@ -23,9 +23,9 @@ def _lint_sources_classpath(target, ctx):
         transitive.append(target[AndroidLibraryResourceClassJarProvider].jars)
     return depset(transitive = transitive)
 
-def _collect_sources(target, ctx):
+def _collect_sources(target, ctx, library):
     classpath = _lint_sources_classpath(target, ctx)
-    merged_manifest = [target[AndroidManifestInfo].manifest] if AndroidManifestInfo in target else []
+    merged_manifest = [target[AndroidManifestInfo].manifest] if AndroidManifestInfo in target and not library else []
     sources = [
         struct(
             srcs = dep[AndroidLintSourcesInfo].srcs,
@@ -185,7 +185,7 @@ def _lint_aspect_impl(target, ctx):
         # Result
         android_lint_info = None  # Current target's AndroidLintNodeInfo
         if enabled:
-            sources = _collect_sources(target, ctx)
+            sources = _collect_sources(target, ctx, library)
             compile_sdk_version = _compile_sdk_version(ctx.attr._android_sdk)
             dep_lint_node_infos = _dep_lint_node_infos(target, transitive_lint_node_infos)
             partial_results = [info.partial_results_dir for info in dep_lint_node_infos]
