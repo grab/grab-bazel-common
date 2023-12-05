@@ -1,5 +1,5 @@
 AndroidLintNodeInfo = provider(
-    doc = "Provider containing data about Android Lint",
+    doc = "Provider containing info about a target's Android Lint data",
     fields = dict(
         name = "Name of the target",
         android = "True for android library or binary",

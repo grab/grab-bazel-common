@@ -12,13 +12,6 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import com.android.tools.lint.Main as LintCli
 
-data class Dependency(
-    val name: String,
-    val android: Boolean,
-    val library: Boolean,
-    val partialDir: File,
-)
-
 class LintCommand : CliktCommand() {
 
     private val name by option(
@@ -128,7 +121,7 @@ class LintCommand : CliktCommand() {
             mutableListOf(
                 "--project", projectXml.toString(),
                 "--xml", outputXml.toString(),
-                "--baseline", baselineFile.toString(),
+                "--baseline", baselineFile.toString(), //TODO(arun) Pass vai action input
                 "--config", lintConfig.toString(),
                 "--update-baseline",
                 "--client-id", "test"

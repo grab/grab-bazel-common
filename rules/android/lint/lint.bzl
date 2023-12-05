@@ -1,9 +1,12 @@
 load("@grab_bazel_common//rules/android:utils.bzl", "utils")
 load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo", "AndroidLintNodeInfo", "AndroidLintSourcesInfo", "LINT_ENABLED")
 
-_LINT_ASPECTS_ATTR = ["deps", "runtime_deps", "exports", "associates"]
+_LINT_ASPECTS_ATTR = ["deps", "runtime_deps", "exports", "associates"]  # Define attributes that aspect will propagate to
 
 def _compile_sdk_version(sdk_target):
+    """
+    Detect the compile_sdk_version based on android jar path
+    """
     android_jar = sdk_target[AndroidSdkInfo].android_jar.path
     if not android_jar.startswith("external/androidsdk/platforms/android-"):
         return None
@@ -14,6 +17,11 @@ def _compile_sdk_version(sdk_target):
     return level
 
 def _lint_sources_classpath(target, ctx):
+    """
+    Collect the classpath for linting. Currently all transitive jars are passed since sometimes lint complains about missing
+    class defs. Need to revisit to prune transitive deps for performance.
+    Apart from dependency jars, add the current target's android resource jar as well.
+    """
     transitive = [
         dep[JavaInfo].transitive_compile_time_jars
         for dep in ctx.rule.attr.deps
@@ -24,6 +32,10 @@ def _lint_sources_classpath(target, ctx):
     return depset(transitive = transitive)
 
 def _collect_sources(target, ctx, library):
+    """
+    Relies on lint_sources target being in the dependencies to collect sources for performing lint. This is added as as clean way
+    to collect sources instead of relying on combining results in an aspect.
+    """
     classpath = _lint_sources_classpath(target, ctx)
     merged_manifest = [target[AndroidManifestInfo].manifest] if AndroidManifestInfo in target and not library else []
     sources = [
@@ -56,8 +68,10 @@ def _transitive_lint_node_infos(ctx):
     )
 
 def _dep_lint_node_infos(target, transitive_lint_node_infos):
-    # From the transitive lint node infos, only process targets which have lint enabled
-    # and return a struct containing all data needed for lint dependencies
+    """
+    From the transitive lint node infos, only process targets which have lint enabled
+    and return a struct containing all data needed for lint dependencies
+    """
     return [
         struct(
             module = str(lint_node_info.name).lstrip("@"),
@@ -71,6 +85,9 @@ def _dep_lint_node_infos(target, transitive_lint_node_infos):
     ]
 
 def _encode_dependency(dependency_info):
+    """
+    Flatten the dependency details in a string to simplify arguments to Lint ClI
+    """
     return "%s^%s^%s^%s" % (
         dependency_info.module,
         dependency_info.android,
@@ -141,7 +158,7 @@ def _lint_action(
     args.add("--lint-config", lint_config_xml_file.path)
     args.add("--partial-results-dir", partial_results_dir.path)
 
-    if verbose:
+    if verbose:  #TODO(arun) Pass via build config
         args.add("--verbose")
 
     mnemonic = "AndroidLint"
@@ -250,11 +267,11 @@ def _lint_aspect_impl(target, ctx):
 
 lint_aspect = aspect(
     implementation = _lint_aspect_impl,
-    attr_aspects = _LINT_ASPECTS_ATTR,  # Define attributes that aspect will propagate to
+    attr_aspects = _LINT_ASPECTS_ATTR,
     attrs = {
         "_lint_cli": attr.label(
             executable = True,
-            cfg = "target",
+            cfg = "exec",
             default = Label("//tools/lint:lint_cli"),
         ),
         "_android_sdk": attr.label(default = "@androidsdk//:sdk"),  # Use toolchains later
@@ -269,7 +286,7 @@ def _lint_test_impl(ctx):
     lint_result_xml_file = ctx.outputs.lint_result
     executable = ctx.actions.declare_file("%s_lint.sh" % target.label.name)
 
-    # Aspect would have calculated the results already, simply symlink it
+    # Aspect would have calculated the results already during traversal, simply symlink it
     ctx.actions.symlink(
         target_file = ctx.attr.target[AndroidLintInfo].info.lint_result_xml,
         output = ctx.outputs.lint_result,
@@ -280,7 +297,7 @@ def _lint_test_impl(ctx):
         is_executable = False,
         content = """
     #!/bin/bash
-    # TODO: Post process lint
+    # TODO: Read result code from Provider and fail the test
     cat {lint_result}
             """.format(
             lint_result = lint_result_xml_file.short_path,

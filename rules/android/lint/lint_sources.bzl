@@ -21,7 +21,7 @@ def _lint_sources_impl(ctx):
             srcs = _target_outputs(ctx.attr.srcs),
             resources = _target_outputs(ctx.attr.resources),
             manifest = _target_outputs([ctx.attr.manifest]),
-            baseline = None,
+            baseline = None,  # TODO(arun) Pass existing baseline
             lint_config = _target_outputs([ctx.attr.lint_config]),
         ),
     ]
@@ -45,7 +45,7 @@ lint_sources = rule(
             cfg = "target",
             default = Label("//third_party:empty.jar"),
         ),
-        # TODO add assets
+        # TODO(arun) add assets
     },
     provides = [
         JavaInfo,

@@ -45,14 +45,14 @@ class ProjectXmlCreator {
             resources.forEach { resource ->
                 appendLine("  <resource file=\"$resource\" />")
             }
-            classpath.forEach { entry ->
-                appendLine("  <classpath jar=\"$entry\" />")
-            }
             manifest?.let { manifest ->
                 appendLine("  <manifest file=\"$manifest\" />")
             }
             mergedManifest?.let { mergedManifest ->
                 appendLine("  <merged-manifest file=\"$mergedManifest\" />")
+            }
+            classpath.forEach { entry ->
+                appendLine("  <classpath jar=\"$entry\" />")
             }
             dependencies.forEach { dependency ->
                 appendLine("  <dep module=\"${dependency.name}\" />")

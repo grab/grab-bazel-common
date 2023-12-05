@@ -10,6 +10,7 @@ class TestActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        android.util.Log.d("SomeReallyLongTagForLintToDetectAndWarn", "Log message")
     }
 
     fun sum(a: Int, b: Int): Int {
