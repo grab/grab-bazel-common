@@ -51,7 +51,7 @@ def android_library(
     lint_sources_target = "_" + name + "_lint_sources"
     lint_sources(
         name = lint_sources_target,
-        srcs = attrs.get("srcs", default = []),
+        srcs = srcs,
         resources = [file for file in resource_files if file.endswith(".xml")],
         manifest = attrs.get("manifest"),
     )
