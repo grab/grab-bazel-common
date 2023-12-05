@@ -121,7 +121,7 @@ class LintCommand : CliktCommand() {
             mutableListOf(
                 "--project", projectXml.toString(),
                 "--xml", outputXml.toString(),
-                "--baseline", baselineFile.toString(), //TODO(arun) Pass vai action input
+                "--baseline", baselineFile.toString(), //TODO(arun) Pass via action input
                 "--config", lintConfig.toString(),
                 "--update-baseline",
                 "--client-id", "test"
@@ -131,7 +131,7 @@ class LintCommand : CliktCommand() {
                 } /*else {
                     add("--report-only")
                 }*/
-                System.getenv("ANDROID_HOME")?.let {
+                System.getenv("ANDROID_HOME")?.let { // TODO(arun) Need to revisit this.
                     add("--sdk-home")
                     add(it)
                 }
