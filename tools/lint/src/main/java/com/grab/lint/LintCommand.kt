@@ -125,7 +125,7 @@ class LintCommand : CliktCommand() {
                 "--config", lintConfig.toString(),
                 "--update-baseline",
                 "--offline", // Not a good practice to make bazel actions reach the network yet
-                "--client-id", "test"
+                "--client-id", "test",
             ).apply {
                 if (analyzeOnly) {
                     add("--analyze-only")
