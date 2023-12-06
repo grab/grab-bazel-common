@@ -124,13 +124,14 @@ class LintCommand : CliktCommand() {
                 "--baseline", baselineFile.toString(), //TODO(arun) Pass via action input
                 "--config", lintConfig.toString(),
                 "--update-baseline",
+                "--offline", // Not a good practice to make bazel actions reach the network yet
                 "--client-id", "test"
             ).apply {
                 if (analyzeOnly) {
                     add("--analyze-only")
-                } /*else {
+                } else {
                     add("--report-only")
-                }*/
+                }
                 System.getenv("ANDROID_HOME")?.let { // TODO(arun) Need to revisit this.
                     add("--sdk-home")
                     add(it)
