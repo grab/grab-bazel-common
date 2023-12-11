@@ -165,7 +165,7 @@ class LintCommand : CliktCommand() {
                     add("--report-only")
                 }
                 add("--baseline")
-                add(baseline.toString())
+                add(baseline.toFile().toString())
                 System.getenv("ANDROID_HOME")?.let { // TODO(arun) Need to revisit this.
                     add("--sdk-home")
                     add(it)

@@ -157,7 +157,7 @@ def _lint_action(
         args.add("--merged-manifest", merged_manifest[0].path)
 
     if baseline:
-        args.add("--baseline", baseline)
+        args.add("--baseline", baseline[0].path)
     args.add("--updated-baseline", updated_baseline)
 
     args.add("--output-xml", lint_result_xml_file.path)
@@ -217,6 +217,11 @@ def _lint_aspect_impl(target, ctx):
             dep_lint_node_infos = _dep_lint_node_infos(target, transitive_lint_node_infos)
             partial_results = [info.partial_results_dir for info in dep_lint_node_infos]
 
+            # Inputs
+            baseline_inputs = []
+            if sources.baseline:
+                baseline_inputs.append(sources.baseline[0])
+
             _lint_action(
                 ctx = ctx,
                 android = android,
@@ -240,7 +245,8 @@ def _lint_aspect_impl(target, ctx):
                     sources.manifest +
                     sources.merged_manifest +
                     [sources.lint_config_xml] +
-                    partial_results,
+                    partial_results +
+                    baseline_inputs,
                     transitive = [sources.classpath],
                 ),
             )

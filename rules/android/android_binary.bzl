@@ -73,6 +73,7 @@ def android_binary(
         srcs = attrs.get("srcs", default = []),
         resources = [file for file in resource_files if file.endswith(".xml")],
         manifest = attrs.get("manifest"),
+        baseline = lint_options.get("baseline", None),
         lint_config = lint_options.get("lint_config", None),
     )
 
