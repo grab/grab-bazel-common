@@ -8,6 +8,10 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
+import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import com.android.tools.lint.Main as LintCli
@@ -70,6 +74,18 @@ class LintCommand : CliktCommand() {
         help = "Dependency target names"
     ).split(",").default(emptyList())
 
+    private val baseline by option(
+        "-b",
+        "--baseline",
+        help = "The lint baseline file"
+    ).convert { Paths.get(it) }
+
+    private val updatedBaseline by option(
+        "-ub",
+        "--updated-baseline",
+        help = "The lint baseline file"
+    ).convert { Paths.get(it) }.required()
+
     private val lintConfig by option(
         "-lc",
         "--lint-config",
@@ -115,15 +131,16 @@ class LintCommand : CliktCommand() {
     }
 
     private fun runLint(projectXml: File, analyzeOnly: Boolean = false) {
-        val outputDir = File(".").toPath()
-        val baselineFile = outputDir.resolve("baseline.xml")
+        val workingDir = Files.createTempDirectory("lint")
+        // Create a baseline file always
+        val baseline = baseline ?: workingDir.resolve("tmp_baseline.xml").createFile()
+
         LintCli().run(
             mutableListOf(
                 "--project", projectXml.toString(),
                 "--xml", outputXml.toString(),
-                "--baseline", baselineFile.toString(), //TODO(arun) Pass via action input
                 "--config", lintConfig.toString(),
-                "--update-baseline",
+                "--update-baseline", // Always update the baseline, so we can copy later if needed
                 "--offline", // Not a good practice to make bazel actions reach the network yet
                 "--client-id", "test",
             ).apply {
@@ -132,16 +149,29 @@ class LintCommand : CliktCommand() {
                 } else {
                     add("--report-only")
                 }
+                baseline.let {
+                    add("--baseline")
+                    add(baseline.toString())
+                }
                 System.getenv("ANDROID_HOME")?.let { // TODO(arun) Need to revisit this.
                     add("--sdk-home")
                     add(it)
                 }
             }.toTypedArray()
         )
+
+        // Copy the updated the baseline to baseline output
+        println("Copying $baseline to $updatedBaseline")
+        Files.copy(baseline, updatedBaseline, StandardCopyOption.REPLACE_EXISTING)
+
         if (verbose) {
             if (outputXml.exists()) println(outputXml.readText())
-            if (partialResults.exists()) partialResults.walkTopDown().forEach { println("\t$it") }
-            if (baselineFile.exists()) println(baselineFile.readText())
+            if (partialResults.exists()) {
+                partialResults.walkTopDown()
+                    .filter { it.isFile }
+                    .forEach { println("\t$it") }
+            }
+            if (updatedBaseline.exists()) println(updatedBaseline.readText())
         }
     }
 }

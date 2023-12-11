@@ -106,6 +106,8 @@ def _lint_action(
         manifest,
         merged_manifest,
         dep_lint_node_infos,
+        baseline,
+        updated_baseline,
         lint_config_xml_file,
         lint_result_xml_file,
         partial_results_dir,
@@ -154,6 +156,10 @@ def _lint_action(
     if len(merged_manifest) != 0:
         args.add("--merged-manifest", merged_manifest[0].path)
 
+    if baseline:
+        args.add("--baseline", baseline)
+    args.add("--updated-baseline", updated_baseline)
+
     args.add("--output-xml", lint_result_xml_file.path)
     args.add("--lint-config", lint_config_xml_file.path)
     args.add("--partial-results-dir", partial_results_dir.path)
@@ -168,6 +174,7 @@ def _lint_action(
         outputs = [
             partial_results_dir,
             lint_result_xml_file,
+            updated_baseline,
         ],
         executable = ctx.executable._lint_cli,
         arguments = [args],
@@ -202,6 +209,9 @@ def _lint_aspect_impl(target, ctx):
         # Result
         android_lint_info = None  # Current target's AndroidLintNodeInfo
         if enabled:
+            # Output
+            lint_updated_baseline_file = ctx.actions.declare_file("lint/" + target.label.name + "_updated_baseline.xml")
+
             sources = _collect_sources(target, ctx, library)
             compile_sdk_version = _compile_sdk_version(ctx.attr._android_sdk)
             dep_lint_node_infos = _dep_lint_node_infos(target, transitive_lint_node_infos)
@@ -218,10 +228,12 @@ def _lint_aspect_impl(target, ctx):
                 manifest = sources.manifest,
                 merged_manifest = sources.merged_manifest,
                 dep_lint_node_infos = dep_lint_node_infos,
+                baseline = sources.baseline,
+                updated_baseline = lint_updated_baseline_file,
                 lint_config_xml_file = sources.lint_config_xml,
                 lint_result_xml_file = lint_result_xml_file,
                 partial_results_dir = partial_results_dir,
-                verbose = True,
+                verbose = False,
                 inputs = depset(
                     sources.srcs +
                     sources.resources +
