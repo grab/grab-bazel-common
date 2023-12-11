@@ -9,6 +9,7 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.createFile
@@ -127,10 +128,24 @@ class LintCommand : CliktCommand() {
             verbose
         )
         runLint(projectXml, analyzeOnly = true)
-        runLint(projectXml, analyzeOnly = false)
+        val baseline = runLint(projectXml, analyzeOnly = false)
+
+        // Copy the updated the baseline to baseline output
+        if (verbose) println("Copying $baseline to $updatedBaseline")
+        Files.copy(baseline, updatedBaseline, StandardCopyOption.REPLACE_EXISTING)
+
+        if (verbose) {
+            if (outputXml.exists()) println(outputXml.readText())
+            if (partialResults.exists()) {
+                partialResults.walkTopDown()
+                    .filter { it.isFile }
+                    .forEach { println("\t$it") }
+            }
+            if (updatedBaseline.exists()) println(updatedBaseline.readText())
+        }
     }
 
-    private fun runLint(projectXml: File, analyzeOnly: Boolean = false) {
+    private fun runLint(projectXml: File, analyzeOnly: Boolean = false): Path {
         val workingDir = Files.createTempDirectory("lint")
         // Create a baseline file always
         val baseline = baseline ?: workingDir.resolve("tmp_baseline.xml").createFile()
@@ -149,29 +164,14 @@ class LintCommand : CliktCommand() {
                 } else {
                     add("--report-only")
                 }
-                baseline.let {
-                    add("--baseline")
-                    add(baseline.toString())
-                }
+                add("--baseline")
+                add(baseline.toString())
                 System.getenv("ANDROID_HOME")?.let { // TODO(arun) Need to revisit this.
                     add("--sdk-home")
                     add(it)
                 }
             }.toTypedArray()
         )
-
-        // Copy the updated the baseline to baseline output
-        println("Copying $baseline to $updatedBaseline")
-        Files.copy(baseline, updatedBaseline, StandardCopyOption.REPLACE_EXISTING)
-
-        if (verbose) {
-            if (outputXml.exists()) println(outputXml.readText())
-            if (partialResults.exists()) {
-                partialResults.walkTopDown()
-                    .filter { it.isFile }
-                    .forEach { println("\t$it") }
-            }
-            if (updatedBaseline.exists()) println(updatedBaseline.readText())
-        }
+        return baseline
     }
 }
