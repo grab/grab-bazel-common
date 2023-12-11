@@ -15,6 +15,7 @@ def android_binary(
         res_values = {},
         enable_data_binding = False,
         enable_compose = True,
+        lint_options = {},
         **attrs):
     """
     `android_binary` wrapper that adds Kotlin, build config, databinding and res values support. The attrs are passed to native `android_binary`
@@ -72,6 +73,7 @@ def android_binary(
         srcs = attrs.get("srcs", default = []),
         resources = [file for file in resource_files if file.endswith(".xml")],
         manifest = attrs.get("manifest"),
+        lint_config = lint_options.get("lint_config", None),
     )
 
     # Build deps

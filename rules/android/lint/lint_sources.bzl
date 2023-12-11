@@ -22,7 +22,7 @@ def _lint_sources_impl(ctx):
             resources = _target_outputs(ctx.attr.resources),
             manifest = _target_outputs([ctx.attr.manifest]),
             baseline = _target_outputs([ctx.attr.baseline]) if ctx.attr.baseline != None else None,
-            lint_config = _target_outputs([ctx.attr.lint_config]),
+            lint_config = _target_outputs([ctx.attr.lint_config]) if ctx.attr.lint_config != None else _target_outputs([ctx.attr._default_lint_config]),
         ),
     ]
 
@@ -40,6 +40,10 @@ lint_sources = rule(
         ),
         "lint_config": attr.label(
             doc = "Lint config xml",
+            allow_single_file = True,
+        ),
+        "_default_lint_config": attr.label(
+            doc = "Default Lint config xml",
             allow_single_file = True,
             default = Label(":lint_config.xml"),
         ),
