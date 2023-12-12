@@ -9,12 +9,7 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.createFile
-import kotlin.io.path.exists
-import kotlin.io.path.readText
 import com.android.tools.lint.Main as LintCli
 
 class LintCommand : CliktCommand() {
@@ -79,13 +74,13 @@ class LintCommand : CliktCommand() {
         "-b",
         "--baseline",
         help = "The lint baseline file"
-    ).convert { Paths.get(it) }
+    ).convert { File(it) }
 
     private val updatedBaseline by option(
         "-ub",
         "--updated-baseline",
         help = "The lint baseline file"
-    ).convert { Paths.get(it) }.required()
+    ).convert { File(it) }.required()
 
     private val lintConfig by option(
         "-lc",
@@ -110,30 +105,78 @@ class LintCommand : CliktCommand() {
     ).flag(default = false)
 
     override fun run() {
-        val projectXml = ProjectXmlCreator().create(
-            name,
-            android,
-            library,
-            compileSdkVersion,
-            partialResults,
-            srcs,
-            resources,
-            classpath,
-            manifest,
-            mergedManifest,
-            dependencies.map { dependency ->
-                val (name, android, library, partialResultsDir) = dependency.split("^")
-                Dependency(name, android.toBoolean(), library.toBoolean(), File(partialResultsDir))
-            },
-            verbose
+        WorkingDirectory().use { dir ->
+            val workingDir = dir.dir
+
+            val projectXml = ProjectXmlCreator(workingDir = workingDir).create(
+                name,
+                android,
+                library,
+                compileSdkVersion,
+                partialResults,
+                srcs,
+                resources,
+                classpath,
+                manifest,
+                mergedManifest,
+                dependencies.map { dependency ->
+                    val (name, android, library, partialResultsDir) = dependency.split("^")
+                    Dependency(name, android.toBoolean(), library.toBoolean(), File(partialResultsDir))
+                },
+                verbose
+            )
+
+            val tmpBaseline = workingDir.resolve("baseline.xml").toFile()
+            if (baseline?.exists() == true) {
+                Files.copy(baseline!!.toPath(), tmpBaseline.toPath())
+            }
+
+            // First run analysis
+            runLint(projectXml, tmpBaseline, analyzeOnly = true)
+            // Second run reporting
+            val baseline = runLint(projectXml, tmpBaseline, analyzeOnly = false)
+
+            // Copy the updated the baseline to baseline output
+            if (verbose) println("Copying $baseline to $updatedBaseline")
+            Files.copy(baseline.toPath(), updatedBaseline.toPath(), StandardCopyOption.REPLACE_EXISTING)
+
+            logResults()
+        }
+    }
+
+    private fun runLint(projectXml: File, tmpBaseline: File, analyzeOnly: Boolean = false): File {
+        LintCli().run(
+            mutableListOf(
+                "--project", projectXml.toString(),
+                "--xml", outputXml.toString(),
+                "--config", lintConfig.toString(),
+
+                "--stacktrace",
+                //"--quiet",
+                "--exitcode",
+
+                "--baseline", tmpBaseline.absolutePath,
+                "--update-baseline", // Always update the baseline, so we can copy later if needed
+                //"--missing-baseline-is-empty-baseline",
+
+                "--offline", // Not a good practice to make bazel actions reach the network yet
+                "--client-id", "test",
+            ).apply {
+                if (analyzeOnly) {
+                    add("--analyze-only")
+                } else {
+                    add("--report-only")
+                }
+                System.getenv("ANDROID_HOME")?.let { // TODO(arun) Need to revisit this.
+                    add("--sdk-home")
+                    add(it)
+                }
+            }.toTypedArray()
         )
-        runLint(projectXml, analyzeOnly = true)
-        val baseline = runLint(projectXml, analyzeOnly = false)
+        return tmpBaseline
+    }
 
-        // Copy the updated the baseline to baseline output
-        if (verbose) println("Copying $baseline to $updatedBaseline")
-        Files.copy(baseline, updatedBaseline, StandardCopyOption.REPLACE_EXISTING)
-
+    private fun logResults() {
         if (verbose) {
             if (outputXml.exists()) println(outputXml.readText())
             if (partialResults.exists()) {
@@ -143,35 +186,5 @@ class LintCommand : CliktCommand() {
             }
             if (updatedBaseline.exists()) println(updatedBaseline.readText())
         }
-    }
-
-    private fun runLint(projectXml: File, analyzeOnly: Boolean = false): Path {
-        val workingDir = Files.createTempDirectory("lint")
-        // Create a baseline file always
-        val baseline = baseline ?: workingDir.resolve("tmp_baseline.xml").createFile()
-
-        LintCli().run(
-            mutableListOf(
-                "--project", projectXml.toString(),
-                "--xml", outputXml.toString(),
-                "--config", lintConfig.toString(),
-                "--update-baseline", // Always update the baseline, so we can copy later if needed
-                "--offline", // Not a good practice to make bazel actions reach the network yet
-                "--client-id", "test",
-            ).apply {
-                if (analyzeOnly) {
-                    add("--analyze-only")
-                } else {
-                    add("--report-only")
-                }
-                add("--baseline")
-                add(baseline.toFile().toString())
-                System.getenv("ANDROID_HOME")?.let { // TODO(arun) Need to revisit this.
-                    add("--sdk-home")
-                    add(it)
-                }
-            }.toTypedArray()
-        )
-        return baseline
     }
 }

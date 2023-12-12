@@ -258,6 +258,7 @@ def _lint_aspect_impl(target, ctx):
                 enabled = enabled,
                 partial_results_dir = partial_results_dir,
                 lint_result_xml = lint_result_xml_file,
+                updated_baseline = lint_updated_baseline_file,
             )
         else:
             # No linting to do, just propagate transitive data
@@ -274,6 +275,7 @@ def _lint_aspect_impl(target, ctx):
                 enabled = enabled,
                 partial_results_dir = None,
                 lint_result_xml = lint_result_xml_file,
+                updated_baseline = None,
             )
         return AndroidLintInfo(
             info = android_lint_info,
@@ -299,41 +301,35 @@ lint_aspect = aspect(
     ],
 )
 
-def _lint_test_impl(ctx):
+def _lint_impl(ctx):
     target = ctx.attr.target
     lint_result_xml_file = ctx.outputs.lint_result
-    executable = ctx.actions.declare_file("%s_lint.sh" % target.label.name)
 
     # Aspect would have calculated the results already during traversal, simply symlink it
     ctx.actions.symlink(
-        target_file = ctx.attr.target[AndroidLintInfo].info.lint_result_xml,
+        target_file = target[AndroidLintInfo].info.lint_result_xml,
         output = ctx.outputs.lint_result,
     )
-
-    ctx.actions.write(
-        output = executable,
-        is_executable = False,
-        content = """
-    #!/bin/bash
-    # TODO: Read result code from Provider and fail the test
-    cat {lint_result}
-            """.format(
-            lint_result = lint_result_xml_file.short_path,
+    return [
+        DefaultInfo(
+            files = depset([
+                ctx.outputs.lint_result,
+            ]),
         ),
-    )
+        target[AndroidLintInfo],  # Forward the provider
+    ]
 
-    return [DefaultInfo(
-        executable = executable,
-        runfiles = ctx.runfiles(files = [lint_result_xml_file]),
-        files = depset([
-            ctx.outputs.lint_result,
-        ]),
-    )]
-
-lint_test = rule(
-    implementation = _lint_test_impl,
+lint = rule(
+    implementation = _lint_impl,
     attrs = {
-        "target": attr.label(aspects = [lint_aspect]),
+        "target": attr.label(
+            doc = "The android_binary or android_library that should be used for implementing linting on",
+            aspects = [lint_aspect],
+            providers = [
+                JavaInfo,
+            ],
+            mandatory = True,
+        ),
         "_lint_cli": attr.label(
             executable = True,
             cfg = "exec",
@@ -341,7 +337,6 @@ lint_test = rule(
         ),
         "_android_sdk": attr.label(default = "@androidsdk//:sdk"),  # Use toolchains later
     },
-    test = True,
     outputs = dict(
         lint_result = "%{name}_result.xml",
     ),

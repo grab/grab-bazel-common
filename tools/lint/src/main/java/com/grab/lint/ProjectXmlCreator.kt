@@ -1,9 +1,11 @@
 package com.grab.lint
 
 import java.io.File
-import java.nio.file.Files
+import java.nio.file.Path
 
-class ProjectXmlCreator {
+class ProjectXmlCreator(
+    private val workingDir: Path
+) {
 
     private fun moduleXml(
         name: String,
@@ -33,7 +35,7 @@ class ProjectXmlCreator {
         dependencies: List<Dependency>,
         verbose: Boolean
     ): File {
-        val tempDir = Files.createTempDirectory("tmp").toFile()
+        val tempDir = workingDir.toFile()
         val projectXml = File(tempDir, "project.xml")
         val contents = buildString {
             appendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
@@ -75,7 +77,6 @@ class ProjectXmlCreator {
                 println(it)
             }
         }
-        projectXml.writeText(contents)
-        return projectXml
+        return projectXml.apply { writeText(contents) }
     }
 }
