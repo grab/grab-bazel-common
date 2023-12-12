@@ -2,7 +2,7 @@ load("@grab_bazel_common//tools/build_config:build_config.bzl", _build_config = 
 load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "DATABINDING_DEPS")
-load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint", "lint_sources", "lint_test", "lint_update_baseline")
+load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint", "lint_sources")
 load(":resources.bzl", "build_resources")
 
 """Enhanced android_binary rule with support for build configs, res values, Kotlin compilation and databinding support"""
@@ -104,17 +104,7 @@ def android_binary(
     )
 
     lint(
-        name = name + ".lint",
-        target = name,
-    )
-
-    lint_test(
-        name = name + ".lint_test",
-        target = name + ".lint",
-    )
-
-    lint_update_baseline(
-        name = name + ".lint_update_baseline",
-        target = name + ".lint",
-        baseline = lint_baseline,
+        name = name,
+        linting_target = name,
+        lint_baseline = lint_baseline,
     )
