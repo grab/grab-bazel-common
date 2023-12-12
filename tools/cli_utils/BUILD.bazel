@@ -1,0 +1,13 @@
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_library")
+
+kotlin_library(
+    name = "cli_utils",
+    srcs = glob([
+        "src/main/java/**/*.kt",
+    ]),
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+    ],
+)

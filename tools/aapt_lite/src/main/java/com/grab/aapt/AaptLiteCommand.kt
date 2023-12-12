@@ -23,7 +23,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
-import com.grab.aapt.databinding.util.WorkingDirectory
+import com.grab.cli.WorkingDirectory
 import java.io.File
 
 class AaptLiteCommand : CliktCommand() {

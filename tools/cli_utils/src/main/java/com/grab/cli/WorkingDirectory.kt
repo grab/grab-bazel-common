@@ -1,4 +1,4 @@
-package com.grab.aapt.databinding.util
+package com.grab.cli
 
 import java.io.Closeable
 import java.nio.file.Files

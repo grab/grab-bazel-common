@@ -18,6 +18,7 @@ kotlin_library(
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/rclass",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/util",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/util/jars",
+        "//tools/cli_utils",
         "//tools/worker:worker_lib",
     ],
 )
