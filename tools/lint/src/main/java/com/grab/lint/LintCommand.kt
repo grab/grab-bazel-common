@@ -9,8 +9,6 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
 import com.grab.cli.WorkingDirectory
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import com.android.tools.lint.Main as LintCli
 
 class LintCommand : CliktCommand() {
@@ -131,17 +129,15 @@ class LintCommand : CliktCommand() {
 
             val tmpBaseline = workingDir.resolve("baseline.xml").toFile()
             if (baseline?.exists() == true) {
-                Files.copy(baseline!!.toPath(), tmpBaseline.toPath())
+                baseline!!.copyTo(tmpBaseline)
             }
 
-            // First run analysis
             runLint(projectXml, tmpBaseline, analyzeOnly = true)
-            // Second run reporting
             val baseline = runLint(projectXml, tmpBaseline, analyzeOnly = false)
 
             // Copy the updated the baseline to baseline output
             if (verbose) println("Copying $baseline to $updatedBaseline")
-            Files.copy(baseline.toPath(), updatedBaseline.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            baseline.copyTo(updatedBaseline, overwrite = true)
 
             logResults()
         }
