@@ -7,11 +7,11 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
+import com.grab.cli.WorkingDirectory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import com.android.tools.lint.Main as LintCli
-import com.grab.cli.WorkingDirectory
 
 class LintCommand : CliktCommand() {
 
@@ -109,6 +109,11 @@ class LintCommand : CliktCommand() {
         WorkingDirectory().use { dir ->
             val workingDir = dir.dir
 
+            val deps = dependencies.map { dependency ->
+                val (name, android, library, partialResultsDir) = dependency.split("^")
+                Dependency(name, android.toBoolean(), library.toBoolean(), File(partialResultsDir))
+            }
+
             val projectXml = ProjectXmlCreator(workingDir = workingDir).create(
                 name,
                 android,
@@ -120,10 +125,7 @@ class LintCommand : CliktCommand() {
                 classpath,
                 manifest,
                 mergedManifest,
-                dependencies.map { dependency ->
-                    val (name, android, library, partialResultsDir) = dependency.split("^")
-                    Dependency(name, android.toBoolean(), library.toBoolean(), File(partialResultsDir))
-                },
+                deps,
                 verbose
             )
 

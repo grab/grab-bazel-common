@@ -5,7 +5,7 @@ def _lint_update_baseline(ctx):
     executable = ctx.actions.declare_file("lint/%s_update_baseline.sh" % target.label.name)
 
     updated_internal_baseline = ctx.attr.target[AndroidLintInfo].info.updated_baseline
-    source_baseline = ctx.files.baseline[0]
+    source_baseline = ctx.files.baseline[0].short_path if len(ctx.files.baseline) != 0 else ctx.attr._default_baseline
 
     ctx.actions.write(
         output = executable,
@@ -16,7 +16,7 @@ def _lint_update_baseline(ctx):
         echo "$(tput setaf 2)Updated {target} $(tput sgr0)"
                 """.format(
             source = updated_internal_baseline.short_path,
-            target = source_baseline.short_path,
+            target = source_baseline,
         ),
     )
     return [
@@ -31,6 +31,7 @@ lint_update_baseline = rule(
     executable = True,
     attrs = {
         "baseline": attr.label(allow_single_file = True, mandatory = False),
+        "_default_baseline": attr.string(default = "lint_baseline.xml"),
         "target": attr.label(
             doc = "The lint target to use for getting the updated baseline",
             providers = [AndroidLintInfo],
