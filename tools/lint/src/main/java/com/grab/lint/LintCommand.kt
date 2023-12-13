@@ -115,18 +115,18 @@ class LintCommand : CliktCommand() {
             }
 
             val projectXml = ProjectXmlCreator(workingDir = workingDir).create(
-                name,
-                android,
-                library,
-                compileSdkVersion,
-                partialResults,
-                srcs,
-                resources,
-                classpath,
-                manifest,
-                mergedManifest,
-                deps,
-                verbose
+                name = name,
+                android = android,
+                library = library,
+                compileSdkVersion = compileSdkVersion,
+                partialResults = partialResults,
+                srcs = srcs,
+                resources = resources,
+                classpath = classpath,
+                manifest = manifest,
+                mergedManifest = mergedManifest,
+                dependencies = deps,
+                verbose = verbose
             )
 
             val tmpBaseline = workingDir.resolve("baseline.xml").toFile()
