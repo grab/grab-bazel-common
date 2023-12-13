@@ -98,6 +98,12 @@ class LintCommand : CliktCommand() {
         "--partial-results-dir",
     ).convert { File(it) }.required()
 
+    private val jdkHome by option(
+        "-j",
+        "--jdk-home",
+        help = "Path fo Java home"
+    ).required()
+
     private val verbose by option(
         "-v",
         "--verbose",
@@ -160,6 +166,8 @@ class LintCommand : CliktCommand() {
 
                 "--offline", // Not a good practice to make bazel actions reach the network yet
                 "--client-id", "test",
+
+                "--jdk-home", jdkHome // Java home to use
             ).apply {
                 if (analyzeOnly) {
                     add("--analyze-only")

@@ -111,6 +111,7 @@ def _lint_action(
         lint_config_xml_file,
         lint_result_xml_file,
         partial_results_dir,
+        jdk_home,
         verbose,
         inputs):
     args = ctx.actions.args()
@@ -167,6 +168,8 @@ def _lint_action(
     if verbose:  #TODO(arun) Pass via build config
         args.add("--verbose")
 
+    args.add("--jdk-home", jdk_home)
+
     mnemonic = "AndroidLint"
     ctx.actions.run(
         mnemonic = mnemonic,
@@ -222,6 +225,9 @@ def _lint_aspect_impl(target, ctx):
             if sources.baseline:
                 baseline_inputs.append(sources.baseline[0])
 
+            # Pass JDK Home
+            java_runtime_info = ctx.attr._javabase[java_common.JavaRuntimeInfo]
+
             _lint_action(
                 ctx = ctx,
                 android = android,
@@ -238,6 +244,7 @@ def _lint_aspect_impl(target, ctx):
                 lint_config_xml_file = sources.lint_config_xml,
                 lint_result_xml_file = lint_result_xml_file,
                 partial_results_dir = partial_results_dir,
+                jdk_home = java_runtime_info.java_home,
                 verbose = False,
                 inputs = depset(
                     sources.srcs +
@@ -247,7 +254,7 @@ def _lint_aspect_impl(target, ctx):
                     [sources.lint_config_xml] +
                     partial_results +
                     baseline_inputs,
-                    transitive = [sources.classpath],
+                    transitive = [sources.classpath, java_runtime_info.files],
                 ),
             )
 
@@ -295,6 +302,9 @@ lint_aspect = aspect(
             default = Label("//tools/lint:lint_cli"),
         ),
         "_android_sdk": attr.label(default = "@androidsdk//:sdk"),  # Use toolchains later
+        "_javabase": attr.label(
+            default = "@bazel_tools//tools/jdk:current_java_runtime",
+        ),
     },
     provides = [
         #AndroidLintInfo,
