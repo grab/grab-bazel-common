@@ -5,7 +5,7 @@ def _lint_update_baseline(ctx):
     executable = ctx.actions.declare_file("lint/%s_update_baseline.sh" % target.label.name)
 
     updated_internal_baseline = ctx.attr.target[AndroidLintInfo].info.updated_baseline
-    source_baseline = ctx.files.baseline[0].short_path if len(ctx.files.baseline) != 0 else ctx.attr._default_baseline
+    source_baseline = ctx.files.baseline[0].short_path if len(ctx.files.baseline) != 0 else "%s/%s" % (ctx.label.package, ctx.attr._default_baseline)
 
     ctx.actions.write(
         output = executable,
