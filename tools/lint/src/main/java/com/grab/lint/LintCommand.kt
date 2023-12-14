@@ -113,7 +113,6 @@ class LintCommand : CliktCommand() {
         WorkingDirectory().use { dir ->
             val workingDir = dir.dir
 
-
             val projectXml = ProjectXmlCreator(workingDir = workingDir).create(
                 name = name,
                 android = android,
@@ -129,10 +128,21 @@ class LintCommand : CliktCommand() {
                 verbose = verbose
             )
 
+            // Prepare baseline
             val tmpBaseline = workingDir.resolve("baseline.xml").toFile()
             if (baseline?.exists() == true) {
                 baseline!!.copyTo(tmpBaseline)
             }
+
+            // Prepare JDK
+            // Lint uses $JAVA_HOME/release which is not provided by Bazel's JavaRuntimeInfo, so manually populate it
+            // Only MODULES is populated here since Lint only seem to use that
+            File(jdkHome, "release").writeText(
+                ModuleLayer
+                    .boot()
+                    .modules()
+                    .joinToString(separator = " ", prefix = "MODULES=\"", postfix = "\"") { it.name }
+            )
 
             runLint(projectXml, tmpBaseline, analyzeOnly = true)
             val baseline = runLint(projectXml, tmpBaseline, analyzeOnly = false)
