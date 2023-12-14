@@ -113,10 +113,6 @@ class LintCommand : CliktCommand() {
         WorkingDirectory().use { dir ->
             val workingDir = dir.dir
 
-            val deps = dependencies.map { dependency ->
-                val (name, android, library, partialResultsDir) = dependency.split("^")
-                Dependency(name, android.toBoolean(), library.toBoolean(), File(partialResultsDir))
-            }
 
             val projectXml = ProjectXmlCreator(workingDir = workingDir).create(
                 name = name,
@@ -129,7 +125,7 @@ class LintCommand : CliktCommand() {
                 classpath = classpath,
                 manifest = manifest,
                 mergedManifest = mergedManifest,
-                dependencies = deps,
+                dependencies = dependencies.map(Dependency::from),
                 verbose = verbose
             )
 
