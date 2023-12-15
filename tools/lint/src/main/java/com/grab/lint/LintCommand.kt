@@ -128,11 +128,8 @@ class LintCommand : CliktCommand() {
                 verbose = verbose
             )
 
-            // Prepare baseline
-            val tmpBaseline = workingDir.resolve("baseline.xml").toFile()
-            if (baseline?.exists() == true) {
-                baseline!!.copyTo(tmpBaseline)
-            }
+            val lintBaseline = LintBaseline(workingDir, baseline, updatedBaseline, verbose)
+            val tmpBaseline = lintBaseline.prepare()
 
             // Prepare JDK
             // Lint uses $JAVA_HOME/release which is not provided by Bazel's JavaRuntimeInfo, so manually populate it
@@ -146,10 +143,7 @@ class LintCommand : CliktCommand() {
 
             runLint(projectXml, tmpBaseline, analyzeOnly = true)
             val baseline = runLint(projectXml, tmpBaseline, analyzeOnly = false)
-
-            // Copy the updated the baseline to baseline output
-            if (verbose) println("Copying $baseline to $updatedBaseline")
-            baseline.copyTo(updatedBaseline, overwrite = true)
+            lintBaseline.postProcess(baseline)
 
             logResults()
         }
