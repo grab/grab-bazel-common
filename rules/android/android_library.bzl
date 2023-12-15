@@ -6,8 +6,6 @@ load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint_sources", "lint_te
 load("@rules_android_lint//rules:defs.bzl", "android_lint_test")
 load(":resources.bzl", "build_resources")
 
-"""Enhanced android_library rule with support for build configs, res values, Kotlin compilation and databinding support"""
-
 def android_library(
         name,
         debug = True,
@@ -17,18 +15,24 @@ def android_library(
         res_values = {},
         enable_data_binding = False,
         enable_compose = False,
+        lint_options = {},
         **attrs):
     """
-    `android_library` wrapper that adds Kotlin, build config, databinding and res values support.
+    `android_binary` wrapper that setups a native.android_binary with various customizations
 
     Args:
-    - name: Name of the target
-    - build_config: `dict` accepting various types such as `strings`, `booleans`, `ints`, `longs` and their corresponding values for generating
+      name: Name of the target
+      debug: Whether to enable debug,
+      srcs: Source files for the library, can contain mix of java and kotlin files.
+      build_config: `dict` accepting various types such as `strings`, `booleans`, `ints`, `longs` and their corresponding values for generating
                     build config fields
-    - res_value: `dict` accepting `string` key and their values. The value will be used to generate android resources and then adds as a
-                 resource for `android_library`.
-    - enable_data_binding: Enable android databinding support for this target
-    - enable_compose: Enable Jetpack Compose support for this target
+      res_values: `dict` accepting `string` key and their values. The value will be used to generate android resources and then adds as a
+                 resource for `android_binary`.
+      custom_package: The package name for android_binary, must be same as one declared in AndroidManifest.xml
+      lint_options: Lint options to pass to lint, typically contains baselines and config.xml
+      enable_data_binding: Enable android databinding support for this target
+      enable_compose: Enable Jetpack Compose support for this target
+      **attrs: Additional attrs to pass to generated android_binary.
     """
 
     build_config_target = name + "_build_cfg"
@@ -73,7 +77,7 @@ def android_library(
     if enable_data_binding:
         rule_type = kt_db_android_library
     elif len(srcs) == 0 and len(resource_files) != 0:
-        rules_type = native.android_library
+        rule_type = native.android_library
     elif len(srcs) != 0:
         rule_type = kt_android_library
 

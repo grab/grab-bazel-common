@@ -221,7 +221,7 @@ def _lint_aspect_impl(target, ctx):
                 lint_config_xml_file = sources.lint_config_xml,
                 lint_result_xml_file = lint_result_xml_file,
                 partial_results_dir = partial_results_dir,
-                verbose = True,
+                verbose = False,
                 inputs = depset(
                     sources.srcs +
                     sources.resources +
