@@ -111,6 +111,8 @@ def android_binary(
         name = name + "_lint_test",
         srcs = attrs.get("srcs", default = []),
         resource_files = [file for file in resource_files if file.endswith(".xml")],
+        manifest = attrs.get("manifest"),
         lib = name,
+        baseline = "lint_baseline.xml",
         deps = android_binary_deps,
     )
