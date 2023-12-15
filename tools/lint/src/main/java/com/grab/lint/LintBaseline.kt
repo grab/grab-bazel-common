@@ -18,8 +18,52 @@ class LintBaseline(
     }
 
     fun postProcess(newBaseline: File) {
-        // Copy the updated the baseline to baseline output
+        // Sanitize the updated baseline to baseline output
         if (verbose) println("Copying $newBaseline to $updatedBaseline")
-        newBaseline.copyTo(updatedBaseline, overwrite = true)
+        val calcExecRoot = execRootRegex()
+        newBaseline.useLines { lines ->
+            updatedBaseline.bufferedWriter().use { writer ->
+                lines.forEach { line ->
+                    writer.appendLine(sanitize(line, calcExecRoot))
+                }
+            }
+        }
+    }
+
+    /**
+     * It seems we can't simply rely on PWD to find the execroot as Lint baseline output may contain sandbox realized paths in them which
+     * expands symlinks. For example, if the file is coming from another target's output it might contain a different sandbox root.
+     * Especially the sandbox number might be different.
+     *
+     * To solve this we check for sandbox path and prepare a [Regex] that can replace any sort of path sandbox or not.
+     */
+    private fun execRootRegex(): Regex {
+        val pwd = System.getenv("PWD") ?: "  "
+        val currDirName = File(pwd).name
+        val regex = "-sandbox/(.*?)/execroot/$currDirName".toRegex()
+        val sandboxDir = regex.find(pwd)?.groupValues?.firstNotNullOfOrNull { it.toIntOrNull() }
+        val pattern = when {
+            sandboxDir != null -> pwd.replace("/$sandboxDir/", "/(.*?)/")
+            else -> pwd
+        }
+        return (pattern.removePrefix("/") + "/").toRegex()
+    }
+
+    private fun sanitize(line: String, calcExecRoot: Regex): String {
+        return if ("file=\"" in line) {
+            FILE_PATH_REGEX.find(line)
+                ?.value
+                ?.replace("\"", "") // Remove "
+                ?.dropWhile { char -> char == '.' || char == '/' } // Clean ../
+                ?.replace(calcExecRoot, "")
+                ?.let { fixedPath ->
+                    "${line.split("file=").first()}file=\"$fixedPath\"" // Retain indent and write file="updated path"
+                } ?: line
+        } else line
+    }
+
+
+    companion object {
+        private val FILE_PATH_REGEX = """"([^"]+)"""".toRegex()
     }
 }
