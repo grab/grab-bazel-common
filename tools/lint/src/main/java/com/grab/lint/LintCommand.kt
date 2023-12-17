@@ -134,12 +134,7 @@ class LintCommand : CliktCommand() {
             // Prepare JDK
             // Lint uses $JAVA_HOME/release which is not provided by Bazel's JavaRuntimeInfo, so manually populate it
             // Only MODULES is populated here since Lint only seem to use that
-            File(jdkHome, "release").writeText(
-                ModuleLayer
-                    .boot()
-                    .modules()
-                    .joinToString(separator = " ", prefix = "MODULES=\"", postfix = "\"") { it.name }
-            )
+            prepareJdk()
 
             runLint(projectXml, tmpBaseline, analyzeOnly = true)
             val baseline = runLint(projectXml, tmpBaseline, analyzeOnly = false)
@@ -181,6 +176,15 @@ class LintCommand : CliktCommand() {
             }.toTypedArray()
         )
         return tmpBaseline
+    }
+
+    private fun prepareJdk() {
+        File(jdkHome, "release").writeText(
+            ModuleLayer
+                .boot()
+                .modules()
+                .joinToString(separator = " ", prefix = "MODULES=\"", postfix = "\"") { it.name }
+        )
     }
 
     private fun logResults() {
