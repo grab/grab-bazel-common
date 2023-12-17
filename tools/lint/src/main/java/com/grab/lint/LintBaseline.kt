@@ -54,6 +54,7 @@ class LintBaseline(
             FILE_PATH_REGEX.find(line)
                 ?.value
                 ?.replace("\"", "") // Remove "
+                ?.replace(System.getenv("TMPDIR") ?: "", "")
                 ?.dropWhile { char -> char == '.' || char == '/' } // Clean ../
                 ?.replace(calcExecRoot, "")
                 ?.let { fixedPath ->
