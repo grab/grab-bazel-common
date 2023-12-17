@@ -9,6 +9,7 @@ def _lint_update_baseline(ctx):
     # If source baseline does not exist, then assume the path to be lint_baseline.xml and generate it.
     source_baseline = ctx.files.baseline[0].short_path if len(ctx.files.baseline) != 0 else "%s/%s" % (ctx.label.package, ctx.attr._default_baseline)
 
+    # TODO(arun) Replace with skylib copy_file
     ctx.actions.write(
         output = executable,
         is_executable = False,
