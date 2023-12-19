@@ -51,6 +51,7 @@ class LintBaseline(
 
     private fun sanitize(line: String, calcExecRoot: Regex): String {
         return if ("file=\"" in line) {
+            val suffix = if (line.endsWith(">")) ">" else ""
             FILE_PATH_REGEX.find(line)
                 ?.value
                 ?.replace("\"", "") // Remove "
@@ -58,7 +59,7 @@ class LintBaseline(
                 ?.dropWhile { char -> char == '.' || char == '/' } // Clean ../
                 ?.replace(calcExecRoot, "")
                 ?.let { fixedPath ->
-                    "${line.split("file=").first()}file=\"$fixedPath\"" // Retain indent and write file="updated path"
+                    "${line.split("file=").first()}file=\"$fixedPath\"$suffix" // Retain indent and write file="updated path"
                 } ?: line
         } else line
     }
