@@ -112,6 +112,7 @@ def _lint_action(
         lint_result_xml_file,
         partial_results_dir,
         jdk_home,
+        result_code,
         verbose,
         inputs):
     args = ctx.actions.args()
@@ -164,6 +165,7 @@ def _lint_action(
     args.add("--output-xml", lint_result_xml_file.path)
     args.add("--lint-config", lint_config_xml_file.path)
     args.add("--partial-results-dir", partial_results_dir.path)
+    args.add("--result-code", result_code)
 
     if verbose:  #TODO(arun) Pass via build config
         args.add("--verbose")
@@ -178,6 +180,7 @@ def _lint_action(
             partial_results_dir,
             lint_result_xml_file,
             updated_baseline,
+            result_code,
         ],
         executable = ctx.executable._lint_cli,
         arguments = [args],
@@ -198,6 +201,7 @@ def _lint_aspect_impl(target, ctx):
         # Output
         partial_results_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_partial_results_dir")
         lint_result_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result.xml")
+        lint_result_code_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result_code")
 
         # Current target info
         rule_kind = ctx.rule.kind
@@ -245,6 +249,7 @@ def _lint_aspect_impl(target, ctx):
                 lint_result_xml_file = lint_result_xml_file,
                 partial_results_dir = partial_results_dir,
                 jdk_home = java_runtime_info.java_home,
+                result_code = lint_result_code_file,
                 verbose = False,
                 inputs = depset(
                     sources.srcs +
@@ -265,6 +270,7 @@ def _lint_aspect_impl(target, ctx):
                 enabled = enabled,
                 partial_results_dir = partial_results_dir,
                 lint_result_xml = lint_result_xml_file,
+                result_code = lint_result_code_file,
                 updated_baseline = lint_updated_baseline_file,
             )
         else:
@@ -274,6 +280,7 @@ def _lint_aspect_impl(target, ctx):
                 command = ("mkdir -p %s" % (partial_results_dir.path)),
             )
             ctx.actions.write(output = lint_result_xml_file, content = "")
+            ctx.actions.write(output = lint_result_code_file, content = "0")
 
             android_lint_info = AndroidLintNodeInfo(
                 name = str(target.label),
@@ -282,6 +289,7 @@ def _lint_aspect_impl(target, ctx):
                 enabled = enabled,
                 partial_results_dir = None,
                 lint_result_xml = lint_result_xml_file,
+                result_code = lint_result_code_file,
                 updated_baseline = None,
             )
         return AndroidLintInfo(

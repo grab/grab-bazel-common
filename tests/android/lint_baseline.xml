@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.0.2" type="baseline" client="" dependencies="true" name="" variant="all" version="8.0.2">
+
+    <issue
+        id="LongLogTag"
+        message="The logging tag can be at most 23 characters, was 39 (SomeReallyLongTagForLintToDetectAndWarn)">
+        <location
+            file="tests/android/src/main/java/com/grab/test/TestActivity.kt"
+            line="13"
+            column="29"/>
+    </issue>
+
+</issues>

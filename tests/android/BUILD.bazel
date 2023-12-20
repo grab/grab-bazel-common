@@ -7,6 +7,9 @@ android_library(
     ]),
     custom_package = "com.grab.test",
     enable_data_binding = True,
+    lint_options = {
+        "baseline": "lint_baseline.xml",
+    },
     manifest = "src/main/AndroidManifest.xml",
     resources = {
         "src/main/res": {

@@ -98,6 +98,12 @@ class LintCommand : CliktCommand() {
         "--partial-results-dir",
     ).convert { File(it) }.required()
 
+    private val resultCode by option(
+        "-rc",
+        "--result-code",
+        help = "File containing result status of running Lint"
+    ).convert { File(it) }.required()
+
     private val jdkHome by option(
         "-j",
         "--jdk-home",
@@ -140,8 +146,13 @@ class LintCommand : CliktCommand() {
             val baseline = runLint(projectXml, tmpBaseline, analyzeOnly = false)
             lintBaseline.postProcess(baseline)
 
-            logResults()
+            processResults()
+            LintResults(resultCodeFile = resultCode, lintResultsFile = outputXml).process()
         }
+    }
+
+    private fun processResults() {
+        resultCode.writeText("0")
     }
 
     private fun runLint(projectXml: File, tmpBaseline: File, analyzeOnly: Boolean = false): File {
