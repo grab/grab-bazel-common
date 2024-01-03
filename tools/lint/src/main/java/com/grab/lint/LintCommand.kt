@@ -69,7 +69,7 @@ class LintCommand : CliktCommand() {
         help = "Dependency target names"
     ).split(",").default(emptyList())
 
-    private val baseline by option(
+    private val orgBaseline by option(
         "-b",
         "--baseline",
         help = "The lint baseline file"
@@ -134,7 +134,7 @@ class LintCommand : CliktCommand() {
                 verbose = verbose
             )
 
-            val lintBaseline = LintBaseline(workingDir, baseline, updatedBaseline, verbose)
+            val lintBaseline = LintBaseline(workingDir, orgBaseline, updatedBaseline, verbose)
             val tmpBaseline = lintBaseline.prepare()
 
             // Prepare JDK

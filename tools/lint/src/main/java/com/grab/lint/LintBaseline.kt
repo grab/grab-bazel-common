@@ -5,14 +5,15 @@ import java.nio.file.Path
 
 class LintBaseline(
     private val workingDir: Path,
-    private val baselineFile: File?,
+    private val orgBaselineFile: File?,
     private val updatedBaseline: File,
-    private val verbose: Boolean
+    private val verbose: Boolean,
+    private val env: Env = Env.BazelEnv
 ) {
     fun prepare(): File {
         val tmpBaseline = workingDir.resolve("baseline.xml").toFile()
-        if (baselineFile?.exists() == true) {
-            baselineFile.copyTo(tmpBaseline)
+        if (orgBaselineFile?.exists() == true) {
+            orgBaselineFile.copyTo(tmpBaseline)
         }
         return tmpBaseline
     }
@@ -38,7 +39,7 @@ class LintBaseline(
      * To solve this we check for sandbox path and prepare a [Regex] that can replace any sort of path sandbox or not.
      */
     private fun execRootRegex(): Regex {
-        val pwd = System.getenv("PWD") ?: "  "
+        val pwd = env.pwd
         val currDirName = File(pwd).name
         val regex = "-sandbox/(.*?)/execroot/$currDirName".toRegex()
         val sandboxDir = regex.find(pwd)?.groupValues?.firstNotNullOfOrNull { it.toIntOrNull() }
@@ -51,11 +52,12 @@ class LintBaseline(
 
     private fun sanitize(line: String, calcExecRoot: Regex): String {
         return if ("file=\"" in line) {
-            val suffix = if (line.endsWith(">")) ">" else ""
+            val suffix = if (line.endsWith(">")) "/>" else ""
+
             FILE_PATH_REGEX.find(line)
                 ?.value
                 ?.replace("\"", "") // Remove "
-                ?.replace(System.getenv("TMPDIR") ?: "", "")
+                ?.replace(env.tmpDir, "")
                 ?.dropWhile { char -> char == '.' || char == '/' } // Clean ../
                 ?.replace(calcExecRoot, "")
                 ?.let { fixedPath ->
