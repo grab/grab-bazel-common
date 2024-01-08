@@ -4,14 +4,18 @@ build --disk_cache=bazel-cache
 build --verbose_failures
 
 # Databinding flags
-build --experimental_android_databinding_v2
-build --android_databinding_use_v3_4_args
-build --android_databinding_use_androidx
+common --experimental_android_databinding_v2
+common --android_databinding_use_v3_4_args
+common --android_databinding_use_androidx
 
-build --experimental_google_legacy_api
-query --experimental_google_legacy_api
+common --experimental_google_legacy_api
+
+# Java
+build --java_runtime_version=remotejdk_11 # Use inbuilt Java 11 for hermeticity
+build --jvmopt="-Djava.locale.providers=COMPAT,SPI" # Use Java 8 default locale provider
 
 common --strategy=AndroidLint=sandboxed
+common --strategy=AndroidLintAnalyze=sandboxed
 
 test --test_output=errors # Print test logs for failed tests
 test --build_tests_only

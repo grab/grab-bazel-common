@@ -26,6 +26,7 @@ def lint(
       lint_baseline: The baseline XML file to compare results against
     """
 
+    # Normal build target to apply lint aspect and establish AndroidLintInfo provider
     _lint(
         name = name + ".lint",
         target = linting_target,

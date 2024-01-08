@@ -1,5 +1,11 @@
 load("@grab_bazel_common//rules/android:utils.bzl", "utils")
-load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo", "AndroidLintNodeInfo", "AndroidLintSourcesInfo", "LINT_ENABLED")
+load(
+    "@grab_bazel_common//rules/android/lint:providers.bzl",
+    "AndroidLintInfo",
+    "AndroidLintNodeInfo",
+    "AndroidLintSourcesInfo",
+    "LINT_ENABLED",
+)
 
 _LINT_ASPECTS_ATTR = ["deps", "runtime_deps", "exports", "associates"]  # Define attributes that aspect will propagate to
 
@@ -18,8 +24,10 @@ def _compile_sdk_version(sdk_target):
 
 def _lint_sources_classpath(target, ctx):
     """
-    Collect the classpath for linting. Currently all transitive jars are passed since sometimes lint complains about missing
-    class defs. Need to revisit to prune transitive deps for performance.
+    Collect the classpath for linting. Currently all transitive jars are passed since
+    sometimes lint complains about missing class defs. Need to revisit to prune transitive
+    deps for performance.
+
     Apart from dependency jars, add the current target's android resource jar as well.
     """
     transitive = [
@@ -95,8 +103,9 @@ def _encode_dependency(dependency_info):
         dependency_info.partial_results_dir.path,
     )
 
-def _lint_action(
+def _lint_common_args(
         ctx,
+        args,
         android,
         library,
         compile_sdk_version,
@@ -105,17 +114,13 @@ def _lint_action(
         classpath,
         manifest,
         merged_manifest,
-        dep_lint_node_infos,
         baseline,
-        updated_baseline,
+        dep_lint_node_infos,
         lint_config_xml_file,
-        lint_result_xml_file,
         partial_results_dir,
+        project_xml_file,
         jdk_home,
-        result_code,
-        verbose,
-        inputs):
-    args = ctx.actions.args()
+        verbose):
     args.set_param_file_format("multiline")
     args.use_param_file("--flagfile=%s", use_always = True)
 
@@ -160,28 +165,129 @@ def _lint_action(
 
     if baseline:
         args.add("--baseline", baseline[0].path)
-    args.add("--updated-baseline", updated_baseline)
 
-    args.add("--output-xml", lint_result_xml_file.path)
     args.add("--lint-config", lint_config_xml_file.path)
     args.add("--partial-results-dir", partial_results_dir.path)
-    args.add("--result-code", result_code)
 
     if verbose:  #TODO(arun) Pass via build config
         args.add("--verbose")
 
     args.add("--jdk-home", jdk_home)
 
+    args.add("--project-xml", project_xml_file.path)
+    return
+
+def _lint_analyze_action(
+        ctx,
+        android,
+        library,
+        compile_sdk_version,
+        srcs,
+        resources,
+        classpath,
+        manifest,
+        merged_manifest,
+        dep_lint_node_infos,
+        baseline,
+        lint_config_xml_file,
+        partial_results_dir,
+        jdk_home,
+        project_xml_file,
+        verbose,
+        inputs,
+        outputs):
+    args = ctx.actions.args()
+    args.add("ANALYZE")
+    _lint_common_args(
+        ctx = ctx,
+        args = args,
+        android = android,
+        library = library,
+        compile_sdk_version = compile_sdk_version,
+        srcs = srcs,
+        resources = resources,
+        classpath = classpath,
+        manifest = manifest,
+        merged_manifest = merged_manifest,
+        baseline = baseline,
+        dep_lint_node_infos = dep_lint_node_infos,
+        lint_config_xml_file = lint_config_xml_file,
+        partial_results_dir = partial_results_dir,
+        project_xml_file = project_xml_file,
+        jdk_home = jdk_home,
+        verbose = verbose,
+    )
+
+    mnemonic = "AndroidLintAnalyze"
+    ctx.actions.run(
+        mnemonic = mnemonic,
+        inputs = inputs,
+        outputs = outputs,
+        executable = ctx.executable._lint_cli,
+        arguments = [args],
+        progress_message = "%s %s" % (mnemonic, str(ctx.label).lstrip("@")),
+        execution_requirements = {
+            "supports-workers": "1",
+            "supports-multiplex-workers": "1",
+            "requires-worker-protocol": "json",
+        },
+    )
+    return
+
+def _lint_report_action(
+        ctx,
+        android,
+        library,
+        compile_sdk_version,
+        srcs,
+        resources,
+        classpath,
+        manifest,
+        merged_manifest,
+        dep_lint_node_infos,
+        baseline,
+        updated_baseline,
+        lint_config_xml_file,
+        lint_result_xml_file,
+        partial_results_dir,
+        jdk_home,
+        project_xml_file,
+        result_code,
+        verbose,
+        inputs,
+        outputs):
+    args = ctx.actions.args()
+    args.add("REPORT")
+    _lint_common_args(
+        ctx = ctx,
+        args = args,
+        android = android,
+        library = library,
+        compile_sdk_version = compile_sdk_version,
+        srcs = srcs,
+        resources = resources,
+        classpath = classpath,
+        manifest = manifest,
+        merged_manifest = merged_manifest,
+        baseline = baseline,
+        dep_lint_node_infos = dep_lint_node_infos,
+        lint_config_xml_file = lint_config_xml_file,
+        partial_results_dir = partial_results_dir,
+        project_xml_file = project_xml_file,
+        jdk_home = jdk_home,
+        verbose = verbose,
+    )
+
+    args.add("--updated-baseline", updated_baseline)
+
+    args.add("--output-xml", lint_result_xml_file.path)
+    args.add("--result-code", result_code)
+
     mnemonic = "AndroidLint"
     ctx.actions.run(
         mnemonic = mnemonic,
         inputs = inputs,
-        outputs = [
-            partial_results_dir,
-            lint_result_xml_file,
-            updated_baseline,
-            result_code,
-        ],
+        outputs = outputs,
         executable = ctx.executable._lint_cli,
         arguments = [args],
         progress_message = "%s %s" % (mnemonic, str(ctx.label).lstrip("@")),
@@ -198,11 +304,6 @@ def _lint_aspect_impl(target, ctx):
         # Run lint only on internal targets
         return []
     else:
-        # Output
-        partial_results_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_partial_results_dir")
-        lint_result_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result.xml")
-        lint_result_code_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result_code")
-
         # Current target info
         rule_kind = ctx.rule.kind
         android = rule_kind == "android_library" or rule_kind == "android_binary"
@@ -218,6 +319,10 @@ def _lint_aspect_impl(target, ctx):
         if enabled:
             # Output
             lint_updated_baseline_file = ctx.actions.declare_file("lint/" + target.label.name + "_updated_baseline.xml")
+            partial_results_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_partial_results_dir")
+            lint_result_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result.xml")
+            lint_result_code_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result_code")
+            project_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_project.xml")
 
             sources = _collect_sources(target, ctx, library)
             compile_sdk_version = _compile_sdk_version(ctx.attr._android_sdk)
@@ -232,7 +337,48 @@ def _lint_aspect_impl(target, ctx):
             # Pass JDK Home
             java_runtime_info = ctx.attr._javabase[java_common.JavaRuntimeInfo]
 
-            _lint_action(
+            # ┌──────────────┐      ┌──────────────┐
+            # │   Report     ├──────►   Analyze   │
+            # └──────────────┘      └──────────────┘
+            #                        - partial-results-dir
+            # Add separate actions for reporting and analyze and then return different providers in the aspect.
+            # Consuming rules can decide whether to use reporting output or analysis output by using the
+            # correct output file
+
+            _lint_analyze_action(
+                ctx = ctx,
+                android = android,
+                library = library,
+                compile_sdk_version = compile_sdk_version,
+                srcs = sources.srcs,
+                resources = sources.resources,
+                classpath = sources.classpath,
+                manifest = sources.manifest,
+                merged_manifest = sources.merged_manifest,
+                dep_lint_node_infos = dep_lint_node_infos,
+                baseline = sources.baseline,
+                lint_config_xml_file = sources.lint_config_xml,
+                partial_results_dir = partial_results_dir,
+                jdk_home = java_runtime_info.java_home,
+                project_xml_file = project_xml_file,
+                verbose = False,
+                inputs = depset(
+                    sources.srcs +
+                    sources.resources +
+                    sources.manifest +
+                    sources.merged_manifest +
+                    [sources.lint_config_xml] +
+                    partial_results +
+                    baseline_inputs,
+                    transitive = [sources.classpath, java_runtime_info.files],
+                ),
+                outputs = [
+                    partial_results_dir,
+                    project_xml_file,
+                ],
+            )
+
+            _lint_report_action(
                 ctx = ctx,
                 android = android,
                 library = library,
@@ -249,6 +395,7 @@ def _lint_aspect_impl(target, ctx):
                 lint_result_xml_file = lint_result_xml_file,
                 partial_results_dir = partial_results_dir,
                 jdk_home = java_runtime_info.java_home,
+                project_xml_file = project_xml_file,
                 result_code = lint_result_code_file,
                 verbose = False,
                 inputs = depset(
@@ -258,9 +405,16 @@ def _lint_aspect_impl(target, ctx):
                     sources.merged_manifest +
                     [sources.lint_config_xml] +
                     partial_results +
+                    [partial_results_dir] +  # Current module partial results from analyze action
+                    [project_xml_file] +  # Reuse project xml from analyze action
                     baseline_inputs,
                     transitive = [sources.classpath, java_runtime_info.files],
                 ),
+                outputs = [
+                    lint_result_xml_file,
+                    lint_updated_baseline_file,
+                    lint_result_code_file,
+                ],
             )
 
             android_lint_info = AndroidLintNodeInfo(
@@ -274,22 +428,14 @@ def _lint_aspect_impl(target, ctx):
                 updated_baseline = lint_updated_baseline_file,
             )
         else:
-            # No linting to do, just propagate transitive data
-            ctx.actions.run_shell(
-                outputs = [partial_results_dir],
-                command = ("mkdir -p %s" % (partial_results_dir.path)),
-            )
-            ctx.actions.write(output = lint_result_xml_file, content = "")
-            ctx.actions.write(output = lint_result_code_file, content = "0")
-
             android_lint_info = AndroidLintNodeInfo(
                 name = str(target.label),
                 android = android,
                 library = library,
                 enabled = enabled,
                 partial_results_dir = None,
-                lint_result_xml = lint_result_xml_file,
-                result_code = lint_result_code_file,
+                lint_result_xml = None,
+                result_code = None,
                 updated_baseline = None,
             )
         return AndroidLintInfo(

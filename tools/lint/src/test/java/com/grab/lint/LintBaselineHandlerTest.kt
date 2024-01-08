@@ -6,14 +6,14 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 import kotlin.test.assertTrue
 
-class LintBaselineTest {
+class LintBaselineHandlerTest {
 
     @get:Rule
     val temporaryFolder = TemporaryFolder()
 
     private lateinit var orgBaseline: File
     private lateinit var updatedBaseline: File
-    private lateinit var lintBaseline: LintBaseline
+    private lateinit var lintBaselineHandler: LintBaselineHandler
 
     companion object {
         private const val TMP_DIR = "/var/folders/k_/g4n9rwbj4qs2_g9_gby95zlr0000gn/T/"
@@ -31,10 +31,9 @@ class LintBaselineTest {
             writeText(orgBaselineContents)
         }
         updatedBaseline = workingDir.resolve("updated.xml")
-        lintBaseline = LintBaseline(
+        lintBaselineHandler = LintBaselineHandler(
             workingDir = workingDir.toPath(),
             orgBaselineFile = orgBaseline,
-            updatedBaseline = updatedBaseline,
             verbose = false,
             env = TestEnv
         )
@@ -66,7 +65,7 @@ class LintBaselineTest {
 
         """.trimIndent()
         )
-        lintBaseline.postProcess(orgBaseline)
+        lintBaselineHandler.postProcess(orgBaseline, updatedBaseline)
         assertTrue("TMP Dir removed from baseline file path") {
             updatedBaseline.useLines { lines -> lines.filter { it.contains("file") }.all { TestEnv.tmpDir !in it } }
         }
@@ -98,7 +97,7 @@ class LintBaselineTest {
 
         """.trimIndent()
         )
-        lintBaseline.postProcess(orgBaseline)
+        lintBaselineHandler.postProcess(orgBaseline, updatedBaseline)
         assertTrue("Relative path removed from baseline output") {
             updatedBaseline.useLines { lines -> lines.filter { it.contains("file") }.all { "../" !in it } }
         }
@@ -130,7 +129,7 @@ class LintBaselineTest {
 
         """.trimIndent()
         )
-        lintBaseline.postProcess(orgBaseline)
+        lintBaselineHandler.postProcess(orgBaseline, updatedBaseline)
         assertTrue("Pwd removed from baseline file path") {
             updatedBaseline.useLines { lines -> lines.filter { it.contains("file") }.all { TestEnv.pwd !in it } }
         }
