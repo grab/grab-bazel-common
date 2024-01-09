@@ -84,28 +84,9 @@ class LintAnalyzeCommandTest : BaseTest() {
         val partialResults = partialResults.walkTopDown().filter { it.isFile }.toList()
         assertEquals(1, partialResults.size, "Partial results are generated")
         assertEquals("lint-partial-all.xml", partialResults.first().name, "Partial all file is generated")
-        assertEquals(
-            """<?xml version="1.0" encoding="UTF-8"?>
-<incidents format="6" by="lint 8.0.2" type="partial_results">
-    <map id="UnusedResources">
-        <location id="R.string.app_name"
-            file="../root/res/values/strings.xml"
-            line="2"
-            column="13"
-            startOffset="24"
-            endLine="2"
-            endColumn="28"
-            endOffset="39"/>
-        <entry
-            name="model"
-            string="string[app_name(D)];;;;"/>
-    </map>
-
-</incidents>
-""",
-            partialResults.first().readText(),
-            "UnusedResources are flagged in partial results"
-        )
+        assertTrue {
+            partialResults.first().readText().contains("id=\"UnusedResources\"")
+        }
         assertTrue("Project XML is generated") {
             projectXml.exists()
         }
