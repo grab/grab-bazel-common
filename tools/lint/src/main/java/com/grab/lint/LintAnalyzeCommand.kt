@@ -2,6 +2,7 @@ package com.grab.lint
 
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.pathString
 import com.android.tools.lint.Main as LintCli
 
 class LintAnalyzeCommand : LintBaseCommand() {
@@ -15,6 +16,7 @@ class LintAnalyzeCommand : LintBaseCommand() {
         lintBaselineHandler: LintBaselineHandler
     ) {
         val cliArgs = (defaultLintOptions + listOf(
+            "--cache-dir", workingDir.resolve("cache").pathString,
             "--project", projectXml.toString(),
             "--analyze-only" // Only do analyze
         )).toTypedArray()
