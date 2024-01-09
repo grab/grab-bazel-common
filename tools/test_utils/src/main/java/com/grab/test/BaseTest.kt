@@ -14,25 +14,30 @@
  * limitations under the License.
  */
 
-package com.grab.aapt.databinding.common
+package com.grab.test
 
-import okio.Path.Companion.toPath
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import java.io.File
-import java.util.*
+import java.util.Random
 
-abstract class BaseBindingStubTest {
+abstract class BaseTest {
     @get:Rule
     val temporaryFolder = TemporaryFolder()
 
-    data class TestResFile(val name: String, val contents: String, val path: String = "")
+    data class TestResFile(
+        val name: String,
+        val contents: String, val path: String = ""
+    )
 
     private val random = Random()
 
     protected fun testResFiles(vararg testResFiles: TestResFile): List<File> {
         return testResFiles.map { (fileName, contents, path) ->
-            File(temporaryFolder.newFolder(random.nextInt().toString() + path), fileName).apply {
+            File(
+                temporaryFolder.newFolder(random.nextInt().toString() + path),
+                fileName
+            ).apply {
                 delete()
                 writeText(contents)
             }
@@ -41,6 +46,7 @@ abstract class BaseBindingStubTest {
 
     class TestResourceBuilder(private val root: File) {
         val files = mutableListOf<File>()
+
         operator fun String.invoke(content: () -> String) {
             File(root, this).apply {
                 parentFile.mkdirs()

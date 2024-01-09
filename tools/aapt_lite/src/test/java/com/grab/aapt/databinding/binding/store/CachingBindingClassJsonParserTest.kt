@@ -16,13 +16,14 @@
 
 package com.grab.aapt.databinding.binding.store
 
-import com.grab.aapt.databinding.common.BaseBindingStubTest
+
+import com.grab.test.BaseTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class CachingBindingClassJsonParserTest : BaseBindingStubTest() {
+class CachingBindingClassJsonParserTest : BaseTest() {
 
     private lateinit var cachingBindingClassJsonParser: CachingBindingClassJsonParser
 
