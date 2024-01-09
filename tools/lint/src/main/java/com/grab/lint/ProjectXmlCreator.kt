@@ -31,7 +31,7 @@ class ProjectXmlCreator(
         classpath: List<String>,
         manifest: File?,
         mergedManifest: File?,
-        dependencies: List<Dependency>,
+        dependencies: List<LintDependency>,
         verbose: Boolean
     ): File {
         val contents = buildString {

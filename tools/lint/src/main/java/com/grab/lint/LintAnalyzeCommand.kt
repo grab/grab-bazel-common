@@ -6,6 +6,8 @@ import com.android.tools.lint.Main as LintCli
 
 class LintAnalyzeCommand : LintBaseCommand() {
 
+    override val createProjectXml: Boolean = true
+
     override fun run(
         workingDir: Path,
         projectXml: File,

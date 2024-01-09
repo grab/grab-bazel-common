@@ -8,6 +8,14 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
 import com.grab.cli.WorkingDirectory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Path
 
@@ -102,29 +110,39 @@ abstract class LintBaseCommand : CliktCommand() {
         "--compile-sdk-version",
     )
 
+    @OptIn(FlowPreview::class)
     override fun run() {
         prepareJdk()
-        WorkingDirectory().use {
-            val workingDir = it.dir
-            val projectXml = if (projectXml.exists()) {
-                projectXml
-            } else ProjectXmlCreator(projectXml).create(
-                name = name,
-                android = android,
-                library = library,
-                compileSdkVersion = compileSdkVersion,
-                partialResults = partialResults,
-                srcs = srcs,
-                resources = resources,
-                classpath = classpath,
-                manifest = manifest,
-                mergedManifest = mergedManifest,
-                dependencies = dependencies.map(Dependency::from),
-                verbose = verbose
-            )
-            val lintBaselineHandler = LintBaselineHandler(workingDir, inputBaseline, verbose)
-            val tmpBaseline = lintBaselineHandler.prepare()
-            run(workingDir, projectXml, tmpBaseline, lintBaselineHandler)
+        runBlocking {
+            WorkingDirectory().use {
+                val workingDir = it.dir
+                val concurrency = Runtime.getRuntime().availableProcessors() / 2
+                val partialResults = resolveSymlinks(partialResults, workingDir)
+
+                val projectXml = if (!createProjectXml) projectXml else {
+                    ProjectXmlCreator(projectXml).create(
+                        name = name,
+                        android = android,
+                        library = library,
+                        compileSdkVersion = compileSdkVersion,
+                        partialResults = partialResults,
+                        srcs = srcs,
+                        resources = resources,
+                        classpath = classpath,
+                        manifest = manifest,
+                        mergedManifest = mergedManifest,
+                        dependencies = dependencies
+                            .asFlow()
+                            .flatMapMerge(concurrency) { dep ->
+                                flow { emit(LintDependency.from(workingDir, dep)) }.flowOn(Dispatchers.IO)
+                            }.toList(),
+                        verbose = verbose
+                    )
+                }
+                val lintBaselineHandler = LintBaselineHandler(workingDir, inputBaseline, verbose)
+                val tmpBaseline = lintBaselineHandler.prepare()
+                run(workingDir, projectXml, tmpBaseline, lintBaselineHandler)
+            }
         }
     }
 
@@ -134,6 +152,14 @@ abstract class LintBaseCommand : CliktCommand() {
         tmpBaseline: File,
         lintBaselineHandler: LintBaselineHandler
     )
+
+    /**
+     * Create new project.xml at [projectXml].
+     *
+     * Required for non-sandbox modes since we can't rely on file system state when executing in non sandbox modes as previous results might
+     * be still there.
+     */
+    abstract val createProjectXml: Boolean
 
     protected val defaultLintOptions
         get() = mutableListOf(
