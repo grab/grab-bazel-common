@@ -337,10 +337,13 @@ def _lint_aspect_impl(target, ctx):
             # Pass JDK Home
             java_runtime_info = ctx.attr._javabase[java_common.JavaRuntimeInfo]
 
-            # ┌──────────────┐      ┌──────────────┐
-            # │   Report     ├──────►   Analyze   │
-            # └──────────────┘      └──────────────┘
-            #                        - partial-results-dir
+            #  +--------+                +---------+
+            #  |        |                |         |
+            #  | Report +--------------->| Analyze |
+            #  |        |                |         |
+            #  +--------+                +---------+
+            #   -baseline                 -parital-results-dir
+            #   -lint_result.xml          -project-xml
             # Add separate actions for reporting and analyze and then return different providers in the aspect.
             # Consuming rules can decide whether to use reporting output or analysis output by using the
             # correct output file
