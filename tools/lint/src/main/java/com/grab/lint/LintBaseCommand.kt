@@ -181,16 +181,20 @@ abstract class LintBaseCommand : CliktCommand() {
         // Prepare JDK
         // Lint uses $JAVA_HOME/release which is not provided by Bazel's JavaRuntimeInfo, so manually populate it
         // Only MODULES is populated here since Lint only seem to use that
-        File(jdkHome, "release").writeText(
-            ModuleLayer
-                .boot()
-                .modules()
-                .joinToString(
-                    separator = " ",
-                    prefix = "MODULES=\"",
-                    postfix = "\"",
-                    transform = Module::getName
+        File(jdkHome, "release").also { release ->
+            if (!release.exists()) {
+                release.writeText(
+                    ModuleLayer
+                        .boot()
+                        .modules()
+                        .joinToString(
+                            separator = " ",
+                            prefix = "MODULES=\"",
+                            postfix = "\"",
+                            transform = Module::getName
+                        )
                 )
-        )
+            }
+        }
     }
 }
