@@ -1,16 +1,23 @@
 load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo")
+load("@grab_bazel_common//rules/android/lint:lint_aspect.bzl", "lint_aspect")
 
 def _lint_test_impl(ctx):
     target = ctx.attr.target
-    lint_result_xml_file = ctx.outputs.lint_result
     lint_info = ctx.attr.target[AndroidLintInfo].info
-    lint_result_code = lint_info.result_code
 
     executable = ctx.actions.declare_file("%s_lint.sh" % target.label.name)
-    ctx.actions.symlink(
-        target_file = lint_info.lint_result_xml,
-        output = ctx.outputs.lint_result,
-    )
+
+    lint_result_xml_file = ctx.outputs.lint_result
+    lint_result_code = lint_info.result_code
+    if lint_info.enabled:
+        ctx.actions.symlink(
+            target_file = lint_info.lint_result_xml,
+            output = lint_result_xml_file,
+        )
+    else:
+        lint_result_code = ctx.actions.declare_file("%s_result_code" % target.label.name)
+        ctx.actions.write(output = lint_result_xml_file, content = "")
+        ctx.actions.write(output = lint_result_code, content = "0")
 
     ctx.actions.write(
         output = executable,

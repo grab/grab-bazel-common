@@ -4,7 +4,11 @@ def _lint_update_baseline(ctx):
     target = ctx.attr.target
     executable = ctx.actions.declare_file("lint/%s_update_baseline.sh" % target.label.name)
 
-    updated_internal_baseline = ctx.attr.target[AndroidLintInfo].info.updated_baseline
+    lint_info = ctx.attr.target[AndroidLintInfo].info
+    updated_internal_baseline = lint_info.updated_baseline
+    if not lint_info.enabled:
+        updated_internal_baseline = ctx.actions.declare_file("lint/%s_updated_baseline.xml" % target.label.name)
+        ctx.actions.write(output = updated_internal_baseline, content = "")
 
     # If source baseline does not exist, then assume the path to be lint_baseline.xml and generate it.
     source_baseline = ctx.files.baseline[0].short_path if len(ctx.files.baseline) != 0 else "%s/%s" % (ctx.label.package, ctx.attr._default_baseline)
