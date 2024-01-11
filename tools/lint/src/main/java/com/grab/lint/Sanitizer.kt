@@ -34,7 +34,7 @@ class Sanitizer(
     private val rootRegex: Regex by lazy {
         val pwd = env.pwd
         val currDirName = File(pwd).name
-        val regex = "-sandbox/(.*?)/execroot/$currDirName".toRegex()
+        val regex = "(-sandbox/(.*?)/execroot/$currDirName)|(/../../../../../)".toRegex()
         val sandboxDir = regex.find(pwd)?.groupValues?.firstNotNullOfOrNull { it.toIntOrNull() }
         val pattern = when {
             sandboxDir != null -> pwd.replace("/$sandboxDir/", "/(.*?)/")
