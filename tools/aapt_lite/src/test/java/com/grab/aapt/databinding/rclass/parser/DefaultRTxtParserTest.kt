@@ -19,7 +19,6 @@ package com.grab.aapt.databinding.rclass.parser
 import com.grab.aapt.databinding.binding.model.Binding
 import com.grab.aapt.databinding.binding.model.BindingType
 import com.grab.aapt.databinding.binding.model.LayoutBindingData
-import com.grab.aapt.databinding.common.BaseBindingStubTest
 import com.grab.aapt.databinding.rclass.parser.Type.ANIM
 import com.grab.aapt.databinding.rclass.parser.Type.ANIMATOR
 import com.grab.aapt.databinding.rclass.parser.Type.ARRAY
@@ -42,12 +41,13 @@ import com.grab.aapt.databinding.rclass.parser.Type.STYLE
 import com.grab.aapt.databinding.rclass.parser.Type.STYLEABLE
 import com.grab.aapt.databinding.rclass.parser.Type.TRANSITION
 import com.grab.aapt.databinding.rclass.parser.Type.XML
+import com.grab.test.BaseTest
 import com.squareup.javapoet.ClassName
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertTrue
 
-class DefaultRTxtParserTest : BaseBindingStubTest() {
+class DefaultRTxtParserTest : BaseTest() {
 
     private lateinit var rTxtParser: RTxtParser
     private lateinit var testLayoutBindings: List<LayoutBindingData>

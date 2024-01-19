@@ -1,8 +1,8 @@
 package com.google.devtools.build.android
 
-import org.junit.Assert.*
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.lang.IllegalArgumentException
 import kotlin.io.path.name
 
 class SourceSetTest {

@@ -19,8 +19,8 @@ package com.grab.aapt.databinding.binding.generator
 import com.grab.aapt.databinding.binding.model.Binding
 import com.grab.aapt.databinding.binding.model.BindingType
 import com.grab.aapt.databinding.binding.model.LayoutBindingData
-import com.grab.aapt.databinding.common.BaseBindingStubTest
 import com.grab.aapt.databinding.common.DATABINDING_OUTPUT_DIR
+import com.grab.test.BaseTest
 import com.squareup.javapoet.ClassName
 import org.junit.Before
 import org.junit.Test
@@ -30,7 +30,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class DefaultBindingClassGeneratorTest : BaseBindingStubTest() {
+class DefaultBindingClassGeneratorTest : BaseTest() {
 
     private lateinit var defaultBindingClassGenerator: DefaultBindingClassGenerator
     private lateinit var baseDir: File

@@ -19,7 +19,7 @@ package com.grab.aapt.databinding.brclass
 import com.grab.aapt.databinding.binding.model.Binding
 import com.grab.aapt.databinding.binding.model.BindingType
 import com.grab.aapt.databinding.binding.model.LayoutBindingData
-import com.grab.aapt.databinding.common.BaseBindingStubTest
+import com.grab.test.BaseTest
 import com.squareup.javapoet.ClassName
 import org.junit.Before
 import org.junit.Test
@@ -27,7 +27,7 @@ import java.io.File
 import java.nio.file.Paths
 import kotlin.test.assertTrue
 
-class DefaultBrClassGeneratorTest : BaseBindingStubTest() {
+class DefaultBrClassGeneratorTest : BaseTest() {
     private lateinit var brClassGenerator: BrClassGenerator
     private lateinit var baseDir: File
     private lateinit var layoutBinding: LayoutBindingData

@@ -7,6 +7,7 @@ kotlin_test(
     ]),
     deps = [
         "//tools/aapt_lite/src/main/java/com/grab/aapt",
+        "//tools/test_utils",
         "@bazel_common_maven//:junit_junit",
         "@com_github_jetbrains_kotlin//:kotlin-test",
     ],

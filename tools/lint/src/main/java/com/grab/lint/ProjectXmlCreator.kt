@@ -1,10 +1,9 @@
 package com.grab.lint
 
 import java.io.File
-import java.nio.file.Path
 
 class ProjectXmlCreator(
-    private val workingDir: Path
+    private val projectXml: File
 ) {
 
     private fun moduleXml(
@@ -32,11 +31,9 @@ class ProjectXmlCreator(
         classpath: List<String>,
         manifest: File?,
         mergedManifest: File?,
-        dependencies: List<Dependency>,
+        dependencies: List<LintDependency>,
         verbose: Boolean
     ): File {
-        val tempDir = workingDir.toFile()
-        val projectXml = File(tempDir, "project.xml")
         val contents = buildString {
             appendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>")
             appendLine("<project>")

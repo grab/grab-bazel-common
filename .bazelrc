@@ -2,16 +2,49 @@
 build --disk_cache=bazel-cache
 
 build --verbose_failures
+build --incompatible_strict_action_env
+build --repo_env=RJE_VERBOSE=true
 
+common --experimental_google_legacy_api
+
+# Workers
+build --experimental_worker_multiplex
+
+# Java
+build --java_runtime_version=remotejdk_11 # Use inbuilt Java 11 for hermeticity
+build --jvmopt="-Djava.locale.providers=COMPAT,SPI" # Use Java 8 default locale provider
+
+# Android 
 # Databinding flags
-build --experimental_android_databinding_v2
-build --android_databinding_use_v3_4_args
-build --android_databinding_use_androidx
+common --experimental_android_databinding_v2
+common --android_databinding_use_v3_4_args
+common --android_databinding_use_androidx
+# D8 and Dexing flags
+build --define=android_incremental_dexing_tool=d8_dexbuilder
+build --define=android_standalone_dexing_tool=d8_compat_dx
+build --define=android_dexmerger_tool=d8_dexmerger
 
-build --experimental_google_legacy_api
-query --experimental_google_legacy_api
-
-common --strategy=AndroidLint=sandboxed
+build --persistent_multiplex_android_tools
+build --strategy=DatabindingStubs=worker
+build --worker_max_instances=Javac=1
+build --worker_max_instances=KotlinCompile=1
+build --worker_max_instances=KotlinKapt=1
+build --worker_max_instances=AaptPackage=1
+build --worker_max_instances=AndroidResourceParser=1
+build --worker_max_instances=AndroidResourceCompiler=1
+build --worker_max_instances=AndroidResourceValidator=1
+build --worker_max_instances=AndroidLintAnalyze=1
+build --worker_max_instances=AndroidLint=1
+build --worker_max_instances=RClassGenerator=1
+build --worker_max_instances=AndroidAapt2=1
+build --worker_max_instances=AndroidAssetMerger=1
+build --worker_max_instances=AndroidResourceMerger=1
+build --worker_max_instances=AndroidCompiledResourceMerger=1
+build --worker_max_instances=Aapt2Optimize=1
+build --worker_max_instances=DatabindingStubs=1
+build --worker_max_instances=GenerateDataBindingBaseClasses=1
+build --worker_max_instances=DexBuilder=1
+build --worker_max_instances=Desugar=1
 
 test --test_output=errors # Print test logs for failed tests
 test --build_tests_only

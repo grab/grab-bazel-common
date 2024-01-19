@@ -20,8 +20,8 @@ import com.grab.aapt.databinding.binding.model.BindingType
 import com.grab.aapt.databinding.binding.parser.DefaultLayoutBindingsParser
 import com.grab.aapt.databinding.binding.store.LayoutTypeStore
 import com.grab.aapt.databinding.binding.store.LocalModuleLayoutTypeStore
-import com.grab.aapt.databinding.common.BaseBindingStubTest
 import com.grab.aapt.databinding.util.toLayoutBindingName
+import com.grab.test.BaseTest
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.TypeName
 import org.junit.Before
@@ -31,7 +31,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-class DefaultLayoutBindingsParserTest : BaseBindingStubTest() {
+class DefaultLayoutBindingsParserTest : BaseTest() {
     private lateinit var layoutBindingsParser: DefaultLayoutBindingsParser
     private val packageName = "test"
     private lateinit var testLayoutFiles: List<File>

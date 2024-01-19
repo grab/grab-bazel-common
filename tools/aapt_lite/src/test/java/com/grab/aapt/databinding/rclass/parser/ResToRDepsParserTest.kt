@@ -16,13 +16,14 @@
 
 package com.grab.aapt.databinding.rclass.parser
 
-import com.grab.aapt.databinding.common.BaseBindingStubTest
+
+import com.grab.test.BaseTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class ResToRDepsParserTest : BaseBindingStubTest() {
+class ResToRDepsParserTest : BaseTest() {
 
     private lateinit var resToRParser: ResToRParser
 
