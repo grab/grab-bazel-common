@@ -8,16 +8,9 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
 import com.grab.cli.WorkingDirectory
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Path
+import java.util.stream.Collectors
 
 abstract class LintBaseCommand : CliktCommand() {
 
@@ -112,38 +105,33 @@ abstract class LintBaseCommand : CliktCommand() {
 
     protected lateinit var sanitizer: Sanitizer
 
-    @OptIn(FlowPreview::class)
     override fun run() {
         prepareJdk()
-        runBlocking {
-            WorkingDirectory().use {
-                val workingDir = it.dir
-                sanitizer = Sanitizer(tmpPath = workingDir)
-                val concurrency = Runtime.getRuntime().availableProcessors() / 2
-                val partialResults = resolveSymlinks(partialResults, workingDir)
+        WorkingDirectory().use {
+            val workingDir = it.dir
+            sanitizer = Sanitizer(tmpPath = workingDir)
+            val partialResults = resolveSymlinks(partialResults, workingDir)
 
-                val projectXml = if (!createProjectXml) projectXml else {
-                    ProjectXmlCreator(projectXml).create(
-                        name = name,
-                        android = android,
-                        library = library,
-                        compileSdkVersion = compileSdkVersion,
-                        partialResults = partialResults,
-                        srcs = srcs,
-                        resources = resources,
-                        classpath = classpath,
-                        manifest = manifest,
-                        mergedManifest = mergedManifest,
-                        dependencies = dependencies
-                            .asFlow()
-                            .flatMapMerge(concurrency) { dep ->
-                                flow { emit(LintDependency.from(workingDir, dep)) }.flowOn(Dispatchers.IO)
-                            }.toList(),
-                        verbose = verbose
-                    )
-                }
-                run(workingDir, projectXml, workingDir.tmpBaseLine())
+            val projectXml = if (!createProjectXml) projectXml else {
+                ProjectXmlCreator(projectXml).create(
+                    name = name,
+                    android = android,
+                    library = library,
+                    compileSdkVersion = compileSdkVersion,
+                    partialResults = partialResults,
+                    srcs = srcs,
+                    resources = resources,
+                    classpath = classpath,
+                    manifest = manifest,
+                    mergedManifest = mergedManifest,
+                    dependencies = dependencies
+                        .parallelStream()
+                        .map { dep -> LintDependency.from(workingDir, dep) }
+                        .collect(Collectors.toList()),
+                    verbose = verbose
+                )
             }
+            run(workingDir, projectXml, workingDir.tmpBaseLine())
         }
     }
 
