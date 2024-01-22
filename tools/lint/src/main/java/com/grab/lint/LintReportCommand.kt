@@ -34,7 +34,7 @@ class LintReportCommand : LintBaseCommand() {
         tmpBaseline: File,
     ) {
         val newBaseline = runLint(workingDir, projectXml, tmpBaseline)
-        sanitizer.sanitize(newBaseline, updatedBaseline)
+        Sanitizer(tmpPath = workingDir).sanitize(newBaseline, updatedBaseline)
         LintResults(
             resultCodeFile = resultCode,
             lintResultsFile = outputXml

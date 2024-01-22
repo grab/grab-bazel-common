@@ -103,13 +103,10 @@ abstract class LintBaseCommand : CliktCommand() {
         "--compile-sdk-version",
     )
 
-    protected lateinit var sanitizer: Sanitizer
-
     override fun run() {
         prepareJdk()
         WorkingDirectory().use {
             val workingDir = it.dir
-            sanitizer = Sanitizer(tmpPath = workingDir)
             val partialResults = resolveSymlinks(partialResults, workingDir)
 
             val projectXml = if (!createProjectXml) projectXml else {
