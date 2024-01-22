@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.pathString
 import com.android.tools.lint.Main as LintCli
 
 class LintReportCommand : LintBaseCommand() {
@@ -47,7 +48,7 @@ class LintReportCommand : LintBaseCommand() {
             "--project", projectXml.toString(),
             "--xml", outputXml.toString(),
             "--baseline", tmpBaseline.absolutePath,
-            //"--cache-dir", workingDir.resolve("cache").pathString,
+            "--cache-dir", workingDir.resolve("cache").pathString,
             "--update-baseline", // Always update the baseline, so we can copy later if needed
             "--report-only" // Only do reporting
         )).toTypedArray()
