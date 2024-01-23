@@ -1,6 +1,7 @@
 package com.grab.lint
 
 import java.io.File
+import java.lang.IllegalStateException
 import java.nio.file.Path
 import kotlin.io.path.bufferedWriter
 
@@ -15,7 +16,8 @@ class Sanitizer(
         file.useLines { lines ->
             tmpFile.bufferedWriter().use { writer ->
                 lines.forEach { line ->
-                    writer.appendLine(sanitize(line, rootRegex))
+//                    writer.appendLine(sanitize(line, rootRegex))
+                    writer.appendLine(line)
                 }
             }
         }
@@ -31,19 +33,26 @@ class Sanitizer(
      *
      * To solve this we check for sandbox path and prepare a [Regex] that can replace any sort of path sandbox or not.
      */
-    private val rootRegex: Regex by lazy {
+    val rootRegex: Regex by lazy {
         val pwd = env.pwd
         val currDirName = File(pwd).name
-        val regex = "((-sandbox|_bazel_root)/(.*?)/execroot/$currDirName)|(/../../../../../)".toRegex()
+        val regex = "(-sandbox|\\\$HOME)/(.*?)/execroot/$currDirName/".toRegex()
+//        file="$HOME/.cache/bazel/_bazel_root/37202aee69651204fed0f45444e7c1eb/execroot/pax_android/insurance/insurance-ride-cover-discovery/src/main/res/drawable/insure_rcd_beta_icon.xml"
+//        val regex = "((-sandbox|\$HOME)/(.*?)/execroot/$currDirName)|(/../../../../../)".toRegex()
         val sandboxDir = regex.find(pwd)?.groupValues?.firstNotNullOfOrNull { it.toIntOrNull() }
         val pattern = when {
             sandboxDir != null -> pwd.replace("/$sandboxDir/", "/(.*?)/")
             else -> pwd
         }
         (pattern.removePrefix("/") + "/").toRegex()
+        regex
     }
+    val q = "pax_android/insurance/insurance-ride-cover-discovery/src/main/res/drawable/insure_rcd_beta_icon.xml"
+     fun sanitize(line: String, calcExecRoot: Regex = rootRegex): String {
 
-    private fun sanitize(line: String, calcExecRoot: Regex): String {
+//        if (line.contains(q) && file.name == "lint-definite-all.xml") {
+//            throw IllegalStateException("${line.substring(0, line.indexOf(q))}".replace("/", "*"))
+//        }
         val target = if ("file=\"" in line) {
             "file="
         } else if ("message=\"" in line) {
@@ -56,6 +65,7 @@ class Sanitizer(
         return PATH_REGEX.find(line)
             ?.value
             ?.replace("\"", "") // Remove "
+            ?.replace("\\", "") // Remove "
             ?.replace(System.getenv(env.tmpDir) ?: "", "")
             ?.dropWhile { char -> char == '.' || char == '/' } // Clean ../
             ?.replace(calcExecRoot, "")

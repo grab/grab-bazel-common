@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Path
+import kotlin.random.Random
 import com.android.tools.lint.Main as LintCli
 
 class LintCommand : CliktCommand() {
@@ -125,6 +126,8 @@ class LintCommand : CliktCommand() {
         "--verbose",
     ).flag(default = false)
 
+    val random = Random(Long.MAX_VALUE)
+
     override fun run() {
         WorkingDirectory().use { dir ->
             val workingDir = dir.dir
@@ -143,7 +146,6 @@ class LintCommand : CliktCommand() {
                 dependencies = dependencies.map(Dependency::from),
                 verbose = verbose
             )
-
             val tmpBaseline = workingDir.tmpBaseLine()
 
             // Prepare JDK
@@ -156,6 +158,10 @@ class LintCommand : CliktCommand() {
 
             val baseline = runLint(projectXml, tmpBaseline, analyzeOnly = false)
             Sanitizer(tmpPath = workingDir).sanitize(baseline, updatedBaseline)
+
+            var partialResultsBackup = File(Env.BazelEnv.pwd + "/lint/partial-results/$name")
+            partialResults.copyRecursively(partialResultsBackup)
+
 
             processResults()
             LintResults(resultCodeFile = resultCode, lintResultsFile = outputXml).process()
