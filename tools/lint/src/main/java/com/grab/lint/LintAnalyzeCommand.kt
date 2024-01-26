@@ -24,20 +24,5 @@ class LintAnalyzeCommand : LintBaseCommand() {
             "--analyze-only" // Only do analyze
         )).toTypedArray()
         LintCli().run(cliArgs)
-        postProcessPartialResults(workingDir)
-    }
-
-    private fun postProcessPartialResults(workingDir: Path) {
-        Files.walk(partialResults.toPath())
-            .filter { it.isRegularFile() }
-            .collect(Collectors.toList())
-            .parallelStream()
-            .forEach { path ->
-                if ("lint-definite-all.xml" in path.name) {
-                    Files.delete(path)
-                } else {
-                    Sanitizer(tmpPath = workingDir).sanitize(path.toFile())
-                }
-            }
     }
 }

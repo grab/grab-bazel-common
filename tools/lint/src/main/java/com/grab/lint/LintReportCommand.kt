@@ -1,8 +1,10 @@
 package com.grab.lint
 
 import com.github.ajalt.clikt.parameters.options.convert
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
+import com.grab.lint.Sanitizer.Companion.PWD
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -28,6 +30,10 @@ class LintReportCommand : LintBaseCommand() {
         help = "File containing result status of running Lint"
     ).convert { File(it) }.required()
 
+    private val pathVariables by option(
+        "--path-variables"
+    ).default("$PWD=${System.getenv(PWD)}")
+
     override fun run(
         workingDir: Path,
         projectXml: File,
@@ -48,6 +54,7 @@ class LintReportCommand : LintBaseCommand() {
             "--project", projectXml.toString(),
             "--xml", outputXml.toString(),
             "--baseline", tmpBaseline.absolutePath,
+            "--path-variables", pathVariables,
             "--cache-dir", workingDir.resolve("cache").pathString,
             "--update-baseline", // Always update the baseline, so we can copy later if needed
             "--report-only" // Only do reporting
