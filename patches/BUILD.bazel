@@ -1,0 +1,56 @@
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
+
+# Patch coroutine core jvm
+kt_jvm_import(
+    name = "lint-api",
+    jars = ["lint-api-1.0.jar"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "@bazel_common_maven//:com_android_tools_build_builder_model",
+        "@bazel_common_maven//:com_android_tools_build_manifest_merger",
+        "@bazel_common_maven//:com_android_tools_common",
+        "@bazel_common_maven//:com_android_tools_external_com_intellij_intellij_core",
+        "@bazel_common_maven//:com_android_tools_external_com_intellij_kotlin_compiler",
+        "@bazel_common_maven//:com_android_tools_external_org_jetbrains_uast",
+        "@bazel_common_maven//:com_android_tools_layoutlib_layoutlib_api",
+        "@bazel_common_maven//:com_android_tools_lint_lint_model",
+        "@bazel_common_maven//:com_android_tools_sdk_common",
+        "@bazel_common_maven//:com_android_tools_sdklib",
+        "@bazel_common_maven//:com_google_guava_guava",
+        "@bazel_common_maven//:commons_io_commons_io",
+        "@bazel_common_maven//:net_sf_kxml_kxml2",
+        "@bazel_common_maven//:org_jetbrains_kotlin_kotlin_reflect",
+        "@bazel_common_maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk8",
+        "@bazel_common_maven//:org_ow2_asm_asm",
+        "@bazel_common_maven//:org_ow2_asm_asm_tree",
+    ],
+)
+
+kt_jvm_import(
+    name = "lint-cli",
+    jars = ["lint-cli-1.0.jar"],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        ":lint-api",
+        "@bazel_common_maven//:com_android_tools_analytics_library_protos_31_4_0_alpha09",
+        "@bazel_common_maven//:com_android_tools_analytics_library_shared_31_4_0_alpha09",
+        "@bazel_common_maven//:com_android_tools_analytics_library_tracker_31_4_0_alpha09",
+        "@bazel_common_maven//:com_android_tools_build_manifest_merger_31_4_0_alpha09",
+        "@bazel_common_maven//:com_android_tools_common_31_4_0_alpha09",
+        "@bazel_common_maven//:com_android_tools_external_com_intellij_intellij_core_31_4_0_alpha09",
+        "@bazel_common_maven//:com_android_tools_external_com_intellij_kotlin_compiler_31_4_0_alpha09",
+        "@bazel_common_maven//:com_android_tools_external_org_jetbrains_uast_31_4_0_alpha09",
+        "@bazel_common_maven//:com_android_tools_layoutlib_layoutlib_api_31_4_0_alpha09",
+        "@bazel_common_maven//:com_android_tools_lint_lint-checks_31_4_0_alpha09",
+        "@bazel_common_maven//:com_android_tools_sdk_common_31_4_0_alpha09",
+        "@bazel_common_maven//:com_android_tools_sdklib_31_4_0_alpha09",
+        "@bazel_common_maven//:com_google_guava_guava_32_0_1_jre",
+        "@bazel_common_maven//:net_sf_kxml_kxml2_2_3_0",
+        "@bazel_common_maven//:org_jetbrains_kotlin_kotlin_reflect_1_9_20",
+        "@bazel_common_maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk8_1_9_20",
+    ],
+)

@@ -8,14 +8,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
 import com.grab.cli.WorkingDirectory
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Path
 import com.android.tools.lint.Main as LintCli
@@ -27,6 +19,10 @@ class LintCommand : CliktCommand() {
         "-n",
         "--name",
     ).required()
+
+    private val pathVariables by option(
+        "--path-variables"
+    ).default("PWD=${System.getenv("PWD")}")
 
     private val android: Boolean by option(
         "-a",
@@ -143,41 +139,28 @@ class LintCommand : CliktCommand() {
                 dependencies = dependencies.map(Dependency::from),
                 verbose = verbose
             )
-
             val tmpBaseline = workingDir.tmpBaseLine()
+
+//            val project= File(workingDir.toFile(), "project.xml")
+//            project.copyTo(File(Env.BazelEnv.pwd + "/lint/partial-results/$name/project.xml"))
 
             // Prepare JDK
             // Lint uses $JAVA_HOME/release which is not provided by Bazel's JavaRuntimeInfo, so manually populate it
             // Only MODULES is populated here since Lint only seem to use that
             prepareJdk()
 
-            runLint(projectXml, tmpBaseline, analyzeOnly = true)
-            sanitizePartialResults(workingDir)
+            runLint(name, projectXml, tmpBaseline, analyzeOnly = true)
 
-            val baseline = runLint(projectXml, tmpBaseline, analyzeOnly = false)
+            val baseline = runLint(name, projectXml, tmpBaseline, analyzeOnly = false)
             Sanitizer(tmpPath = workingDir).sanitize(baseline, updatedBaseline)
+
+//            var partialResultsBackup = File(Env.BazelEnv.pwd + "/lint/partial-results/$name")
+//            partialResults.copyRecursively(partialResultsBackup)
+
 
             processResults()
             LintResults(resultCodeFile = resultCode, lintResultsFile = outputXml).process()
         }
-    }
-
-    private fun sanitizePartialResults(workingDir: Path) = runBlocking {
-        partialResults.listFiles().flatMap {
-            if (it.isDirectory) {
-                it.listFiles().toList()
-            } else {
-                listOf(it)
-            }
-        }.filter { it.isFile }
-            .asFlow().flatMapMerge(concurrency) { partialResults ->
-                flow {
-                    emit(partialResults)
-                }
-            }.map {
-                Sanitizer(tmpPath = workingDir).sanitize(it)
-            }.flowOn(Dispatchers.IO)
-            .collect()
     }
 
     private fun Path.tmpBaseLine(): File {
@@ -192,14 +175,18 @@ class LintCommand : CliktCommand() {
     private fun processResults() {
         resultCode.writeText("0")
     }
-
-    private fun runLint(projectXml: File, tmpBaseline: File, analyzeOnly: Boolean = false): File {
+    fun log(message:String){
+//        val file = File("${System.getenv("PWD")}/lint/logs.txt")
+//        file.appendText("bazel-common: $message\n")
+    }
+    private fun runLint(name:String, projectXml: File, tmpBaseline: File, analyzeOnly: Boolean = false): File {
+        log("runLint $name analyzeOnly=$analyzeOnly")
         LintCli().run(
             mutableListOf(
                 "--project", projectXml.toString(),
                 "--xml", outputXml.toString(),
                 "--config", lintConfig.toString(),
-
+                "--path-variables",pathVariables,
                 "--stacktrace",
                 //"--quiet",
                 "--exitcode",

@@ -53,6 +53,8 @@ class ProjectXmlCreator(
             mergedManifest?.let { mergedManifest ->
                 appendLine("  <merged-manifest file=\"$mergedManifest\" />")
             }
+            //TODO
+//            appendLine("  <lint-checks jar=\"${Env.BazelEnv.pwd}/custom-lint-checks-1.0.jar\" />")
             classpath.forEach { entry ->
                 appendLine("  <classpath jar=\"$entry\" />")
             }
