@@ -1,0 +1,40 @@
+load("@grab_bazel_common//rules:defs.bzl", "android_library", "android_unit_test")
+
+android_library(
+    name = "android_library_sample",
+    srcs = glob([
+        "src/main/java/**/*.kt",
+    ]),
+    custom_package = "com.grab.test.lib",
+    enable_data_binding = True,
+    lint_options = {
+        "baseline": "lint_baseline.xml",
+    },
+    manifest = "src/main/AndroidManifest.xml",
+    resources = {
+        "src/main/res": {
+        },
+    },
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//:parcelize",
+        "@bazel_common_maven//:com_google_android_material_material",
+    ],
+)
+
+android_unit_test(
+    name = "android_library_sample_unit_test",
+    srcs = glob([
+        "src/test/java/**/*.kt",
+    ]),
+    associates = [
+        ":android_library_sample_kt",
+    ],
+    deps = [
+        ":android_library_sample",
+        "@maven//:junit_junit",
+        "@maven//:org_json_json",
+    ],
+)

@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.grab.test">
+
+    <application>
+        <activity
+            android:name="com.grab.test.LibraryActivity"
+            android:exported="true" />
+    </application>
+
+</manifest>

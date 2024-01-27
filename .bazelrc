@@ -2,6 +2,8 @@
 build --disk_cache=bazel-cache
 
 build --verbose_failures
+
+# Action Env
 build --incompatible_strict_action_env
 build --repo_env=RJE_VERBOSE=true
 
@@ -10,9 +12,11 @@ common --experimental_google_legacy_api
 # Workers
 build --experimental_worker_multiplex
 
-# Java
+# JAVA - START
+build --experimental_strict_java_deps=off # Turn off strict java deps
 build --java_runtime_version=remotejdk_11 # Use inbuilt Java 11 for hermeticity
 build --jvmopt="-Djava.locale.providers=COMPAT,SPI" # Use Java 8 default locale provider
+# JAVA - END
 
 # Android 
 # Databinding flags

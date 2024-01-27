@@ -1,7 +1,7 @@
-load("@grab_bazel_common//rules:defs.bzl", "android_library", "android_unit_test")
+load("@grab_bazel_common//rules:defs.bzl", "android_binary", "android_unit_test")
 
-android_library(
-    name = "android_sample",
+android_binary(
+    name = "android_binary_sample",
     srcs = glob([
         "src/main/java/**/*.kt",
     ]),
@@ -11,26 +11,34 @@ android_library(
         "baseline": "lint_baseline.xml",
     },
     manifest = "src/main/AndroidManifest.xml",
+    manifest_values = {
+        "versionCode": "1",
+        "versionName": "1.0",
+        "minSdkVersion": "21",
+        "targetSdkVersion": "31",
+        "applicationId": "com.grab.test",
+    },
     resources = {
         "src/main/res": {
         },
     },
     deps = [
         "//:parcelize",
+        "//tests/android/library:android_library_sample",
         "@bazel_common_maven//:com_google_android_material_material",
     ],
 )
 
 android_unit_test(
-    name = "android_sample_unit_test",
+    name = "android_binary_sample_unit_test",
     srcs = glob([
         "src/test/java/**/*.kt",
     ]),
     associates = [
-        ":android_sample_kt",
+        ":lib_android_binary_sample_kt",
     ],
     deps = [
-        ":android_sample",
+        ":android_binary_sample",
         "@maven//:junit_junit",
         "@maven//:org_json_json",
     ],

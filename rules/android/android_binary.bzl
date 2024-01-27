@@ -12,7 +12,7 @@ def android_binary(
         custom_package = {},
         res_values = {},
         enable_data_binding = False,
-        enable_compose = True,
+        enable_compose = False,
         lint_options = {},
         **attrs):
     """
