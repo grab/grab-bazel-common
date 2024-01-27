@@ -231,6 +231,9 @@ def _lint_analyze_action(
             "supports-multiplex-workers": "1",
             "requires-worker-protocol": "json",
         },
+        env = {
+            "LINT_PRINT_STACKTRACE": "true",
+        },
     )
     return
 
@@ -295,6 +298,9 @@ def _lint_report_action(
             "supports-workers": "1",
             "supports-multiplex-workers": "1",
             "requires-worker-protocol": "json",
+        },
+        env = {
+            "LINT_PRINT_STACKTRACE": "true",
         },
     )
     return
