@@ -1,7 +1,6 @@
 package com.grab.lint
 
 import java.io.File
-import java.nio.file.Path
 
 data class LintDependency(
     val name: String,
@@ -10,14 +9,14 @@ data class LintDependency(
     val partialDir: File,
 ) {
     companion object {
-        fun from(workingDir: Path, encodedString: String): LintDependency {
+        fun from(encodedString: String): LintDependency {
             val (name, android, library, partialResultsDir) = encodedString.split("^")
-            val partialResults = resolveSymlinks(File(partialResultsDir), workingDir)
+            // val partialResults = resolveSymlinks(File(partialResultsDir), workingDir)
             return LintDependency(
                 name = name,
                 android = android.toBoolean(),
                 library = library.toBoolean(),
-                partialDir = partialResults
+                partialDir = File(partialResultsDir)
             )
         }
     }

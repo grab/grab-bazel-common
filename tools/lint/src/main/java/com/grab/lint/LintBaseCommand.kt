@@ -107,7 +107,7 @@ abstract class LintBaseCommand : CliktCommand() {
         prepareJdk()
         WorkingDirectory().use {
             val workingDir = it.dir
-            val partialResults = resolveSymlinks(partialResults, workingDir)
+            // val partialResults = resolveSymlinks(partialResults, workingDir)
 
             val projectXml = if (!createProjectXml) projectXml else {
                 ProjectXmlCreator(projectXml).create(
@@ -123,7 +123,7 @@ abstract class LintBaseCommand : CliktCommand() {
                     mergedManifest = mergedManifest,
                     dependencies = dependencies
                         .parallelStream()
-                        .map { dep -> LintDependency.from(workingDir, dep) }
+                        .map(LintDependency::from)
                         .collect(Collectors.toList()),
                     verbose = verbose
                 )
