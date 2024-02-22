@@ -1,5 +1,6 @@
 package com.grab.lint
 
+import com.android.tools.lint.model.PathVariables
 import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required

@@ -12,6 +12,8 @@ import java.io.File
 import java.nio.file.Path
 import java.util.stream.Collectors
 
+const val PWD = "PWD"
+
 abstract class LintBaseCommand : CliktCommand() {
 
     protected val name by option(
