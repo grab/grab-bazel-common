@@ -13,6 +13,12 @@ class LintAnalyzeCommand : LintBaseCommand() {
 
     override val createProjectXml: Boolean = true
 
+    override fun preRun() {
+        // For analyze, always clear previous lint results
+        partialResults.deleteRecursively()
+        Files.createDirectories(partialResults.toPath())
+    }
+
     override fun run(
         workingDir: Path,
         projectXml: File,

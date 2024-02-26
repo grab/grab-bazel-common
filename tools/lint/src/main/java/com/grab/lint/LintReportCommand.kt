@@ -43,6 +43,10 @@ class LintReportCommand : LintBaseCommand() {
 
     override val createProjectXml = false
 
+    override fun preRun() {
+        // No-op
+    }
+
     private fun runLint(workingDir: Path, projectXml: File, tmpBaseline: File): File {
         val cliArgs = (defaultLintOptions + listOf(
             "--project", projectXml.toString(),

@@ -104,11 +104,10 @@ abstract class LintBaseCommand : CliktCommand() {
     )
 
     override fun run() {
+        preRun()
         prepareJdk()
         WorkingDirectory().use {
             val workingDir = it.dir
-            // val partialResults = resolveSymlinks(partialResults, workingDir)
-
             val projectXml = if (!createProjectXml) projectXml else {
                 ProjectXmlCreator(projectXml).create(
                     name = name,
@@ -132,6 +131,11 @@ abstract class LintBaseCommand : CliktCommand() {
         }
     }
 
+    /**
+     * Executes for before running any common logic
+     */
+    abstract fun preRun()
+
     abstract fun run(
         workingDir: Path,
         projectXml: File,
@@ -142,10 +146,13 @@ abstract class LintBaseCommand : CliktCommand() {
      * Create new project.xml at [projectXml].
      *
      * Required for non-sandbox modes since we can't rely on file system state when executing in non sandbox modes as previous results might
-     * be still there.
+     * be still there. When true, a new project XML will be created at [projectXml] and if `false` will use the project xml at this location
      */
     abstract val createProjectXml: Boolean
 
+    /**
+     * Common options for Lint across different types of invocations, analyze or report.
+     */
     protected val defaultLintOptions
         get() = mutableListOf(
             "--config", lintConfig.toString(),
