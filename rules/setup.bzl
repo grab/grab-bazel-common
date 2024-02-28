@@ -74,6 +74,7 @@ def bazel_common_setup(
             "xmlpull:xmlpull:1.1.3.1",
             "net.sf.kxml:kxml2:2.3.0",
             "com.squareup.moshi:moshi:1.11.0",
+            "org.jetbrains.kotlin:kotlin-stdlib:1.8.10",
             "org.jetbrains.kotlin:kotlin-parcelize-compiler:1.8.10",
             "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.8.10",
             "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4",

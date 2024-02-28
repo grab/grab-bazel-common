@@ -14,6 +14,6 @@ kotlin_library(
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/di:aapt_scope",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/util/jars",
         "@bazel_common_maven//:com_github_ajalt_clikt",
-        "@com_github_jetbrains_kotlin//:kotlin-stdlib-jdk8",
+        "@bazel_common_maven//:org_jetbrains_kotlin_kotlin_stdlib",
     ],
 )
