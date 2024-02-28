@@ -312,10 +312,11 @@ def _lint_aspect_impl(target, ctx):
     else:
         # Current target info
         rule_kind = ctx.rule.kind
+        kotlin = rule_kind == "kt_jvm_library"
         android = rule_kind == "android_library" or rule_kind == "android_binary"
         library = rule_kind != "android_binary"
 
-        enabled = LINT_ENABLED in ctx.rule.attr.tags and android  # Currently only android targets
+        enabled = LINT_ENABLED in ctx.rule.attr.tags and (android or kotlin)
 
         # Dependency info
         transitive_lint_node_infos = _transitive_lint_node_infos(ctx)

@@ -3,7 +3,7 @@ load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "kt_db_android_library")
 load(":resources.bzl", "build_resources")
-load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint", "lint_sources")
+load("@grab_bazel_common//rules/android/lint:defs.bzl", "LINT_ENABLED", "lint", "lint_sources")
 
 def android_library(
         name,
@@ -92,7 +92,7 @@ def android_library(
         assets = attrs.get("assets", default = None),
         assets_dir = attrs.get("assets_dir", default = None),
         visibility = attrs.get("visibility", default = None),
-        tags = attrs.get("tags", default = []) + ["lint_enabled"],
+        tags = attrs.get("tags", default = []) + [LINT_ENABLED],
         deps = android_library_deps,
         plugins = attrs.get("plugins", default = None),
     )
