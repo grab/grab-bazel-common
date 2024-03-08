@@ -1,12 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="5" by="lint 8.0.2" client="" dependencies="true" name="" type="baseline" variant="all" version="8.0.2">
+<issues format="6" by="lint 8.4.0-alpha09" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha09">
 
     <issue
         id="LongLogTag"
-        message="The logging tag can be at most 23 characters, was 39 (SomeReallyLongTagForLintToDetectAndWarn)">
+        message="The logging tag can be at most 23 characters, was 39 (SomeReallyLongTagForLintToDetectAndWarn)"
+        errorLine1="        android.util.Log.d(&quot;SomeReallyLongTagForLintToDetectAndWarn&quot;, &quot;Log message&quot;)"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="tests/android/binary/src/main/java/com/grab/test/TestActivity.kt"
-            line="13"/>
+            file="../../../../../../../tests/android/binary/src/main/java/com/grab/test/TestActivity.kt"
+            line="13"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="MissingVersion"
+        message="Should set `android:versionCode` to specify the application version"
+        errorLine1="&lt;manifest xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2=" ~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/binary/src/main/AndroidManifest.xml"
+            line="1"
+            column="2"/>
+    </issue>
+
+    <issue
+        id="MissingVersion"
+        message="Should set `android:versionName` to specify the application version"
+        errorLine1="&lt;manifest xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2=" ~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/binary/src/main/AndroidManifest.xml"
+            line="1"
+            column="2"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.layout.layout_test` appears to be unused"
+        errorLine1="&lt;layout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="../../../../../../../tests/android/binary/src/main/res/layout/layout_test.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.layout.layout_test` appears to be unused"
+        errorLine1="&lt;layout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="../../../../../../../tests/android/library/src/main/res/layout/layout_test.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.un_used_resource` appears to be unused"
+        errorLine1="    &lt;string name=&quot;un_used_resource&quot;>Unused resource&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/library/src/main/res/values/strings.xml"
+            line="2"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="MissingApplicationIcon"
+        message="Should explicitly set `android:icon`, there is no default"
+        errorLine1="    &lt;application android:label=&quot;@string/app_name&quot;>"
+        errorLine2="     ~~~~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/binary/src/main/AndroidManifest.xml"
+            line="4"
+            column="6"/>
     </issue>
 
 </issues>

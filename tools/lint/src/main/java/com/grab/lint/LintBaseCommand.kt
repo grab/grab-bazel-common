@@ -27,7 +27,7 @@ abstract class LintBaseCommand : CliktCommand() {
     protected val library: Boolean by option(
         "-l",
         "--library",
-    ).flag(default = true)
+    ).flag(default = false)
 
     protected val srcs by option(
         "-s",
