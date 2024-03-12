@@ -8,6 +8,7 @@ android_binary(
     custom_package = "com.grab.test",
     enable_data_binding = True,
     lint_options = {
+        "enabled": True,
         "baseline": "lint_baseline.xml",
     },
     manifest = "src/main/AndroidManifest.xml",
