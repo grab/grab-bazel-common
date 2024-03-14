@@ -313,7 +313,9 @@ def _lint_aspect_impl(target, ctx):
         # Current target info
         rule_kind = ctx.rule.kind
         kotlin = rule_kind == "kt_jvm_library"
-        android = rule_kind == "android_library" or rule_kind == "android_binary"
+
+        #TODO(arun) Remove name based detection and inject value into lint_sources from macro and read it later
+        android = rule_kind == "android_library" or rule_kind == "android_binary" or (kotlin and target.label.name.endswith("_kt"))
         library = rule_kind != "android_binary"
 
         enabled = LINT_ENABLED in ctx.rule.attr.tags and (android or kotlin)
