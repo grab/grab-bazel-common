@@ -87,6 +87,11 @@ abstract class LintBaseCommand : CliktCommand() {
         "--partial-results-dir",
     ).convert { File(it) }.required()
 
+    protected val modelsDir by option(
+        "-mo",
+        "--models-dir",
+    ).convert { File(it) }.required()
+
     protected val inputBaseline by option(
         "-b",
         "--baseline",
@@ -98,10 +103,10 @@ abstract class LintBaseCommand : CliktCommand() {
         "--project-xml",
     ).convert { File(it) }.required()
 
-    private val compileSdkVersion: String? by option(
+    private val compileSdkVersion: String by option(
         "-cs",
         "--compile-sdk-version",
-    )
+    ).default("34")
 
     protected val pathVariables by option(
         "--path-variables"
@@ -113,12 +118,16 @@ abstract class LintBaseCommand : CliktCommand() {
         WorkingDirectory().use {
             val workingDir = it.dir
             val projectXml = if (!createProjectXml) projectXml else {
-                ProjectXmlCreator(projectXml).create(
+                ProjectXmlCreator(
+                    workingDir = workingDir,
+                    projectXml = projectXml
+                ).create(
                     name = name,
                     android = android,
                     library = library,
                     compileSdkVersion = compileSdkVersion,
                     partialResults = partialResults,
+                    modelsDir = modelsDir,
                     srcs = srcs,
                     resources = resources,
                     classpath = classpath,

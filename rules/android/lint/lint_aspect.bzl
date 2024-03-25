@@ -86,6 +86,7 @@ def _dep_lint_node_infos(target, transitive_lint_node_infos):
             android = lint_node_info.android,
             library = lint_node_info.library,
             partial_results_dir = lint_node_info.partial_results_dir,
+            models_dir = lint_node_info.models_dir,
             lint_result_xml = lint_node_info.lint_result_xml,
         )
         for lint_node_info in transitive_lint_node_infos.to_list()
@@ -96,11 +97,12 @@ def _encode_dependency(dependency_info):
     """
     Flatten the dependency details in a string to simplify arguments to Lint ClI
     """
-    return "%s^%s^%s^%s" % (
+    return "%s^%s^%s^%s^%s" % (
         dependency_info.module,
         dependency_info.android,
         dependency_info.library,
         dependency_info.partial_results_dir.path,
+        dependency_info.models_dir.path,
     )
 
 def _lint_common_args(
@@ -119,6 +121,7 @@ def _lint_common_args(
         lint_config_xml_file,
         partial_results_dir,
         project_xml_file,
+        models_dir,
         jdk_home,
         verbose):
     args.set_param_file_format("multiline")
@@ -168,6 +171,7 @@ def _lint_common_args(
 
     args.add("--lint-config", lint_config_xml_file.path)
     args.add("--partial-results-dir", partial_results_dir.path)
+    args.add("--models-dir", models_dir.path)
 
     if verbose:  #TODO(arun) Pass via build config
         args.add("--verbose")
@@ -193,6 +197,7 @@ def _lint_analyze_action(
         partial_results_dir,
         jdk_home,
         project_xml_file,
+        models_dir,
         verbose,
         inputs,
         outputs):
@@ -213,6 +218,7 @@ def _lint_analyze_action(
         dep_lint_node_infos = dep_lint_node_infos,
         lint_config_xml_file = lint_config_xml_file,
         partial_results_dir = partial_results_dir,
+        models_dir = models_dir,
         project_xml_file = project_xml_file,
         jdk_home = jdk_home,
         verbose = verbose,
@@ -255,6 +261,7 @@ def _lint_report_action(
         partial_results_dir,
         jdk_home,
         project_xml_file,
+        models_dir,
         result_code,
         verbose,
         inputs,
@@ -277,6 +284,7 @@ def _lint_report_action(
         lint_config_xml_file = lint_config_xml_file,
         partial_results_dir = partial_results_dir,
         project_xml_file = project_xml_file,
+        models_dir = models_dir,
         jdk_home = jdk_home,
         verbose = verbose,
     )
@@ -326,17 +334,26 @@ def _lint_aspect_impl(target, ctx):
         # Result
         android_lint_node_info = None  # Current target's AndroidLintNodeInfo
         if enabled:
-            # Output
+            # Output- Start
             lint_updated_baseline_file = ctx.actions.declare_file("lint/" + target.label.name + "_updated_baseline.xml")
-            partial_results_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_partial_results_dir")
+            lint_partial_results_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_partial_results_dir")
+            lint_results_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_results_dir")
+
             lint_result_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result.xml")
             lint_result_code_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result_code")
+
+            # Project Xmls
             project_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_project.xml")
+
+            # Models
+            lint_models_dir = ctx.actions.declare_file("lint/" + target.label.name + "_models_dir")
+            # Output - End
 
             sources = _collect_sources(target, ctx, library)
             compile_sdk_version = _compile_sdk_version(ctx.attr._android_sdk)
             dep_lint_node_infos = _dep_lint_node_infos(target, transitive_lint_node_infos)
-            partial_results = [info.partial_results_dir for info in dep_lint_node_infos]
+            dep_partial_results = [info.partial_results_dir for info in dep_lint_node_infos]
+            dep_lint_models = [info.models_dir for info in dep_lint_node_infos]
 
             # Inputs
             baseline_inputs = []
@@ -351,8 +368,9 @@ def _lint_aspect_impl(target, ctx):
             #  | Report +--------------->| Analyze |
             #  |        |                |         |
             #  +--------+                +---------+
-            #   -baseline                 -parital-results-dir
+            #   -baseline                 -partial-results-dir
             #   -lint_result.xml          -project-xml
+            #                             -models-dir
             # Add separate actions for reporting and analyze and then return different providers in the aspect.
             # Consuming rules can decide whether to use reporting output or analysis output by using the
             # correct output file
@@ -370,9 +388,10 @@ def _lint_aspect_impl(target, ctx):
                 dep_lint_node_infos = dep_lint_node_infos,
                 baseline = sources.baseline,
                 lint_config_xml_file = sources.lint_config_xml,
-                partial_results_dir = partial_results_dir,
+                partial_results_dir = lint_partial_results_dir,
                 jdk_home = java_runtime_info.java_home,
                 project_xml_file = project_xml_file,
+                models_dir = lint_models_dir,
                 verbose = False,
                 inputs = depset(
                     sources.srcs +
@@ -380,12 +399,14 @@ def _lint_aspect_impl(target, ctx):
                     sources.manifest +
                     sources.merged_manifest +
                     [sources.lint_config_xml] +
-                    partial_results +
+                    dep_partial_results +
+                    dep_lint_models +
                     baseline_inputs,
                     transitive = [sources.classpath, java_runtime_info.files],
                 ),
                 outputs = [
-                    partial_results_dir,
+                    lint_models_dir,
+                    lint_partial_results_dir,
                     project_xml_file,
                 ],
             )
@@ -405,7 +426,8 @@ def _lint_aspect_impl(target, ctx):
                 updated_baseline = lint_updated_baseline_file,
                 lint_config_xml_file = sources.lint_config_xml,
                 lint_result_xml_file = lint_result_xml_file,
-                partial_results_dir = partial_results_dir,
+                partial_results_dir = lint_results_dir,
+                models_dir = lint_models_dir,
                 jdk_home = java_runtime_info.java_home,
                 project_xml_file = project_xml_file,
                 result_code = lint_result_code_file,
@@ -416,13 +438,16 @@ def _lint_aspect_impl(target, ctx):
                     sources.manifest +
                     sources.merged_manifest +
                     [sources.lint_config_xml] +
-                    partial_results +
-                    [partial_results_dir] +  # Current module partial results from analyze action
+                    dep_partial_results +
+                    dep_lint_models +
+                    [lint_partial_results_dir] +  # Current module partial results from analyze action
+                    [lint_models_dir] +  # Current module models from analyze action
                     [project_xml_file] +  # Reuse project xml from analyze action
                     baseline_inputs,
                     transitive = [sources.classpath, java_runtime_info.files],
                 ),
                 outputs = [
+                    lint_results_dir,
                     lint_result_xml_file,
                     lint_updated_baseline_file,
                     lint_result_code_file,
@@ -434,7 +459,8 @@ def _lint_aspect_impl(target, ctx):
                 android = android,
                 library = library,
                 enabled = enabled,
-                partial_results_dir = partial_results_dir,
+                partial_results_dir = lint_partial_results_dir,
+                models_dir = lint_models_dir,
                 lint_result_xml = lint_result_xml_file,
                 result_code = lint_result_code_file,
                 updated_baseline = lint_updated_baseline_file,

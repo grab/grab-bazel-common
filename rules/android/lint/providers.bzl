@@ -7,6 +7,7 @@ AndroidLintNodeInfo = provider(
         enabled = "True if linting was run on this target",
         result_code = "File containing result code of lint run",
         partial_results_dir = "Lint partial results directory",
+        models_dir = "Lint models directory",
         updated_baseline = "The updated baseline XML",
         lint_result_xml = "The lint results XML file",
     ),

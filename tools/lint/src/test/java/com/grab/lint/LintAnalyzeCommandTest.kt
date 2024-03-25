@@ -14,6 +14,7 @@ class LintAnalyzeCommandTest : BaseTest() {
     private lateinit var jdkHome: File
     private lateinit var lintFile: File
     private lateinit var partialResults: File
+    private lateinit var modelsDir: File
 
     @Before
     fun setup() {
@@ -33,6 +34,7 @@ class LintAnalyzeCommandTest : BaseTest() {
         partialResults = inputRoot.resolve("partial_results").apply {
             mkdirs()
         }
+        modelsDir = inputRoot.resolve("models_dir")
     }
 
     @Test
@@ -76,6 +78,7 @@ class LintAnalyzeCommandTest : BaseTest() {
                 "--jdk-home", jdkHome.toString(),
                 "--lint-config", lintFile.toString(),
                 "--partial-results-dir", partialResults.toString(),
+                "--models-dir", modelsDir.toString(),
                 "--compile-sdk-version", "34",
                 "--project-xml", projectXml.toString(),
             )

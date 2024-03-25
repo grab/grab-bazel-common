@@ -2,6 +2,13 @@
 <issues format="6" by="lint 8.4.0-alpha09" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha09">
 
     <issue
+        id="LocaleFolder"
+        message="The locale folder &quot;`id`&quot; should be called &quot;`in`&quot; instead; see the `java.util.Locale` documentation">
+        <location
+            file="../../../../../../../tests/android/binary/src/main/res/values-id"/>
+    </issue>
+
+    <issue
         id="LongLogTag"
         message="The logging tag can be at most 23 characters, was 39 (SomeReallyLongTagForLintToDetectAndWarn)"
         errorLine1="        android.util.Log.d(&quot;SomeReallyLongTagForLintToDetectAndWarn&quot;, &quot;Log message&quot;)"
@@ -35,6 +42,28 @@
     </issue>
 
     <issue
+        id="MissingTranslation"
+        message="&quot;app_name&quot; is not translated in &quot;id&quot; (Indonesian)"
+        errorLine1="    &lt;string name=&quot;app_name&quot;>Test&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/binary/src/main/res/values/strings.xml"
+            line="2"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ExtraTranslation"
+        message="&quot;app_name1&quot; is translated here but not found in default locale"
+        errorLine1="    &lt;string name=&quot;app_name1&quot;>Test&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/binary/src/main/res/values-id/strings.xml"
+            line="2"
+            column="13"/>
+    </issue>
+
+    <issue
         id="UnusedResources"
         message="The resource `R.layout.layout_test` appears to be unused"
         errorLine1="&lt;layout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
@@ -58,6 +87,17 @@
 
     <issue
         id="UnusedResources"
+        message="The resource `R.string.app_name1` appears to be unused"
+        errorLine1="    &lt;string name=&quot;app_name1&quot;>Test&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/binary/src/main/res/values-id/strings.xml"
+            line="2"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
         message="The resource `R.string.un_used_resource` appears to be unused"
         errorLine1="    &lt;string name=&quot;un_used_resource&quot;>Unused resource&lt;/string>"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
@@ -76,6 +116,39 @@
             file="../../../../../../../tests/android/binary/src/main/AndroidManifest.xml"
             line="4"
             column="6"/>
+    </issue>
+
+    <issue
+        id="TextFields"
+        message="This text field does not specify an `inputType`"
+        errorLine1="        &lt;EditText"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/library/src/main/res/layout/layout_test.xml"
+            line="32"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/library/src/main/res/layout/layout_test.xml"
+            line="27"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="LabelFor"
+        message="Missing accessibility label: provide either a view with an `android:labelFor` that references this view or provide an `android:hint`"
+        errorLine1="        &lt;EditText"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/library/src/main/res/layout/layout_test.xml"
+            line="32"
+            column="10"/>
     </issue>
 
 </issues>

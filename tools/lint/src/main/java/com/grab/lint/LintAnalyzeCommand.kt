@@ -11,13 +11,13 @@ import com.android.tools.lint.Main as LintCli
 
 class LintAnalyzeCommand : LintBaseCommand() {
 
-    override val createProjectXml: Boolean = true
-
     override fun preRun() {
         // For analyze, always clear previous lint results
         partialResults.deleteRecursively()
         Files.createDirectories(partialResults.toPath())
     }
+
+    override val createProjectXml = true
 
     override fun run(
         workingDir: Path,

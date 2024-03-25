@@ -13,6 +13,8 @@ kotlin_library(
         "//tools/cli_utils",
         "//tools/worker:worker_lib",
         "@bazel_common_maven//:com_android_tools_lint_lint",
+        "@bazel_common_maven//:com_android_tools_lint_lint_api",
+        "@bazel_common_maven//:com_android_tools_lint_lint_checks",
         "@bazel_common_maven//:com_github_ajalt_clikt",
         "@bazel_common_maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core",
     ],

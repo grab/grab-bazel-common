@@ -1,4 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <issues format="6" by="lint 8.4.0-alpha09" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha09">
 
+    <issue
+        id="TextFields"
+        message="This text field does not specify an `inputType`"
+        errorLine1="        &lt;EditText"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/library/src/main/res/layout/layout_test.xml"
+            line="32"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ContentDescription"
+        message="Missing `contentDescription` attribute on image"
+        errorLine1="        &lt;ImageView"
+        errorLine2="         ~~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/library/src/main/res/layout/layout_test.xml"
+            line="27"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="LabelFor"
+        message="Missing accessibility label: where minSdk &lt; 17, you should provide an `android:hint`"
+        errorLine1="        &lt;EditText"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/library/src/main/res/layout/layout_test.xml"
+            line="32"
+            column="10"/>
+    </issue>
+
 </issues>
