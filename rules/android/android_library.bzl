@@ -65,6 +65,7 @@ def android_library(
             manifest = attrs.get("manifest"),
             baseline = lint_baseline,
             lint_config = lint_options.get("config", None),
+            deps = android_library_deps,
         )
         android_library_deps = android_library_deps + [lint_sources_target]
         lint(

@@ -28,6 +28,7 @@ class ProjectXmlCreator(
         partialResults: File,
         srcs: List<String>,
         resources: List<String>,
+        aarDeps: List<String>,
         classpath: List<String>,
         manifest: File?,
         mergedManifest: File?,
@@ -43,6 +44,10 @@ class ProjectXmlCreator(
             }
             resources.forEach { resource ->
                 appendLine("  <resource file=\"$resource\" />")
+            }
+            aarDeps.forEach { aar ->
+                val aarInfo = aar.split(":")
+                appendLine("  <aar file=\"${aarInfo.first()}\" extracted=\"${aarInfo[1]}\" />")
             }
             manifest?.let { manifest ->
                 appendLine("  <manifest file=\"$manifest\" />")
