@@ -1,6 +1,8 @@
 load("@grab_bazel_common//rules/android:utils.bzl", "utils")
 load(
     "@grab_bazel_common//rules/android/lint:providers.bzl",
+    "AarInfo",
+    "AarNodeInfo",
     "AndroidLintInfo",
     "AndroidLintNodeInfo",
     "AndroidLintSourcesInfo",
@@ -50,6 +52,7 @@ def _collect_sources(target, ctx, library):
         struct(
             srcs = dep[AndroidLintSourcesInfo].srcs,
             resources = dep[AndroidLintSourcesInfo].resources,
+            aar_deps = dep[AndroidLintSourcesInfo].aar_deps,
             manifest = dep[AndroidLintSourcesInfo].manifest,
             merged_manifest = merged_manifest,
             baseline = dep[AndroidLintSourcesInfo].baseline,
@@ -113,6 +116,7 @@ def _lint_common_args(
         compile_sdk_version,
         srcs,
         resources,
+        aar_dirs,
         classpath,
         manifest,
         merged_manifest,
@@ -140,6 +144,11 @@ def _lint_common_args(
         srcs,
         join_with = ",",
         map_each = utils.to_path,
+    )
+    args.add_joined(
+        "--aar_dirs",
+        aar_dirs,
+        join_with = ",",
     )
     args.add_joined(
         "--resource-files",
@@ -188,6 +197,7 @@ def _lint_analyze_action(
         compile_sdk_version,
         srcs,
         resources,
+        aar_dirs,
         classpath,
         manifest,
         merged_manifest,
@@ -211,6 +221,7 @@ def _lint_analyze_action(
         compile_sdk_version = compile_sdk_version,
         srcs = srcs,
         resources = resources,
+        aar_dirs = aar_dirs,
         classpath = classpath,
         manifest = manifest,
         merged_manifest = merged_manifest,
@@ -224,6 +235,7 @@ def _lint_analyze_action(
         verbose = verbose,
     )
 
+    #    print("lint aspect analyze args=", args)
     mnemonic = "AndroidLintAnalyze"
     ctx.actions.run(
         mnemonic = mnemonic,
@@ -250,6 +262,7 @@ def _lint_report_action(
         compile_sdk_version,
         srcs,
         resources,
+        aar_dirs,
         classpath,
         manifest,
         merged_manifest,
@@ -276,6 +289,7 @@ def _lint_report_action(
         compile_sdk_version = compile_sdk_version,
         srcs = srcs,
         resources = resources,
+        aar_dirs = aar_dirs,
         classpath = classpath,
         manifest = manifest,
         merged_manifest = merged_manifest,
@@ -312,6 +326,14 @@ def _lint_report_action(
         },
     )
     return
+
+def _extract_aar_dirs(aar_deps):
+    aars = [
+        [dep[AarInfo].self] + dep[AarInfo].transitive.to_list()
+        for dep in aar_deps
+        if AarInfo in dep and (dep[AarInfo].self.aar != None or len(dep[AarInfo].transitive.to_list()) > 0)
+    ]
+    return [(aarInfoNode.aar.path + ":" + aarInfoNode.aar_dir.path) for aarInfoNodes in aars for aarInfoNode in aarInfoNodes]
 
 def _lint_aspect_impl(target, ctx):
     if target.label.workspace_root.startswith("external"):
@@ -350,6 +372,7 @@ def _lint_aspect_impl(target, ctx):
             # Output - End
 
             sources = _collect_sources(target, ctx, library)
+            aar_dirs = _extract_aar_dirs(sources.aar_deps)
             compile_sdk_version = _compile_sdk_version(ctx.attr._android_sdk)
             dep_lint_node_infos = _dep_lint_node_infos(target, transitive_lint_node_infos)
             dep_partial_results = [info.partial_results_dir for info in dep_lint_node_infos]
@@ -382,6 +405,7 @@ def _lint_aspect_impl(target, ctx):
                 compile_sdk_version = compile_sdk_version,
                 srcs = sources.srcs,
                 resources = sources.resources,
+                aar_dirs = aar_dirs,
                 classpath = sources.classpath,
                 manifest = sources.manifest,
                 merged_manifest = sources.merged_manifest,
@@ -418,6 +442,7 @@ def _lint_aspect_impl(target, ctx):
                 compile_sdk_version = compile_sdk_version,
                 srcs = sources.srcs,
                 resources = sources.resources,
+                aar_dirs = aar_dirs,
                 classpath = sources.classpath,
                 manifest = sources.manifest,
                 merged_manifest = sources.merged_manifest,

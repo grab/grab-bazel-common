@@ -27,10 +27,27 @@ AndroidLintSourcesInfo = provider(
         name = "Name of target",
         srcs = "Java/Kotlin sources",
         resources = "Android resources",
+        aar_deps = "direct and transiive aars AarInfo",
         manifest = "Android manifest file",
         baseline = "Lint baseline XML",
         lint_config = "Lint config XML",
     ),
+)
+
+AarNodeInfo = provider(
+    "A provider to collect aar info of the current target",
+    fields = {
+        "aar": "aar path",
+        "aar_dir": "aar extracrted path",
+    },
+)
+
+AarInfo = provider(
+    "A provider to collect all aars from transitive dependencies",
+    fields = {
+        "self": "AarNodeInfo",
+        "transitive": "depset(AarNodeInfo)",
+    },
 )
 
 LINT_ENABLED = "lint_enabled"
