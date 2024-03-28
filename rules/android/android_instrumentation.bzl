@@ -15,6 +15,7 @@ def android_instrumentation_binary(
         resource_files = [],
         associates = [],
         test_instrumentation_runner = "androidx.test.runner.AndroidJUnitRunner",
+        enable_compose = False,
         **kwargs):
     """A macro that creates an Android instrumentation binary.
 
@@ -40,6 +41,8 @@ def android_instrumentation_binary(
     )
 
     android_library_name = name + "_lib"
+    if enable_compose:
+        deps.extend(["@grab_bazel_common//rules/android/compose:compose-plugin"])
 
     # TODO: Migrate to android_library
     kt_android_library(
