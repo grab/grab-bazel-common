@@ -18,6 +18,7 @@ class LintModelCreator(
      */
     fun create(
         projectName: String,
+        android: Boolean,
         library: Boolean,
         compileSdkVersion: String?,
         minSdkVersion: String,
@@ -28,20 +29,21 @@ class LintModelCreator(
         resources: List<String>,
         manifest: File?,
         mergedManifest: File?,
-        packageName: String? = "com.android.lint", // TODO pass from bazel
-        javaSourceLevel: String = "1.8", // TODO pass from bazel
-        resConfigs: List<String> = listOf("en", "id", "in", "km", "ms", "my", "th", "vi", "zh", "ko", "ja")  // TODO pass from bazel
+        resConfigs: List<String>,
+        packageName: String?,
+        javaSourceLevel: String = "1.8" // TODO pass from bazel
     ): File {
-        val lintModelXml = modelsDir.toPath().createDirectories().resolve("module.xml")
-        val buildDir = modelsDir.toPath().resolve("build").createDirectories() // Hack - if needed create a dedicate build folder
+        val modelPath = modelsDir.toPath().createDirectories()
+        val lintModelXml = modelPath.resolve("module.xml")
+        val buildDir = modelPath.resolve("build").createDirectories() // Hack - if needed create a dedicate build folder
         val lintModuleType = when {
             library -> LIBRARY
             else -> APP
         }
 
         // Manually relativize path from models dir to exec root
-        val pwd = env.pwd
-        val relativeProjectPath = modelsDir.toPath().absolute().relativize(Paths.get(pwd).absolute())
+        val pwd = Paths.get(env.pwd)
+        val relativeProjectPath = modelPath.absolute().relativize(pwd.absolute())
 
         lintModelXml.writeText(
             """
@@ -63,6 +65,7 @@ class LintModelCreator(
         val variant = modelsDir.resolve("main.xml")
         variant.writeText(
             buildVariant(
+                android = android,
                 minSdkVersion = minSdkVersion,
                 targetSdkVersion = targetSdkVersion,
                 packageName = packageName,
@@ -71,7 +74,7 @@ class LintModelCreator(
                 mergedManifest = mergedManifest,
                 buildDir = buildDir,
                 sourceProvider = buildSourceProvider(srcs, resources, manifest)
-            ).trimMargin()
+            )
         )
 
         val artifact = modelsDir.resolve("main-artifact-libraries.xml")
@@ -99,14 +102,16 @@ class LintModelCreator(
         // TODO assets
         return """
             |<sourceProvider
-            |    ${manifest?.let { """  manifest="$manifest"""" } ?: ""}
-            |    ${dirString(srcs)?.let { """  javaDirectories="$it"""" } ?: ""}
-            |    ${dirString(resources, isResources = true)?.let { """  resDirectories="$it"""" } ?: ""}/>
+            |    ${manifest?.let { """manifest="$it"""" } ?: ""}
+            |    ${dirString(srcs)?.let { """javaDirectories="$it"""" } ?: ""}
+            |    ${dirString(resources, isResources = true)?.let { """resDirectories="$it"""" } ?: ""}/>
         """.trimMargin()
     }
 
 
+    @Suppress("UnnecessaryVariable", "UNUSED_PARAMETER")
     private fun buildVariant(
+        android: Boolean,
         minSdkVersion: String,
         targetSdkVersion: String,
         packageName: String?,
@@ -115,28 +120,38 @@ class LintModelCreator(
         mergedManifest: File?,
         buildDir: Path,
         sourceProvider: String
-    ): String = """
-                    |<variant
-                    |       name="main"
-                    |       minSdkVersion="$minSdkVersion"
-                    |       targetSdkVersion="$targetSdkVersion"
-                    |       debuggable="true"
-                    |       useSupportLibraryVectorDrawables="true"
-                    |       package="$packageName"
-                    |       partialResultsDir="$partialResultsDir"
-                    |       resourceConfigurations="${resConfigs.joinToString(separator = ",")}"
-                    |       mergedManifest="$mergedManifest">
-                    |     <buildFeatures />
-                    |     <sourceProviders>
-                    |       
-                    |     </sourceProviders>
-                    |     <artifact
-                    |       type="MAIN"
-                    |       classOutputs="${buildDir.resolve("classes").createDirectories()}"
-                    |       applicationId="$packageName">
-                    |     </artifact>
-                    |   </variant>
-                """.trimMargin()
+    ): String {
+        val sdkVersions = if (android) """
+            |minSdkVersion="$minSdkVersion"
+            |    targetSdkVersion="$targetSdkVersion"
+        """.trimMargin() else ""
+
+        val resourceConfigurations = if (resConfigs.isNotEmpty()) """
+            |resourceConfigurations="${resConfigs.joinToString(separator = ",")}"
+        """.trimMargin() else ""
+
+        val variant = """
+        |<variant
+        |    name="main"
+        |    $sdkVersions
+        |    debuggable="true"
+        |    useSupportLibraryVectorDrawables="true"
+        |    ${packageName?.let { """package="$it"""" } ?: ""}
+        |    partialResultsDir="$partialResultsDir"
+        |    $resourceConfigurations
+        |    mergedManifest="$mergedManifest">
+        |    <buildFeatures />
+        |    <sourceProviders>
+        |    </sourceProviders>
+        |    <artifact
+        |      type="MAIN"
+        |      classOutputs="${buildDir.resolve("classes").createDirectories()}"
+        |      applicationId="$packageName">
+        |    </artifact>
+        |</variant>
+        |""".trimMargin()
+        return variant
+    }
 
     /**
      * Provided a list of file paths return the common parent directory.

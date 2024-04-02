@@ -30,10 +30,10 @@ class LintAnalyzeCommand : LintBaseCommand() {
             "--analyze-only" // Only do analyze
         )).toTypedArray()
         LintCli().run(cliArgs)
-        postProcessPartialResults(workingDir)
+        postProcessPartialResults()
     }
 
-    private fun postProcessPartialResults(workingDir: Path) {
+    private fun postProcessPartialResults() {
         Files.walk(partialResults.toPath())
             .filter { it.isRegularFile() }
             .collect(Collectors.toList())

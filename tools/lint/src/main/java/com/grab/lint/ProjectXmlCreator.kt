@@ -5,14 +5,14 @@ import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
-private fun List<String>.lintJars(): Sequence<String> =
-    this.asSequence().map {
-        Paths.get(it.split("^")[1]).resolve("lint.jar")
-    }.filter { it.exists() }.map { it.toString() }
-
 class ProjectXmlCreator(
     private val projectXml: File,
 ) {
+
+    private fun List<String>.lintJars(): Sequence<String> = asSequence()
+        .map { Paths.get(it.split("^")[1]).resolve("lint.jar") }
+        .filter { it.exists() }
+        .map { it.toString() }
 
     private fun moduleXml(
         name: String,
@@ -35,12 +35,16 @@ class ProjectXmlCreator(
         android: Boolean,
         library: Boolean,
         compileSdkVersion: String,
+        minSdkVersion: String,
+        targetSdkVersion: String,
         partialResults: File,
         modelsDir: File,
         srcs: List<String>,
         resources: List<String>,
         aarDeps: List<String>,
         classpath: List<String>,
+        resConfigs: List<String>,
+        packageName: String?,
         manifest: File?,
         mergedManifest: File?,
         dependencies: List<LintDependency>,
@@ -51,16 +55,19 @@ class ProjectXmlCreator(
             modelsDir
         } else LintModelCreator().create(
             compileSdkVersion = compileSdkVersion,
+            android = android,
             library = library,
             projectName = name,
-            minSdkVersion = "21", // TODO(arun) Pass from project
-            targetSdkVersion = "34", // TODO(arun) Pass from project
+            minSdkVersion = minSdkVersion,
+            targetSdkVersion = targetSdkVersion,
             mergedManifest = mergedManifest,
             partialResultsDir = partialResults,
             modelsDir = modelsDir,
             srcs = srcs,
             resources = resources,
+            packageName = packageName,
             manifest = manifest,
+            resConfigs = resConfigs,
         )
 
         val contents = buildString {
@@ -70,9 +77,6 @@ class ProjectXmlCreator(
             srcs.forEach { src ->
                 appendLine("  <src file=\"$src\" test=\"false\" />")
             }
-            //resources.forEach { resource ->
-            //      appendLine("  <resource file=\"$resource\" />")
-            //}
             // Certain detectors need res folder as input, eg: MissingTranslation
             resFolders(resources).forEach { resource ->
                 appendLine("  <resource file=\"$resource\" />")

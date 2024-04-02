@@ -29,6 +29,11 @@ abstract class LintBaseCommand : CliktCommand() {
         "--library",
     ).flag(default = false)
 
+    protected val packageName: String? by option(
+        "-pn",
+        "--package-name",
+    )
+
     protected val srcs by option(
         "-s",
         "--sources",
@@ -85,11 +90,13 @@ abstract class LintBaseCommand : CliktCommand() {
     protected val partialResults by option(
         "-pr",
         "--partial-results-dir",
+        help = "The partial results directory generated during analyze step"
     ).convert { File(it) }.required()
 
     protected val modelsDir by option(
         "-mo",
         "--models-dir",
+        help = "Lint models directory containing models.xml"
     ).convert { File(it) }.required()
 
     protected val inputBaseline by option(
@@ -101,12 +108,32 @@ abstract class LintBaseCommand : CliktCommand() {
     private val projectXml by option(
         "-p",
         "--project-xml",
+        help = "Path to project.xml that will be created/reused when invoking Lint CLI"
     ).convert { File(it) }.required()
 
     private val compileSdkVersion: String by option(
         "-cs",
         "--compile-sdk-version",
+        help = "Compile SDK version of android modules"
     ).default("34")
+
+    private val minSdkVersion: String by option(
+        "-ms",
+        "--min-sdk-version",
+        help = "Min SDK version of android modules"
+    ).default("1")
+
+    private val targetSdkVersion: String by option(
+        "-ts",
+        "--target-sdk-version",
+        help = "Target SDK version of android modules"
+    ).default("34")
+
+    private val resConfigs by option(
+        "-rs",
+        "--res-configs",
+        help = "Res configuration filters for android modules"
+    ).split(",").default(emptyList())
 
     protected val pathVariables by option(
         "--path-variables"
@@ -123,21 +150,23 @@ abstract class LintBaseCommand : CliktCommand() {
         WorkingDirectory().use {
             val workingDir = it.dir
             val projectXml = if (!createProjectXml) projectXml else {
-                ProjectXmlCreator(
-                    projectXml = projectXml
-                ).create(
+                ProjectXmlCreator(projectXml = projectXml).create(
                     name = name,
                     android = android,
                     library = library,
                     compileSdkVersion = compileSdkVersion,
+                    minSdkVersion = minSdkVersion,
+                    targetSdkVersion = targetSdkVersion,
                     partialResults = partialResults,
                     modelsDir = modelsDir,
                     srcs = srcs,
                     resources = resources,
                     aarDeps = aarDeps,
                     classpath = classpath,
+                    packageName = packageName,
                     manifest = manifest,
                     mergedManifest = mergedManifest,
+                    resConfigs = resConfigs,
                     dependencies = dependencies
                         .parallelStream()
                         .map(LintDependency::from)

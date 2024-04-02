@@ -24,6 +24,43 @@ def _compile_sdk_version(sdk_target):
     level = level.removesuffix("/android.jar")
     return level
 
+def _sdk_versions(ctx):
+    """
+    Return min and target sdk version inferred from manifest_values
+    """
+    is_binary = ctx.rule.kind == "android_binary"
+    if is_binary:
+        manifest_values = ctx.rule.attr.manifest_values
+        return struct(
+            min_sdk = manifest_values.get("minSdkVersion", None),
+            target_sdk = manifest_values.get("targetSdkVersion", None),
+        )
+    else:
+        return struct(
+            min_sdk = None,
+            target_sdk = None,
+        )
+
+def _res_config(ctx):
+    """
+    Return resource_configuration_filters if it is android_binary
+    """
+    is_binary = ctx.rule.kind == "android_binary"
+    if is_binary:
+        return ctx.rule.attr.resource_configuration_filters
+    else:
+        return None
+
+def _package_name(ctx):
+    """
+    Return the package name of an android_binary target
+    """
+    is_binary = ctx.rule.kind == "android_binary"
+    if is_binary:
+        return ctx.rule.attr.custom_package
+    else:
+        return None
+
 def _lint_sources_classpath(target, ctx):
     """
     Collect the classpath for linting. Currently all transitive jars are passed since
@@ -122,9 +159,13 @@ def _lint_common_args(
         args,
         android,
         library,
+        package_name,
         compile_sdk_version,
+        min_sdk_version,
+        target_sdk_version,
         srcs,
         resources,
+        res_config,
         aars,
         aar_infos,
         classpath,
@@ -148,6 +189,14 @@ def _lint_common_args(
         args.add("--library")
     if compile_sdk_version:
         args.add("--compile-sdk-version", compile_sdk_version)
+    if min_sdk_version:
+        args.add("--min-sdk-version", min_sdk_version)
+    if target_sdk_version:
+        args.add("--target-sdk-version", target_sdk_version)
+    if res_config:
+        args.add_joined("--res-configs", res_config, join_with = ",")
+    if package_name:
+        args.add("--package-name", package_name)
 
     args.add_joined(
         "--sources",
@@ -205,9 +254,13 @@ def _lint_analyze_action(
         ctx,
         android,
         library,
+        package_name,
         compile_sdk_version,
+        min_sdk_version,
+        target_sdk_version,
         srcs,
         resources,
+        res_config,
         aars,
         aar_infos,
         classpath,
@@ -230,9 +283,13 @@ def _lint_analyze_action(
         args = args,
         android = android,
         library = library,
+        package_name = package_name,
         compile_sdk_version = compile_sdk_version,
+        min_sdk_version = min_sdk_version,
+        target_sdk_version = target_sdk_version,
         srcs = srcs,
         resources = resources,
+        res_config = res_config,
         aars = aars,
         aar_infos = aar_infos,
         classpath = classpath,
@@ -271,9 +328,13 @@ def _lint_report_action(
         ctx,
         android,
         library,
+        package_name,
         compile_sdk_version,
+        min_sdk_version,
+        target_sdk_version,
         srcs,
         resources,
+        res_config,
         aars,
         aar_infos,
         classpath,
@@ -299,9 +360,13 @@ def _lint_report_action(
         args = args,
         android = android,
         library = library,
+        package_name = package_name,
         compile_sdk_version = compile_sdk_version,
+        min_sdk_version = min_sdk_version,
+        target_sdk_version = target_sdk_version,
         srcs = srcs,
         resources = resources,
+        res_config = res_config,
         aars = aars,
         aar_infos = aar_infos,
         classpath = classpath,
@@ -369,7 +434,7 @@ def _lint_aspect_impl(target, ctx):
         # Result
         android_lint_node_info = None  # Current target's AndroidLintNodeInfo
         if enabled:
-            # Output- Start
+            # Output - Start
             lint_updated_baseline_file = ctx.actions.declare_file("lint/" + target.label.name + "_updated_baseline.xml")
             lint_partial_results_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_partial_results_dir")
             lint_results_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_results_dir")
@@ -386,6 +451,9 @@ def _lint_aspect_impl(target, ctx):
 
             sources = _collect_sources(target, ctx, library)
             compile_sdk_version = _compile_sdk_version(ctx.attr._android_sdk)
+            sdk_versions = _sdk_versions(ctx)
+            res_config = _res_config(ctx)
+            android_package = _package_name(ctx)
             dep_lint_node_infos = _dep_lint_node_infos(target, transitive_lint_node_infos)
             dep_partial_results = [info.partial_results_dir for info in dep_lint_node_infos]
             dep_lint_models = [info.models_dir for info in dep_lint_node_infos]
@@ -418,9 +486,13 @@ def _lint_aspect_impl(target, ctx):
                 ctx = ctx,
                 android = android,
                 library = library,
+                package_name = android_package,
                 compile_sdk_version = compile_sdk_version,
+                min_sdk_version = sdk_versions.min_sdk,
+                target_sdk_version = sdk_versions.target_sdk,
                 srcs = sources.srcs,
                 resources = sources.resources,
+                res_config = res_config,
                 aars = aars,
                 aar_infos = aar_node_infos,
                 classpath = sources.classpath,
@@ -458,9 +530,13 @@ def _lint_aspect_impl(target, ctx):
                 ctx = ctx,
                 android = android,
                 library = library,
+                package_name = android_package,
                 compile_sdk_version = compile_sdk_version,
+                min_sdk_version = sdk_versions.min_sdk,
+                target_sdk_version = sdk_versions.target_sdk,
                 srcs = sources.srcs,
                 resources = sources.resources,
+                res_config = res_config,
                 aars = aars,
                 aar_infos = aar_node_infos,
                 classpath = sources.classpath,

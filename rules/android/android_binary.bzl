@@ -111,6 +111,7 @@ def android_binary(
         manifest = attrs.get("manifest"),
         multidex = attrs.get("multidex", default = None),
         manifest_values = attrs.get("manifest_values", default = None),
+        resource_configuration_filters = attrs.get("resource_configuration_filters", default = None),
         plugins = attrs.get("plugins", default = None),
         tags = tags,
         visibility = attrs.get("visibility", default = None),

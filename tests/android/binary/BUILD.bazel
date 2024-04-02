@@ -19,6 +19,19 @@ android_binary(
         "targetSdkVersion": "31",
         "applicationId": "com.grab.test",
     },
+    resource_configuration_filters = [
+        "en",
+        "id",
+        "in",
+        "km",
+        "ms",
+        "my",
+        "th",
+        "vi",
+        "zh",
+        "ko",
+        "ja",
+    ],
     resources = {
         "src/main/res": {
         },
