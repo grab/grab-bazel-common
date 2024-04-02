@@ -71,7 +71,7 @@ class LintModelCreatorTest : BaseTest() {
         lintModelCreator.create(
             compileSdkVersion = "30",
             android = false,
-            library = false,
+            library = true,
             projectName = "//test",
             minSdkVersion = "21",
             targetSdkVersion = "34",

@@ -66,6 +66,7 @@ class LintModelCreator(
         variant.writeText(
             buildVariant(
                 android = android,
+                library = library,
                 minSdkVersion = minSdkVersion,
                 targetSdkVersion = targetSdkVersion,
                 packageName = packageName,
@@ -112,6 +113,7 @@ class LintModelCreator(
     @Suppress("UnnecessaryVariable", "UNUSED_PARAMETER")
     private fun buildVariant(
         android: Boolean,
+        library: Boolean,
         minSdkVersion: String,
         targetSdkVersion: String,
         packageName: String?,
@@ -121,7 +123,7 @@ class LintModelCreator(
         buildDir: Path,
         sourceProvider: String
     ): String {
-        val sdkVersions = if (android) """
+        val sdkVersions = if (android && !library) """
             |minSdkVersion="$minSdkVersion"
             |    targetSdkVersion="$targetSdkVersion"
         """.trimMargin() else ""
@@ -135,7 +137,7 @@ class LintModelCreator(
         |    name="main"
         |    $sdkVersions
         |    debuggable="true"
-        |    useSupportLibraryVectorDrawables="true"
+        |    useSupportLibraryVectorDrawables="true" 
         |    ${packageName?.let { """package="$it"""" } ?: ""}
         |    partialResultsDir="$partialResultsDir"
         |    $resourceConfigurations
