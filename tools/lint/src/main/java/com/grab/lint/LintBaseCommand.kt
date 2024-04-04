@@ -207,7 +207,7 @@ abstract class LintBaseCommand : CliktCommand() {
             //"--quiet",
             "--exitcode",
             "--offline", // Not a good practice to make bazel actions reach the network yet
-            "--client-id", "test",
+            "--client-id", "cli",
             "--jdk-home", jdkHome // Java home to use
         ).apply {
             System.getenv("ANDROID_HOME")?.let { // TODO(arun) Need to revisit this.
