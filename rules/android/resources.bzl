@@ -9,26 +9,29 @@ def _calculate_output_files(name, all_resources):
     Args:
         all_resources: All resource files sorted based on priority with higher priority appearing first.
     """
-    outputs = []
 
-    # Multiple res folders root can contain same file name of resource, prevent creating same outputs by storing normalized resource paths
-    # eg: `res/values/strings.xml`
-    normalized_res_paths = {}
+    # Multiple res folders root can contain same file name of resource, dedup them using a dict
+    outputs = {}
+
+    # Two different resource buckets can contain different file extensions but same file name. For example icon.png and icon.webp, based on
+    # what comes first, only one file will be present after merging. Track such cases and remove them from outputs.
+    output_files = {}
 
     for file in all_resources:
         res_name_and_dir = file.split("/")[-2:]  # ["values", "values.xml"] etc
         res_dir = res_name_and_dir[0]
         res_name = res_name_and_dir[1]
+        res_name_no_ext = res_name.split(".")[0]
         if "values" in res_dir:
             # Resource merging merges all values files into single values.xml file.
             normalized_res_path = "%s/out/res/%s/values.xml" % (name, res_dir)
         else:
             normalized_res_path = "%s/out/res/%s/%s" % (name, res_dir, res_name)
 
-        if normalized_res_path not in normalized_res_paths:
-            normalized_res_paths[normalized_res_path] = normalized_res_path
-            outputs.append(normalized_res_path)
-    return outputs
+        if res_name_no_ext not in output_files:
+            outputs[normalized_res_path] = normalized_res_path
+            output_files[res_name_no_ext] = res_name_no_ext
+    return list(outputs.values())
 
 def build_resources(
         name,
@@ -40,6 +43,12 @@ def build_resources(
     declared and it has multiple resource roots then all those roots are merged into single directory and contents of the directory are returned.
     Conversely if resource_files are used then sources are returned as is. In both cases, generated resources passed via res_values are
     accounted for.
+
+    Args:
+        name: The name of the resource merger target
+        resource_files: Default bazel expected Android resource_files format
+        resources: Dict of various resources, manifest and assets keyed by a source set name
+        res_values: Dict of various resources keyed by their type to be generated during build. Use res_value
     """
     generated_resources = []
     res_value_strings = res_values.get("strings", default = {})
@@ -67,6 +76,7 @@ def build_resources(
         all_resources = []
         all_manifests = []
 
+        # Expand declaration like `src/main/res` to their files using glob
         for resource_dir in resources.keys():
             resource_dict = resources.get(resource_dir)
             all_resources.extend(
