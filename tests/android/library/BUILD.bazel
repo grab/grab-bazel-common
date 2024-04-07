@@ -13,7 +13,9 @@ android_library(
     },
     manifest = "src/main/AndroidManifest.xml",
     resources = {
-        "src/main/res": {
+        "main": {
+            "res": "src/main/res",
+            "manifest": "src/main/AndroidManifest.xml",
         },
     },
     visibility = [

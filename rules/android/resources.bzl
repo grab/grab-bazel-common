@@ -36,10 +36,10 @@ def _calculate_output_files(name, all_resources):
 def build_resources(
         name,
         resource_files,
-        resources,
+        resource_sets,
         res_values):
     """
-    Calculates and returns resource_files either generated, merged or just the source ones based on parameters given. When `resources` are
+    Calculates and returns resource_files either generated, merged or just the source ones based on parameters given. When `resource_sets` are
     declared and it has multiple resource roots then all those roots are merged into single directory and contents of the directory are returned.
     Conversely if resource_files are used then sources are returned as is. In both cases, generated resources passed via res_values are
     accounted for.
@@ -47,8 +47,14 @@ def build_resources(
     Args:
         name: The name of the resource merger target
         resource_files: Default bazel expected Android resource_files format
-        resources: Dict of various resources, manifest and assets keyed by a source set name
-        res_values: Dict of various resources keyed by their type to be generated during build. Use res_value
+        resource_sets: Dict of various resources, manifest and assets keyed by a source set name
+            For example
+            "main": {
+                "res": "src/main/res",
+                "manifest": "src/main/AndroidManifest.xml",
+                "assets": "src/main/assets",
+            }
+        res_values: Dict of various resources keyed by their type to be generated during build. Uses res_value
     """
     generated_resources = []
     res_value_strings = res_values.get("strings", default = {})
@@ -57,34 +63,36 @@ def build_resources(
             name = name + "_res_value",
             strings = res_value_strings,
         )
-
-    if (len(resources) != 0 and len(resource_files) != 0):
+    if (len(resource_sets) != 0 and len(resource_files) != 0):
         fail("Either resources or resource_files should be specified but not both")
 
-    if (len(resources) != 0):
+    if (len(resource_sets) != 0):
         # Resources are passed with the new format
         # Merge sources and return the merged result
 
-        if (len(resources) == 1):
-            resource_dir = resources.keys()[0]
-            return native.glob(
-                include = [resource_dir + "/**"],
-                exclude = ["**/.DS_Store"],
-            ) + generated_resources
+        if (len(resource_sets) == 1):
+            resource_set = resource_sets.keys()[0]
+            resource_dir = resource_sets.get(resource_set).get("res", None)
+            if resource_dir:
+                return native.glob(
+                    include = [resource_dir + "/**"],
+                    exclude = ["**/.DS_Store"],
+                ) + generated_resources
 
-        source_sets = []  # Source sets in the format res_dir::manifest
+        source_sets = []  # Source sets args in the res_dir:assets:manifest format
         all_resources = []
         all_manifests = []
 
-        # Expand declaration like `src/main/res` to their files using glob
-        for resource_dir in resources.keys():
-            resource_dict = resources.get(resource_dir)
-            all_resources.extend(
-                native.glob(
-                    include = [resource_dir + "/**"],
-                    exclude = ["**/.DS_Store"],
-                ),
-            )
+        for resource_set in resource_sets.keys():
+            resource_dict = resource_sets.get(resource_set)
+            resource_dir = resource_dict.get("res", None)
+            if resource_dir:
+                all_resources.extend(
+                    native.glob(
+                        include = [resource_dir + "/**"],
+                        exclude = ["**/.DS_Store"],
+                    ),
+                )
 
             manifest = resource_dict.get("manifest", "")
             if manifest != "":

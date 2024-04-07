@@ -34,7 +34,14 @@ android_binary(
         "ja",
     ],
     resources = {
-        "src/main/res": {
+        "main": {
+            "res": "src/main/res",
+            "manifest": "src/main/AndroidManifest.xml",
+            "assets": "src/main/assets",
+        },
+        "flavor": {
+            "res": "src/flavor/res",
+            "manifest": "src/flavor/AndroidManifest.xml",
         },
     },
     deps = [

@@ -42,11 +42,10 @@ def android_binary(
         longs = build_config.get("longs", default = {}),
         strings = build_config.get("strings", default = {}),
     )
-
     resource_files = build_resources(
         name = name,
         resource_files = attrs.get("resource_files", default = []),
-        resources = attrs.get("resources", default = {}),
+        resource_sets = attrs.get("resources", default = {}),
         res_values = res_values,
     )
 
