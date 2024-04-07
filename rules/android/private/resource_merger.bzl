@@ -7,6 +7,7 @@ def _to_path(f):
 
 def _resource_merger_impl(ctx):
     outputs = ctx.outputs.merged_resources
+    merged_manifest = ctx.outputs.merged_manifest
     label = ctx.label.name
 
     # Args for compiler
@@ -26,15 +27,16 @@ def _resource_merger_impl(ctx):
         join_with = ",",
         map_each = _to_path,
     )
+    args.add("--manifest", merged_manifest)
 
     mnemonic = "MergeSourceSets"
     ctx.actions.run(
         mnemonic = mnemonic,
         inputs = depset(ctx.files.resources + ctx.files.manifests),
-        outputs = outputs,
+        outputs = ctx.outputs.merged_resources + [merged_manifest],
         executable = ctx.executable._compiler,
         arguments = [args],
-        progress_message = "%s %s" % (mnemonic, ctx.label),
+        progress_message = "%s %s" % (mnemonic, str(ctx.label).lstrip("@")),
         execution_requirements = {
             "supports-workers": "1",
             "supports-multiplex-workers": "1",
@@ -51,11 +53,12 @@ resource_merger = rule(
         "source_sets": attr.string_list(),
         "resources": attr.label_list(allow_files = True, mandatory = True),
         "manifests": attr.label_list(allow_files = True, mandatory = True),
+        "merged_manifest": attr.output(),
         "merged_resources": attr.output_list(mandatory = True),
         "_compiler": attr.label(
             default = Label("@grab_bazel_common//tools/aapt_lite:aapt_lite"),
             executable = True,
-            cfg = "exec",
+            cfg = "host",
         ),
     },
 )

@@ -130,11 +130,13 @@ def build_resources(
         merge_target_name = name + "_res"
         merged_resources = _calculate_output_files(merge_target_name, all_resources)
         merged_assets = _calculate_output_files(merge_target_name, all_assets)
+        merged_manifest = "%s/_merged/AndroidManifest.xml" % merge_target_name
         resource_merger(
             name = merge_target_name,
             source_sets = source_sets,
             resources = all_resources + all_assets,
             manifests = all_manifests,
+            merged_manifest = merged_manifest,
             merged_resources = merged_resources + merged_assets,
         )
         asset_dir = "%s/out/assets/" % merge_target_name
@@ -142,7 +144,7 @@ def build_resources(
             res = merged_resources + generated_resources,
             assets = merged_assets if len(merged_assets) != 0 else None,
             asset_dir = asset_dir if len(merged_assets) != 0 else None,
-            manifest = None,
+            manifest = merged_manifest,
         )
     else:
         return struct(

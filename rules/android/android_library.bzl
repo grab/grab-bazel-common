@@ -52,6 +52,7 @@ def android_library(
         res_values = res_values,
     )
     resource_files = merged_resources.res
+    manifest = merged_resources.manifest
 
     lint_enabled = lint_options.get("enabled", False) and (len(srcs) > 0 or len(resource_files) > 0)
     android_library_deps = attrs.get("deps", default = []) + [build_config_target]
@@ -63,7 +64,7 @@ def android_library(
             name = lint_sources_target,
             srcs = srcs,
             resources = [file for file in resource_files if file.endswith(".xml")],
-            manifest = attrs.get("manifest"),
+            manifest = manifest,
             baseline = lint_baseline,
             lint_config = lint_options.get("config", None),
             deps = android_library_deps,
@@ -99,7 +100,7 @@ def android_library(
         name = name,
         srcs = srcs,
         custom_package = custom_package,
-        manifest = attrs.get("manifest"),
+        manifest = manifest,
         resource_files = resource_files,
         assets = merged_resources.assets,
         assets_dir = merged_resources.asset_dir,

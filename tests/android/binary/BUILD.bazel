@@ -19,6 +19,7 @@ android_binary(
         "minSdkVersion": "21",
         "targetSdkVersion": "31",
         "applicationId": "com.grab.test",
+        "orientation": "portrait",
     },
     resource_configuration_filters = [
         "en",
@@ -37,6 +38,7 @@ android_binary(
         "flavor": {
             "res": "src/flavor/res",
             "manifest": "src/flavor/AndroidManifest.xml",
+            "assets": "src/flavor/assets",
         },
         "main": {
             "res": "src/main/res",

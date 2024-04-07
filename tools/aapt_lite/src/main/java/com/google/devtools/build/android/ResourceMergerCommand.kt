@@ -1,6 +1,7 @@
 package com.google.devtools.build.android
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
@@ -23,6 +24,12 @@ class ResourceMergerCommand : CliktCommand() {
         help = "List of sources sets in the format $SOURCE_SET_FORMAT separated by `,`"
     ).split(",").default(emptyList())
 
+    private val manifest by option(
+        "-m",
+        "--manifest",
+        help = "The merged manifest output file"
+    ).convert { File(it) }
+
     private val outputs by option(
         "-o",
         "--output",
@@ -36,7 +43,11 @@ class ResourceMergerCommand : CliktCommand() {
             deleteRecursively()
             parentFile?.mkdirs()
         }
-        ResourceMerger.merge(/* sourceSets = */ sourceSets, /* outputDir = */ outputDir)
+        ResourceMerger.merge(
+            /* sourceSets = */ sourceSets,
+            /* outputDir = */ outputDir,
+            /* manifest = */ manifest
+        )
         OutputFixer.process(outputDir = outputDir, declaredOutputs = outputs)
     }
 }
