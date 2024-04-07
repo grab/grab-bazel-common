@@ -42,12 +42,13 @@ def android_binary(
         longs = build_config.get("longs", default = {}),
         strings = build_config.get("strings", default = {}),
     )
-    resource_files = build_resources(
+    merged_resources = build_resources(
         name = name,
         resource_files = attrs.get("resource_files", default = []),
         resource_sets = attrs.get("resources", default = {}),
         res_values = res_values,
     )
+    resource_files = merged_resources.res
 
     # Kotlin compilation with kt_android_library
     kotlin_target = "lib_" + name
@@ -58,8 +59,8 @@ def android_binary(
     kt_android_library(
         name = kotlin_target,
         srcs = attrs.get("srcs", default = []),
-        assets = attrs.get("assets", default = None),
-        assets_dir = attrs.get("assets_dir", default = None),
+        assets = merged_resources.assets,
+        assets_dir = merged_resources.asset_dir,
         custom_package = custom_package,
         manifest = attrs.get("manifest", default = None),
         resource_files = resource_files,

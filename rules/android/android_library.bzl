@@ -45,12 +45,13 @@ def android_library(
         strings = build_config.get("strings", default = {}),
     )
 
-    resource_files = build_resources(
+    merged_resources = build_resources(
         name = name,
         resource_files = attrs.get("resource_files", default = []),
         resource_sets = attrs.get("resources", default = {}),
         res_values = res_values,
     )
+    resource_files = merged_resources.res
 
     lint_enabled = lint_options.get("enabled", False) and (len(srcs) > 0 or len(resource_files) > 0)
     android_library_deps = attrs.get("deps", default = []) + [build_config_target]
@@ -100,8 +101,8 @@ def android_library(
         custom_package = custom_package,
         manifest = attrs.get("manifest"),
         resource_files = resource_files,
-        assets = attrs.get("assets", default = None),
-        assets_dir = attrs.get("assets_dir", default = None),
+        assets = merged_resources.assets,
+        assets_dir = merged_resources.asset_dir,
         visibility = attrs.get("visibility", default = None),
         tags = tags,
         deps = android_library_deps,
