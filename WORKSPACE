@@ -32,4 +32,5 @@ maven_install(
         "https://maven.google.com",
     ],
     strict_visibility = True,
+    version_conflict_policy = "pinned",
 )

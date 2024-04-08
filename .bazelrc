@@ -1,6 +1,8 @@
 # Disk cache
 build --disk_cache=bazel-cache
 
+common --enable_bzlmod=false
+
 build --verbose_failures
 
 # Action Env
