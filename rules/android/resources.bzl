@@ -3,7 +3,7 @@ load("@grab_bazel_common//rules/android/private:resource_merger.bzl", "resource_
 
 def _calculate_output_files(name, all_resources):
     """
-    Calculates the output files from the given resources
+    Calculates the output file paths Bazel would create from the given resources
 
     Resource merger would merge resources and write to a single merged directory. Bazel needs to know output files in advance, so this
     method tries to predict the output files so we can register them as predeclared outputs. We can't use `actions.declare_dir` since
@@ -72,12 +72,11 @@ def build_resources(
     Calculates and returns resource_files, assets and manifest either generated, merged or just the source ones based on parameters given.
     When `resource_sets` are declared and it has multiple resource roots then all those roots are merged into single directory and
     contents of the directory are returned.
-    Conversely if resource_files are used then sources are returned as is. In both cases, generated resources passed via res_values are
-    accounted for.
+    Using `resource_files` is an error and not recommended.
 
     Args:
         name: The name of the resource merger target
-        resource_files: Default bazel expected Android resource_files format
+        resource_files: Default bazel expected Android resource_files format (deprecated)
         resource_sets: Dict of various resources, manifest and assets keyed by a source set name
             For example
             "main": {
