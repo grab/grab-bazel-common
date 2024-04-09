@@ -19,7 +19,7 @@ def _calculate_output_files(name, all_resources):
 
     # Two different resource buckets can contain different file extensions but same file name. For example icon.png and icon.webp, based on
     # what comes first, only one file will be present after merging. Track such cases and remove them from outputs.
-    output_files = {}
+    output_file_names = {}
 
     for file in all_resources:
         res_name_and_dir = file.split("/")[-2:]  # ["values", "values.xml"] etc
@@ -34,16 +34,32 @@ def _calculate_output_files(name, all_resources):
         else:
             normalized_res_path = "%s/out%s/%s/%s" % (name, out_res_dir, res_dir, res_name)
 
-        if res_name_no_ext not in output_files:
+        if res_name_no_ext not in output_file_names:
             outputs[normalized_res_path] = normalized_res_path
-            output_files[res_name_no_ext] = res_name_no_ext
+            output_file_names[res_name_no_ext] = res_name_no_ext
     return list(outputs.values())
 
-def res_glob(include = []):
+def _res_glob(includes = []):
     """
-    `glob` wrapper to exclude common problematic files
+    `glob` wrapper to exclude common problematic files and glob a directory as a whole using /**
+
+    Args:
+        includes: List of string directory path
     """
-    return native.glob(include = include, exclude = ["**/.DS_Store"])
+    return native.glob(
+        include = [include + "/**" for include in includes],
+        exclude = ["**/.DS_Store"],
+    )
+
+def _generate_resources(res_value_strings, name):
+    if res_value_strings:
+        return res_value(name = name + "_res_value", strings = res_value_strings)
+    else:
+        return []
+
+def _validate_resource_parameters(resource_sets, resource_files):
+    if len(resource_files) != 0:
+        fail("resouce_files is deprecrated, migrate to using resources format. See resources.bzl")
 
 def build_resources(
         name,
@@ -74,78 +90,73 @@ def build_resources(
     Returns:
     - resources: Merged output containing resources, assets, assets_dir and manifest.
     """
-    generated_resources = []
-    res_value_strings = res_values.get("strings", default = {})
-    if len(res_value_strings) != 0:
-        generated_resources = res_value(
-            name = name + "_res_value",
-            strings = res_value_strings,
-        )
-
-    if (len(resource_sets) != 0 and len(resource_files) != 0):
-        fail("Either resources or resource_files should be specified but not both")
+    generated_resources = _generate_resources(res_values.get("strings", default = {}), name)
+    _validate_resource_parameters(resource_sets, resource_files)
 
     if (len(resource_sets) != 0):
         # Resources are passed with the new format, merge sources and return the merged result
-
         if (len(resource_sets) == 1):
             # Only only source set is provided, hence glob it and return as-is.
-            resource_set = resource_sets.keys()[0]
-            resource_dict = resource_sets.get(resource_set)
+            resource_set_name = resource_sets.keys()[0]
+            resource_dict = resource_sets.get(resource_set_name)
 
             resource_dir = resource_dict.get("res", None)
-            resources = res_glob([resource_dir + "/**"]) if resource_dir else []
+            resources = _res_glob([resource_dir]) if resource_dir else []
 
             asset_dir = resource_dict.get("assets", None)
-            assets = res_glob([asset_dir + "/**"]) if asset_dir else []
+            assets = _res_glob([asset_dir]) if asset_dir else []
+            has_assets = len(assets) != 0
 
             return struct(
                 res = resources + generated_resources,
-                assets = assets if len(assets) != 0 else None,
-                asset_dir = asset_dir if len(assets) != 0 else None,
+                assets = assets if has_assets else None,
+                asset_dir = asset_dir if has_assets else None,
                 manifest = resource_dict.get("manifest", None),
             )
+        else:
+            source_sets = []  # Source sets args in the res_dir:assets:manifest format
+            all_resources = []
+            all_assets = []
+            all_manifests = []
 
-        source_sets = []  # Source sets args in the res_dir:assets:manifest format
-        all_resources = []
-        all_assets = []
-        all_manifests = []
+            for resource_set_name in resource_sets.keys():
+                resource_dict = resource_sets.get(resource_set_name)
 
-        for resource_set in resource_sets.keys():
-            resource_dict = resource_sets.get(resource_set)
-            resource_dir = resource_dict.get("res", "")
-            if resource_dir != "":
-                all_resources.extend(res_glob([resource_dir + "/**"]))
+                resource_dir = resource_dict.get("res", "")
+                if resource_dir != "":
+                    all_resources.extend(_res_glob([resource_dir]))
 
-            manifest = resource_dict.get("manifest", "")
-            if manifest != "":
-                all_manifests.append(manifest)
+                asset_dir = resource_dict.get("assets", "")
+                if asset_dir != "":
+                    all_assets.extend(_res_glob([asset_dir]))
 
-            asset_dir = resource_dict.get("assets", "")
-            if asset_dir != "":
-                all_assets.extend(res_glob([asset_dir + "/**"]))
+                manifest = resource_dict.get("manifest", "")
+                if manifest != "":
+                    all_manifests.append(manifest)
 
-            source_sets.append("%s:%s:%s" % (resource_dir, asset_dir, manifest))
+                source_sets.append("%s:%s:%s" % (resource_dir, asset_dir, manifest))
 
-        merge_target_name = name + "_res"
-        merged_resources = _calculate_output_files(merge_target_name, all_resources)
-        merged_assets = _calculate_output_files(merge_target_name, all_assets)
-        merged_manifest = "%s/_merged/AndroidManifest.xml" % merge_target_name
-        resource_merger(
-            name = merge_target_name,
-            source_sets = source_sets,
-            resources = all_resources + all_assets,
-            manifests = all_manifests,
-            merged_manifest = merged_manifest,
-            merged_resources = merged_resources + merged_assets,
-        )
-        asset_dir = "%s/out/assets/" % merge_target_name
-        return struct(
-            res = merged_resources + generated_resources,
-            assets = merged_assets if len(merged_assets) != 0 else None,
-            asset_dir = asset_dir if len(merged_assets) != 0 else None,
-            manifest = merged_manifest,
-        )
+            merge_target_name = name + "_res"
+            merged_resources = _calculate_output_files(merge_target_name, all_resources)
+            merged_assets = _calculate_output_files(merge_target_name, all_assets)
+
+            # Outputs that would be produced by merger
+            merged_manifest = "%s/_merged/AndroidManifest.xml" % merge_target_name
+            asset_dir = "%s/out/assets/" % merge_target_name
+            resource_merger(
+                name = merge_target_name,
+                source_sets = source_sets,
+                resources = all_resources + all_assets,
+                manifests = all_manifests,
+                merged_manifest = merged_manifest,
+                merged_resources = merged_resources + merged_assets,
+            )
+            return struct(
+                res = merged_resources + generated_resources,
+                assets = merged_assets if len(merged_assets) != 0 else None,
+                asset_dir = asset_dir if len(merged_assets) != 0 else None,
+                manifest = merged_manifest,
+            )
     else:
         return struct(
             res = resource_files + generated_resources,

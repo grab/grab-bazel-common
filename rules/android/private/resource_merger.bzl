@@ -1,9 +1,8 @@
-"""
-Rule to merge android variant specific resource folders and account for overrides.
-"""
+load("@grab_bazel_common//rules/android:utils.bzl", "utils")
 
-def _to_path(f):
-    return f.path
+"""
+Rule to merge android variant specific resource folders, assets and manifest and account for overrides.
+"""
 
 def _resource_merger_impl(ctx):
     outputs = ctx.outputs.merged_resources
@@ -15,6 +14,7 @@ def _resource_merger_impl(ctx):
     args.set_param_file_format("multiline")
     args.use_param_file("--flagfile=%s", use_always = True)
     args.add("RESOURCE_MERGER")
+    args.add("--label", ctx.label)
     args.add("--target", ctx.label.package)
     args.add_joined(
         "--source-sets",
@@ -25,7 +25,7 @@ def _resource_merger_impl(ctx):
         "--output",
         outputs,
         join_with = ",",
-        map_each = _to_path,
+        map_each = utils.to_path,
     )
     args.add("--manifest", merged_manifest)
 

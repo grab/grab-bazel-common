@@ -12,10 +12,17 @@ import java.io.File
 
 class ResourceMergerCommand : CliktCommand() {
 
+    @Suppress("unused")
+    private val label by option(
+        "-l",
+        "--label",
+        help = "The label name that invokes this merger."
+    )
+
     private val target by option(
         "-t",
         "--target",
-        help = "The target name"
+        help = "The target name, this will be used to decode source set paths"
     ).required()
 
     private val sourceSets by option(

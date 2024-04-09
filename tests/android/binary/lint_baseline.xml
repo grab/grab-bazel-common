@@ -31,13 +31,24 @@
     </issue>
 
     <issue
+        id="DiscouragedApi"
+        message="Should not restrict activity to fixed orientation. This may not be suitable for different form factors, causing the app to be letterboxed."
+        errorLine1="            android:screenOrientation=&quot;${orientation}&quot; />"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="../../../../../../android-armeabi-v7a-fastbuild/bin/tests/android/binary/android_binary_sample_res/_merged/AndroidManifest.xml"
+            line="11"
+            column="13"/>
+    </issue>
+
+    <issue
         id="MissingVersion"
         message="Should set `android:versionCode` to specify the application version"
         errorLine1="&lt;manifest xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2=" ~~~~~~~~">
         <location
-            file="../../../../../../../tests/android/binary/src/main/AndroidManifest.xml"
-            line="1"
+            file="../../../../../../android-armeabi-v7a-fastbuild/bin/tests/android/binary/android_binary_sample_res/_merged/AndroidManifest.xml"
+            line="2"
             column="2"/>
     </issue>
 
@@ -47,8 +58,8 @@
         errorLine1="&lt;manifest xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2=" ~~~~~~~~">
         <location
-            file="../../../../../../../tests/android/binary/src/main/AndroidManifest.xml"
-            line="1"
+            file="../../../../../../android-armeabi-v7a-fastbuild/bin/tests/android/binary/android_binary_sample_res/_merged/AndroidManifest.xml"
+            line="2"
             column="2"/>
     </issue>
 
@@ -132,11 +143,11 @@
     <issue
         id="MissingApplicationIcon"
         message="Should explicitly set `android:icon`, there is no default"
-        errorLine1="    &lt;application android:label=&quot;@string/app_name&quot;>"
+        errorLine1="    &lt;application android:label=&quot;@string/app_name&quot; >"
         errorLine2="     ~~~~~~~~~~~">
         <location
-            file="../../../../../../../tests/android/binary/src/main/AndroidManifest.xml"
-            line="4"
+            file="../../../../../../android-armeabi-v7a-fastbuild/bin/tests/android/binary/android_binary_sample_res/_merged/AndroidManifest.xml"
+            line="7"
             column="6"/>
     </issue>
 
