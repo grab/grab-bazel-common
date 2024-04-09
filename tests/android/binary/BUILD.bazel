@@ -34,7 +34,7 @@ android_binary(
         "ko",
         "ja",
     ],
-    resources = {
+    resource_sets = {
         "flavor": {
             "res": "src/flavor/res",
             "manifest": "src/flavor/AndroidManifest.xml",

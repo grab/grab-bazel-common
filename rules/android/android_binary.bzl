@@ -44,8 +44,9 @@ def android_binary(
     )
     merged_resources = build_resources(
         name = name,
+        manifest = attrs.get("manifest", None),
         resource_files = attrs.get("resource_files", default = []),
-        resource_sets = attrs.get("resources", default = {}),
+        resource_sets = attrs.get("resource_sets", default = {}),
         res_values = res_values,
     )
     resource_files = merged_resources.res

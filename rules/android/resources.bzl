@@ -63,6 +63,7 @@ def _validate_resource_parameters(resource_sets, resource_files):
 
 def build_resources(
         name,
+        manifest,
         resource_files,
         resource_sets,
         res_values):
@@ -76,6 +77,7 @@ def build_resources(
 
     Args:
         name: The name of the resource merger target
+        manifest: The default primary manifest.
         resource_files: Default bazel expected Android resource_files format (deprecated)
         resource_sets: Dict of various resources, manifest and assets keyed by a source set name
             For example
@@ -110,7 +112,7 @@ def build_resources(
                 res = resources + generated_resources,
                 assets = assets if has_assets else None,
                 asset_dir = asset_dir if has_assets else None,
-                manifest = resource_dict.get("manifest", None),
+                manifest = resource_dict.get("manifest", manifest),
             )
         else:
             source_sets = []  # Source sets args in the res_dir:assets:manifest format
@@ -161,5 +163,5 @@ def build_resources(
             res = resource_files + generated_resources,
             assets = None,
             asset_dir = None,
-            manifest = None,
+            manifest = manifest,
         )
