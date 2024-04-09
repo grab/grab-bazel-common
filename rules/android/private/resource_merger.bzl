@@ -58,7 +58,7 @@ resource_merger = rule(
         "_compiler": attr.label(
             default = Label("@grab_bazel_common//tools/aapt_lite:aapt_lite"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
     },
 )
