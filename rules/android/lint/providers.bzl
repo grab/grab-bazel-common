@@ -10,6 +10,7 @@ AndroidLintNodeInfo = provider(
         models_dir = "Lint models directory",
         updated_baseline = "The updated baseline XML",
         lint_result_xml = "The lint results XML file",
+        lint_junit_xml = "Lint result formatted in Junit format",
     ),
 )
 

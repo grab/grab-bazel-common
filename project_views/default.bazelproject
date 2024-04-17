@@ -1,6 +1,11 @@
 directories:
   .
+  -bazel-bin
+  -bazel-grab-bazel-common
+  -bazel-out
   -bazel-cache
+  -bazel-testlogs
+  -bazel-genfiles
 
 # Automatically includes all relevant targets under the 'directories' above
 derive_targets_from_directories: true
@@ -8,6 +13,9 @@ derive_targets_from_directories: true
 workspace_type: java
 
 java_language_level: 11
+
+test_sources:
+  */src/test/*
 
 additional_languages:
   java

@@ -360,6 +360,7 @@ def _lint_report_action(
         fail_on_warning,
         fail_on_information,
         lint_result_xml_file,
+        lint_result_junit_xml_file,
         partial_results_dir,
         jdk_home,
         project_xml_file,
@@ -402,7 +403,8 @@ def _lint_report_action(
     args.add("--fail-on-warning", fail_on_warning)
     args.add("--fail-on-information", fail_on_information)
 
-    args.add("--output-xml", lint_result_xml_file.path)
+    args.add("--output-xml", lint_result_xml_file)
+    args.add("--output-junit-xml", lint_result_junit_xml_file)
     args.add("--result-code", result_code)
 
     mnemonic = "AndroidLint"
@@ -458,6 +460,7 @@ def _lint_aspect_impl(target, ctx):
             lint_results_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_results_dir")
 
             lint_result_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result.xml")
+            lint_result_junit_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result_junit.xml")
             lint_result_code_file = ctx.actions.declare_file("lint/" + target.label.name + "_lint_result_code")
 
             # Project Xmls
@@ -573,6 +576,7 @@ def _lint_aspect_impl(target, ctx):
                 fail_on_warning = sources.fail_on_warning,
                 fail_on_information = sources.fail_on_information,
                 lint_result_xml_file = lint_result_xml_file,
+                lint_result_junit_xml_file = lint_result_junit_xml_file,
                 partial_results_dir = lint_results_dir,
                 models_dir = lint_models_dir,
                 jdk_home = java_runtime_info.java_home,
@@ -599,6 +603,7 @@ def _lint_aspect_impl(target, ctx):
                 outputs = [
                     lint_results_dir,
                     lint_result_xml_file,
+                    lint_result_junit_xml_file,
                     lint_updated_baseline_file,
                     lint_result_code_file,
                 ],
@@ -612,6 +617,7 @@ def _lint_aspect_impl(target, ctx):
                 partial_results_dir = lint_partial_results_dir,
                 models_dir = lint_models_dir,
                 lint_result_xml = lint_result_xml_file,
+                lint_junit_xml = lint_result_junit_xml_file,
                 result_code = lint_result_code_file,
                 updated_baseline = lint_updated_baseline_file,
             )
@@ -623,6 +629,7 @@ def _lint_aspect_impl(target, ctx):
                 enabled = enabled,
                 partial_results_dir = None,
                 lint_result_xml = None,
+                lint_junit_xml = None,
                 result_code = None,
                 updated_baseline = None,
             )

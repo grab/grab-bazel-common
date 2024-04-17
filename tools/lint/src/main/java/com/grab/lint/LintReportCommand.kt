@@ -7,6 +7,7 @@ import com.github.ajalt.clikt.parameters.options.required
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.pathString
+import kotlin.system.measureTimeMillis
 import com.android.tools.lint.Main as LintCli
 
 class LintReportCommand : LintBaseCommand() {
@@ -17,10 +18,16 @@ class LintReportCommand : LintBaseCommand() {
         help = "The lint baseline file"
     ).convert { File(it) }.required()
 
-    private val outputXml by option(
+    private val lintResultXml by option(
         "-o",
         "--output-xml",
         help = "Lint output xml"
+    ).convert { File(it) }.required()
+
+    private val outputJunitXml by option(
+        "-oj",
+        "--output-junit-xml",
+        help = "Lint output in Junit format"
     ).convert { File(it) }.required()
 
     private val resultCode by option(
@@ -46,13 +53,18 @@ class LintReportCommand : LintBaseCommand() {
         projectXml: File,
         tmpBaseline: File,
     ) {
-        val newBaseline = runLint(workingDir, projectXml, tmpBaseline)
-        newBaseline.copyTo(updatedBaseline)
+        val elapsed = measureTimeMillis {
+            runLint(workingDir, projectXml, tmpBaseline, lintResultXml)
+        }
+        tmpBaseline.copyTo(updatedBaseline)
         LintResults(
+            name = name,
+            lintResultsFile = lintResultXml,
+            elapsed = elapsed,
             resultCodeFile = resultCode,
-            lintResultsFile = outputXml,
-            failOnWarnings = failOnWarnings,
+            outputJunitXml = outputJunitXml,
             failOnInformation = failOnInformation,
+            failOnWarnings = failOnWarnings,
         ).process()
     }
 
@@ -62,10 +74,10 @@ class LintReportCommand : LintBaseCommand() {
 
     override val createProjectXml: Boolean = false
 
-    private fun runLint(workingDir: Path, projectXml: File, tmpBaseline: File): File {
+    private fun runLint(workingDir: Path, projectXml: File, tmpBaseline: File, lintResultXml: File) {
         val cliArgs = (defaultLintOptions + listOf(
             "--project", projectXml.toString(),
-            "--xml", outputXml.toString(),
+            "--xml", lintResultXml.toString(),
             "--baseline", tmpBaseline.absolutePath,
             "--path-variables", pathVariables,
             "--cache-dir", workingDir.resolve("cache").pathString,
@@ -73,6 +85,5 @@ class LintReportCommand : LintBaseCommand() {
             "--report-only" // Only do reporting
         )).toTypedArray()
         LintCli().run(cliArgs)
-        return tmpBaseline
     }
 }

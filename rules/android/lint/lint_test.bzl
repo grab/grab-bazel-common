@@ -7,6 +7,7 @@ def _lint_test_impl(ctx):
 
     executable = ctx.actions.declare_file("%s_lint.sh" % target.label.name)
 
+    lint_junit_xml_file = lint_info.lint_junit_xml
     lint_result_xml_file = ctx.outputs.lint_result
     lint_result_code = lint_info.result_code
     if lint_info.enabled:
@@ -15,8 +16,12 @@ def _lint_test_impl(ctx):
             output = lint_result_xml_file,
         )
     else:
-        lint_result_code = ctx.actions.declare_file("%s_result_code" % target.label.name)
+        lint_junit_xml_file = ctx.actions.declare_file("%s_junit.xml" % target.label.name)
+        ctx.actions.write(output = lint_junit_xml_file, content = "")
+
         ctx.actions.write(output = lint_result_xml_file, content = "")
+
+        lint_result_code = ctx.actions.declare_file("%s_result_code" % target.label.name)
         ctx.actions.write(output = lint_result_code, content = "0")
 
     ctx.actions.write(
@@ -25,9 +30,11 @@ def _lint_test_impl(ctx):
         content = """
 #!/bin/bash
 cat {lint_result_xml_file}
+cp {lint_junit_xml_file} $XML_OUTPUT_FILE
 exit $(cat {lint_result_code})
             """.format(
             lint_result_xml_file = lint_result_xml_file.short_path,
+            lint_junit_xml_file = lint_junit_xml_file.short_path,
             lint_result_code = lint_result_code.short_path,
         ),
     )
@@ -35,7 +42,11 @@ exit $(cat {lint_result_code})
     return [
         DefaultInfo(
             executable = executable,
-            runfiles = ctx.runfiles(files = [lint_result_xml_file, lint_result_code]),
+            runfiles = ctx.runfiles(files = [
+                lint_junit_xml_file,
+                lint_result_xml_file,
+                lint_result_code,
+            ]),
             files = depset([
                 ctx.outputs.lint_result,
             ]),

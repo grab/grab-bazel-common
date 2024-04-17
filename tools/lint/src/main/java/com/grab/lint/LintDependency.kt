@@ -12,7 +12,6 @@ data class LintDependency(
     companion object {
         fun from(encodedString: String): LintDependency {
             val (name, android, library, partialResultsDir, modelsDir) = encodedString.split("^")
-            // val partialResults = resolveSymlinks(File(partialResultsDir), workingDir)
             return LintDependency(
                 name = name,
                 android = android.toBoolean(),
