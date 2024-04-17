@@ -1,6 +1,8 @@
 GRAB_BAZEL_COMMON_ARTIFACTS = [
     "org.jetbrains.kotlin:kotlin-parcelize-compiler:1.8.10",
     "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.8.10",
+    "androidx.appcompat:appcompat:1.6.1",
+    "androidx.lifecycle:lifecycle-runtime:2.5.1",
     "androidx.compose.compiler:compiler:1.4.3",
     "androidx.annotation:annotation:1.5.0",
     "androidx.databinding:databinding-adapters:7.2.2",
