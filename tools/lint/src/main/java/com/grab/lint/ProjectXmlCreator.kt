@@ -51,7 +51,7 @@ class ProjectXmlCreator(
         dependencies: List<LintDependency>,
         verbose: Boolean
     ): File {
-        val lintModelsDir = if (modelsDir.exists()) {
+        val lintModelsDir = if (modelsDir.exists() && modelsDir.walk().drop(1).any()) {
             // For android_binary's report step we need to reuse models from analyze action so just return it if it exists
             modelsDir
         } else LintModelCreator().create(
