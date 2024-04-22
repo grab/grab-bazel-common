@@ -186,7 +186,7 @@ def _lint_common_args(
     args.set_param_file_format("multiline")
     args.use_param_file("--flagfile=%s", use_always = True)
 
-    args.add("--name", ctx.label.name)
+    args.add("--name", str(ctx.label).lstrip("@"))
     if android:
         args.add("--android")
     if library:

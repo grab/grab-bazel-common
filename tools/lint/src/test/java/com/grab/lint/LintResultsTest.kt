@@ -144,9 +144,6 @@ class LintResultsTest {
         DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(outputJunitXml).apply {
             assertNode(
                 "testsuites",
-                "name" to "Test",
-                "tests" to "1",
-                "time" to "0"
             )
             assertNode(
                 "testsuite",

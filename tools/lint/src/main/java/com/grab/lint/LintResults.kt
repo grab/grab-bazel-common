@@ -1,5 +1,6 @@
 package com.grab.lint
 
+import org.w3c.dom.Document
 import org.w3c.dom.Element
 import java.io.File
 import java.io.FileWriter
@@ -9,7 +10,6 @@ import java.util.concurrent.TimeUnit
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.OutputKeys
-import javax.xml.transform.Transformer
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
@@ -57,60 +57,78 @@ class LintResults(
 
     private fun buildJunitReport(documentBuilder: DocumentBuilder, errorIssues: List<Element>) {
         val junitDoc = documentBuilder.newDocument()
-        val testSuites = junitDoc.createElement("testsuites").also {
-            it["name"] = name
-            it["tests"] = errorIssues.size.toString()
-            it["time"] = TimeUnit.MILLISECONDS.toSeconds(elapsed).toString()
-        }
-        junitDoc.appendChild(testSuites)
+        val rootTestSuites = junitDoc.createElement("testsuites").also(junitDoc::appendChild)
 
-        errorIssues.groupBy { it["id"] }.forEach { (id, issues) ->
-            val failures = issues.size.toString()
-            val testSuite = junitDoc.createElement("testsuite").also {
-                it["name"] = id
-                it["tests"] = failures
-                it["failures"] = failures
-            }
-            testSuites.appendChild(testSuite)
-
-            issues.forEach { issue ->
-                val message = issue["message"]
-                val summary = issue["summary"]
-                val location = issue.getElementsByTagName("location").elements().first()
-                val file = location["file"].replace("../", "")
-                val line = location["line"]
-                val explanation = listOf(
-                    issue["explanation"],
-                    "\nFile: $file:$line",
-                    "Error line:",
-                    issue["errorLine1"],
-                    issue["errorLine2"]
-                ).joinToString(separator = "\n")
-
-                val testCase = junitDoc.createElement("testcase").also {
-                    it["name"] = message
-                    it["classname"] = summary
-                    it["file"] = file
-                    it["line"] = line
+        when {
+            errorIssues.isEmpty() -> addSuccessfulTestCase(junitDoc, rootTestSuites)
+            else -> errorIssues.groupBy { it["id"] }.forEach { (id, issues) ->
+                val failures = issues.size.toString()
+                val testSuite = junitDoc.createElement("testsuite").also {
+                    it["name"] = id
+                    it["tests"] = failures
+                    it["failures"] = failures
+                    it["time"] = TimeUnit.MILLISECONDS.toSeconds(elapsed).toString()
                 }
-                val failure = junitDoc.createElement("failure").also {
-                    it["message"] = explanation
-                }
-                testCase.appendChild(failure)
-                testSuite.appendChild(testCase)
+                rootTestSuites.appendChild(testSuite)
+                issues.forEach { issue -> mapIssueToTestCase(issue, junitDoc, testSuite) }
             }
         }
 
         try {
             FileWriter(outputJunitXml).use { fileWriter ->
-                val transformer: Transformer = TransformerFactory.newInstance().newTransformer()
-                transformer.setOutputProperty(OutputKeys.INDENT, "yes")
-                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
-                transformer.transform(DOMSource(junitDoc), StreamResult(fileWriter))
+                with(TransformerFactory.newInstance().newTransformer()) {
+                    setOutputProperty(OutputKeys.INDENT, "yes")
+                    setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
+                    transform(DOMSource(junitDoc), StreamResult(fileWriter))
+                }
             }
         } catch (e: Exception) {
             throw RuntimeException(e)
         }
+    }
+
+    private fun addSuccessfulTestCase(junitDoc: Document, rootTestSuites: Element) {
+        val testSuite = junitDoc.createElement("testsuite").also {
+            it["name"] = name
+            it["tests"] = "1"
+            it["time"] = TimeUnit.MILLISECONDS.toSeconds(elapsed).toString()
+            it.appendChild(junitDoc.createElement("testcase").also { testcase ->
+                testcase["name"] = "Android lint on $name"
+                testcase["classname"] = name
+            })
+        }
+        rootTestSuites.appendChild(testSuite)
+    }
+
+    private fun mapIssueToTestCase(
+        issue: Element,
+        junitDoc: Document,
+        testSuite: Element
+    ) {
+        val message = issue["message"]
+        val summary = issue["summary"]
+        val location = issue.getElementsByTagName("location").elements().first()
+        val file = location["file"].replace("../", "")
+        val line = location["line"]
+        val explanation = listOf(
+            issue["explanation"],
+            "\nFile: $file:$line",
+            "Error line:",
+            issue["errorLine1"],
+            issue["errorLine2"]
+        ).joinToString(separator = "\n")
+
+        val testCase = junitDoc.createElement("testcase").also {
+            it["name"] = message
+            it["classname"] = summary
+            it["file"] = file
+            it["line"] = line
+        }
+        val failure = junitDoc.createElement("failure").also {
+            it["message"] = explanation
+        }
+        testCase.appendChild(failure)
+        testSuite.appendChild(testCase)
     }
 
     companion object {
