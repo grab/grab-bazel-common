@@ -17,8 +17,6 @@ class LintAnalyzeCommand : LintBaseCommand() {
         Files.createDirectories(partialResults.toPath())
     }
 
-    override val createProjectXml = true
-
     override fun run(
         workingDir: Path,
         projectXml: File,

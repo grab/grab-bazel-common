@@ -38,6 +38,7 @@ class ProjectXmlCreator(
         minSdkVersion: String,
         targetSdkVersion: String,
         partialResults: File,
+        createModelsDir: Boolean,
         modelsDir: File,
         srcs: List<String>,
         resources: List<String>,
@@ -51,8 +52,7 @@ class ProjectXmlCreator(
         dependencies: List<LintDependency>,
         verbose: Boolean
     ): File {
-        val lintModelsDir = if (modelsDir.exists() && modelsDir.walk().drop(1).any()) {
-            // For android_binary's report step we need to reuse models from analyze action so just return it if it exists
+        val lintModelsDir = if (!createModelsDir) {
             modelsDir
         } else LintModelCreator().create(
             compileSdkVersion = compileSdkVersion,

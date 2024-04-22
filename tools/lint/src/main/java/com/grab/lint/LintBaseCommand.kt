@@ -79,7 +79,7 @@ abstract class LintBaseCommand : CliktCommand() {
     protected val jdkHome by option(
         "-j",
         "--jdk-home",
-        help = "Path fo Java home"
+        help = "Path to Java home"
     ).required()
 
     protected val verbose by option(
@@ -99,6 +99,15 @@ abstract class LintBaseCommand : CliktCommand() {
         help = "Lint models directory containing models.xml"
     ).convert { File(it) }.required()
 
+    private val createModelsDir by option(
+        "-mc",
+        "--create-models-dir",
+        help = "Whether to create a new lint models dir specified via --models-dir"
+    ).flag(
+        "--no-create-models-dir",
+        default = true
+    )
+
     protected val inputBaseline by option(
         "-b",
         "--baseline",
@@ -110,6 +119,15 @@ abstract class LintBaseCommand : CliktCommand() {
         "--project-xml",
         help = "Path to project.xml that will be created/reused when invoking Lint CLI"
     ).convert { File(it) }.required()
+
+    private val createProjectXml by option(
+        "-pc",
+        "--create-project-xml",
+        help = "Whether to create a new project.xml or reuse one specified in --project-xml"
+    ).flag(
+        "--no-create-project-xml",
+        default = true
+    )
 
     private val compileSdkVersion: String by option(
         "-cs",
@@ -161,6 +179,7 @@ abstract class LintBaseCommand : CliktCommand() {
                     minSdkVersion = minSdkVersion,
                     targetSdkVersion = targetSdkVersion,
                     partialResults = partialResults,
+                    createModelsDir = createModelsDir,
                     modelsDir = modelsDir,
                     srcs = srcs,
                     resources = resources,
@@ -192,14 +211,6 @@ abstract class LintBaseCommand : CliktCommand() {
         projectXml: File,
         tmpBaseline: File,
     )
-
-    /**
-     * Create new project.xml at [projectXml].
-     *
-     * Required for non-sandbox modes since we can't rely on file system state when executing in non sandbox modes as previous results might
-     * be still there. When true, a new project XML will be created at [projectXml] and if `false` will use the project xml at this location
-     */
-    abstract val createProjectXml: Boolean
 
     /**
      * Common options for Lint across different types of invocations, analyze or report.

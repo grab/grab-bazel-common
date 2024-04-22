@@ -398,7 +398,8 @@ def _lint_report_action(
         jdk_home = jdk_home,
         verbose = verbose,
     )
-
+    args.add("--no-create-project-xml")
+    args.add("--no-create-models-dir")
     args.add("--updated-baseline", updated_baseline)
     args.add("--fail-on-warning", fail_on_warning)
     args.add("--fail-on-information", fail_on_information)
