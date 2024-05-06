@@ -1,6 +1,5 @@
 workspace(name = "grab_bazel_common")
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@grab_bazel_common//rules:repositories.bzl", "bazel_common_dependencies")
 
 bazel_common_dependencies()

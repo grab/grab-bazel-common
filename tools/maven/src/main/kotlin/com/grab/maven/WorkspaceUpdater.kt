@@ -5,9 +5,8 @@ import java.io.File
 class WorkspaceUpdater(
     private val workspace: File
 ) {
-
     private val pinnedMavenInstallAttr = "pinned_maven_install ="
-    private val pinBazelCommonArtifacts = "pin_bazel_common_artifacts()"
+    private val pinBazelCommonArtifacts = "pin_bazel_common_dependencies()"
 
     fun pin() {
         with(workspace) {
@@ -16,7 +15,7 @@ class WorkspaceUpdater(
                     "$pinnedMavenInstallAttr False",
                     "$pinnedMavenInstallAttr True"
                 ).replace(
-                    "#+pin_bazel_common_artifacts\\(\\)".toRegex(),
+                    "#+pin_bazel_common_dependencies\\(\\)".toRegex(),
                     pinBazelCommonArtifacts
                 )
             )

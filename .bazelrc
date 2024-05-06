@@ -6,8 +6,11 @@ build --verbose_failures
 # Action Env
 build --incompatible_strict_action_env
 build --repo_env=RJE_VERBOSE=true
+common --noincompatible_disallow_unsound_directory_outputs
 
 common --experimental_google_legacy_api
+
+common --enable_bzlmod=false
 
 # Workers
 build --experimental_worker_multiplex

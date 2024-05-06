@@ -11,17 +11,16 @@ import java.io.File
 class MavenInstallPin : CliktCommand() {
 
     private val mavenRepoName by option(
-        "-M",
+        "-m",
         "--maven_repo",
         help = "Name of the maven_install repo to run pinning"
     ).required()
 
-    private val workingDir = System.getenv("BUILD_WORKSPACE_DIRECTORY")
-        ?: error("Missing BUILD_WORKSPACE_DIRECTORY environment")
+    private val workingDir = System.getenv("BUILD_WORKSPACE_DIRECTORY") ?: error("Missing BUILD_WORKSPACE_DIRECTORY environment")
 
     private val bazelInvoker = BazelInvokerFactory.create(workingDir = workingDir)
 
-
+    @Suppress("SameParameterValue")
     private fun file(name: String) = File(workingDir, name)
 
     override fun run() {

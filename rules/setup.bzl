@@ -87,11 +87,11 @@ def bazel_common_setup(
             "org.json:json:20210307",
         ],
         repositories = DAGGER_REPOSITORIES + [
-            "https://jcenter.bintray.com/",
             "https://maven.google.com",
             "https://repo1.maven.org/maven2",
         ],
         strict_visibility = True,
+        resolve_timeout = 3500,
         maven_install_json = maven_install_json,
         fetch_sources = True,
     )
