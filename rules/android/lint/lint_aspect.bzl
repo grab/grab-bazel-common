@@ -468,7 +468,7 @@ def _lint_aspect_impl(target, ctx):
             project_xml_file = ctx.actions.declare_file("lint/" + target.label.name + "_project.xml")
 
             # Models
-            lint_models_dir = ctx.actions.declare_file("lint/" + target.label.name + "_models_dir")
+            lint_models_dir = ctx.actions.declare_directory("lint/" + target.label.name + "_models_dir")
             # Output - End
 
             sources = _collect_sources(target, ctx, library)

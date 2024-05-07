@@ -1,57 +1,60 @@
-# Disk cache
-build --disk_cache=bazel-cache
+# Cache
+common --disk_cache=bazel-cache
+common --remote_cache_compression=true
 
-build --verbose_failures
+# Errors
+common --verbose_failures
 
 # Action Env
-build --incompatible_strict_action_env
-build --repo_env=RJE_VERBOSE=true
-common --noincompatible_disallow_unsound_directory_outputs
-
-common --experimental_google_legacy_api
+common --incompatible_strict_action_env
+common --reuse_sandbox_directories
+common --repo_env=RJE_VERBOSE=true
 
 common --enable_bzlmod=false
 
 # Workers
-build --experimental_worker_multiplex
+common --worker_verbose
+common --experimental_worker_multiplex
+common --experimental_shrink_worker_pool
 
 # JAVA - START
-build --experimental_strict_java_deps=off # Turn off strict java deps
-build --java_runtime_version=remotejdk_11 # Use inbuilt Java 11 for hermeticity
-build --jvmopt="-Djava.locale.providers=COMPAT,SPI" # Use Java 8 default locale provider
+common --experimental_java_classpath=bazel
+common --experimental_strict_java_deps=off # Turn off strict java deps
+common --java_runtime_version=remotejdk_11 # Use inbuilt Java 11 for hermeticity
+common --jvmopt="-Djava.locale.providers=COMPAT,SPI" # Use Java 8 default locale provider
 # JAVA - END
 
-# Android 
-# Databinding flags
-common --experimental_android_databinding_v2
-common --android_databinding_use_v3_4_args
-common --android_databinding_use_androidx
-# D8 and Dexing flags
-build --define=android_incremental_dexing_tool=d8_dexbuilder
-build --define=android_standalone_dexing_tool=d8_compat_dx
-build --define=android_dexmerger_tool=d8_dexmerger
+# Android
+common --experimental_google_legacy_api
 
-build --persistent_multiplex_android_tools
-build --strategy=DatabindingStubs=worker
-build --worker_max_instances=Javac=1
-build --worker_max_instances=KotlinCompile=1
-build --worker_max_instances=KotlinKapt=1
-build --worker_max_instances=AaptPackage=1
-build --worker_max_instances=AndroidResourceParser=1
-build --worker_max_instances=AndroidResourceCompiler=1
-build --worker_max_instances=AndroidResourceValidator=1
-build --worker_max_instances=AndroidLintAnalyze=1
-build --worker_max_instances=AndroidLint=1
-build --worker_max_instances=RClassGenerator=1
-build --worker_max_instances=AndroidAapt2=1
-build --worker_max_instances=AndroidAssetMerger=1
-build --worker_max_instances=AndroidResourceMerger=1
-build --worker_max_instances=AndroidCompiledResourceMerger=1
-build --worker_max_instances=Aapt2Optimize=1
-build --worker_max_instances=DatabindingStubs=1
-build --worker_max_instances=GenerateDataBindingBaseClasses=1
-build --worker_max_instances=DexBuilder=1
-build --worker_max_instances=Desugar=1
+# D8 and Dexing flags
+common --define=android_incremental_dexing_tool=d8_dexbuilder
+common --define=android_standalone_dexing_tool=d8_compat_dx
+common --define=android_dexmerger_tool=d8_dexmerger
+
+common --experimental_persistent_aar_extractor
+common --persistent_multiplex_android_tools
+common --persistent_android_dex_desugar
+common --strategy=DatabindingStubs=worker
+common --worker_max_instances=Javac=1
+common --worker_max_instances=KotlinCompile=1
+common --worker_max_instances=KotlinKapt=1
+common --worker_max_instances=AaptPackage=1
+common --worker_max_instances=AndroidResourceParser=1
+common --worker_max_instances=AndroidResourceCompiler=1
+common --worker_max_instances=AndroidResourceValidator=1
+common --worker_max_instances=AndroidLintAnalyze=1
+common --worker_max_instances=AndroidLint=1
+common --worker_max_instances=RClassGenerator=1
+common --worker_max_instances=AndroidAapt2=1
+common --worker_max_instances=AndroidAssetMerger=1
+common --worker_max_instances=AndroidResourceMerger=1
+common --worker_max_instances=AndroidCompiledResourceMerger=1
+common --worker_max_instances=Aapt2Optimize=1
+common --worker_max_instances=DatabindingStubs=1
+common --worker_max_instances=GenerateDataBindingBaseClasses=1
+common --worker_max_instances=DexBuilder=1
+common --worker_max_instances=Desugar=1
 
 test --test_output=errors # Print test logs for failed tests
 test --build_tests_only
