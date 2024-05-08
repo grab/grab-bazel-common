@@ -1,6 +1,12 @@
+# BzlMod
+common --enable_bzlmod=false
+
 # Cache
 common --disk_cache=bazel-cache
 common --remote_cache_compression=true
+startup --digest_function=blake3
+common --experimental_action_cache_store_output_metadata
+common --modify_execution_info=JavaDeployJar=+no-remote-cache # Don't cache Java deploy jar which is huge in size
 
 # Errors
 common --verbose_failures
@@ -10,27 +16,36 @@ common --incompatible_strict_action_env
 common --reuse_sandbox_directories
 common --repo_env=RJE_VERBOSE=true
 
-common --enable_bzlmod=false
-
 # Workers
 common --worker_verbose
 common --experimental_worker_multiplex
 common --experimental_shrink_worker_pool
+common --experimental_worker_for_repo_fetching=platform
 
 # JAVA - START
-common --experimental_java_classpath=bazel
 common --experimental_strict_java_deps=off # Turn off strict java deps
 common --java_runtime_version=remotejdk_11 # Use inbuilt Java 11 for hermeticity
+common --tool_java_runtime_version=remotejdk_11
 common --jvmopt="-Djava.locale.providers=COMPAT,SPI" # Use Java 8 default locale provider
+common --experimental_java_classpath=bazel 
+common --experimental_java_header_input_pruning
 # JAVA - END
 
 # Android
 common --experimental_google_legacy_api
-
+common --noincompatible_enable_android_toolchain_resolution
+common --noincompatible_enable_cc_toolchain_resolution
 # D8 and Dexing flags
 common --define=android_incremental_dexing_tool=d8_dexbuilder
 common --define=android_standalone_dexing_tool=d8_compat_dx
 common --define=android_dexmerger_tool=d8_dexmerger
+# Resource Merging
+common --experimental_disable_instrumentation_manifest_merge
+common --features=android_resources_strict_deps
+common --output_library_merged_assets=false # Turn off asset merging artifact
+# common --android_non_transitive_r_class=true # Disable resource merging a.k.a non transitive R class
+# common --experimental_use_package_aware_rtxt=true # Use package aware R.txt files (required for databinding)
+# common --define=nontransitive_r_class=1 # Adapt bazel common rules for non transitive R class
 
 common --experimental_persistent_aar_extractor
 common --persistent_multiplex_android_tools
