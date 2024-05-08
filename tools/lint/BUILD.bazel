@@ -9,7 +9,7 @@ kotlin_test(
         "//tools/lint/src/main/java/com/grab/lint",
         "//tools/test_utils",
         "@bazel_common_maven//:junit_junit",
-        "@com_github_jetbrains_kotlin//:kotlin-test",
+        "@maven//:org_jetbrains_kotlin_kotlin_test",
     ],
 )
 

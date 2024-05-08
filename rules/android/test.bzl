@@ -56,7 +56,7 @@ def android_unit_test(
         test_runtime_deps = [
             ":" + runtime_resources_name,
             "@grab_bazel_common//rules/android:mock_android_jar",
-            "@com_github_jetbrains_kotlin//:kotlin-reflect",
+            "@maven//:org_jetbrains_kotlin_kotlin_reflect",
         ],
         resources = resources,
         **kwargs

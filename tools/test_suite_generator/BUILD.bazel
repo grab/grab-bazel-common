@@ -39,6 +39,6 @@ kotlin_test(
     deps = [
         ":test_suite_generator",
         "@bazel_common_maven//:junit_junit",
-        "@com_github_jetbrains_kotlin//:kotlin-test",
+        "@maven//:org_jetbrains_kotlin_kotlin_test",
     ],
 )

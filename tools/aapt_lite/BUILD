@@ -9,7 +9,7 @@ kotlin_test(
         "//tools/aapt_lite/src/main/java/com/grab/aapt",
         "//tools/test_utils",
         "@bazel_common_maven//:junit_junit",
-        "@com_github_jetbrains_kotlin//:kotlin-test",
+        "@maven//:org_jetbrains_kotlin_kotlin_test",
     ],
 )
 

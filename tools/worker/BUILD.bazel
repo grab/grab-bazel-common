@@ -28,6 +28,6 @@ kotlin_test(
     deps = [
         ":worker_lib",
         "@bazel_common_maven//:junit_junit",
-        "@com_github_jetbrains_kotlin//:kotlin-test",
+        "@maven//:org_jetbrains_kotlin_kotlin_test",
     ],
 )

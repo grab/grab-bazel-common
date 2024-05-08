@@ -46,6 +46,6 @@ kotlin_test(
         ":binding-adapter-processor",
         "@bazel_common_maven//:com_github_tschuchortdev_kotlin_compile_testing",
         "@bazel_common_maven//:junit_junit",
-        "@com_github_jetbrains_kotlin//:kotlin-test",
+        "@maven//:org_jetbrains_kotlin_kotlin_test",
     ],
 )

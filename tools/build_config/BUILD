@@ -53,8 +53,8 @@ kotlin_test(
     ],
     deps = [
         ":build-config-sample",
-        "@com_github_jetbrains_kotlin//:kotlin-test",
         "@maven//:junit_junit",
+        "@maven//:org_jetbrains_kotlin_kotlin_test",
     ],
 )
 
@@ -75,7 +75,7 @@ kotlin_test(
     ],
     deps = [
         ":build-config-replace-default",
-        "@com_github_jetbrains_kotlin//:kotlin-test",
         "@maven//:junit_junit",
+        "@maven//:org_jetbrains_kotlin_kotlin_test",
     ],
 )

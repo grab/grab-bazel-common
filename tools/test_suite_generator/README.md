@@ -12,22 +12,25 @@ For example, you have a bunch of test classes
 ```kotlin
 class DummyTestClassA {
     @Test
-    fun testFeatureA() {}
+    fun testFeatureA() {
+    }
 }
 
 class DummyTestClassB {
     @Test
-    fun testFeatureB() {}
+    fun testFeatureB() {
+    }
 }
 ```
 
 The generated TestSuite class will look like
 
 ```java
+
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-    DummyTestClassA.class,
-    DummyTestClassB.class
+        DummyTestClassA.class,
+        DummyTestClassB.class
 })
 public class TestSuite {
 }
@@ -40,13 +43,15 @@ You simply add the annotation processor as a dependency for your target. Below i
 ```kotlin
 kt_jvm_test(
     name = "your-test-target",
-    srcs = glob([
-        "..."
-    ]),
+    srcs = glob(
+        [
+            "..."
+        ]
+    ),
     test_class = "com.grazel.generated.TestSuite", // Be aware that the package name is hardcoded
     deps = [
         "@grab_bazel_common//tools/test-info-processor:test-suite-generator",
-        "@com_github_jetbrains_kotlin//:kotlin-test",
+        "@maven//:org_jetbrains_kotlin_kotlin_test",
         "@maven//:junit_junit",
     ],
 )

@@ -49,7 +49,7 @@ def grab_android_local_test(
         ],
         test_runtime_deps = [
             "@grab_bazel_common//tools/test:mockable-android-jar",
-            "@com_github_jetbrains_kotlin//:kotlin-reflect",
+            "@maven//:org_jetbrains_kotlin_kotlin_reflect",
         ],
         **kwargs
     )
@@ -84,7 +84,7 @@ def grab_kt_jvm_test(
         deps = deps,
         test_compile_deps = [],
         test_runtime_deps = [
-            "@com_github_jetbrains_kotlin//:kotlin-reflect",
+            "@maven//:org_jetbrains_kotlin_kotlin_reflect",
         ],
         **kwargs
     )

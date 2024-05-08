@@ -29,7 +29,7 @@ def kotlin_test(
         deps = deps,
         test_compile_deps = [],
         test_runtime_deps = [
-            "@com_github_jetbrains_kotlin//:kotlin-reflect",
+            "@maven//:org_jetbrains_kotlin_kotlin_reflect",
         ],
         **kwargs
     )
