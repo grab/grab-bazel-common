@@ -1,6 +1,7 @@
 package com.google.devtools.build.android
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
@@ -11,10 +12,17 @@ import java.io.File
 
 class ResourceMergerCommand : CliktCommand() {
 
+    @Suppress("unused")
+    private val label by option(
+        "-l",
+        "--label",
+        help = "The label name that invokes this merger."
+    )
+
     private val target by option(
         "-t",
         "--target",
-        help = "The target name"
+        help = "The target name, this will be used to decode source set paths"
     ).required()
 
     private val sourceSets by option(
@@ -22,6 +30,12 @@ class ResourceMergerCommand : CliktCommand() {
         "--source-sets",
         help = "List of sources sets in the format $SOURCE_SET_FORMAT separated by `,`"
     ).split(",").default(emptyList())
+
+    private val manifest by option(
+        "-m",
+        "--manifest",
+        help = "The merged manifest output file"
+    ).convert { File(it) }
 
     private val outputs by option(
         "-o",
@@ -36,7 +50,11 @@ class ResourceMergerCommand : CliktCommand() {
             deleteRecursively()
             parentFile?.mkdirs()
         }
-        ResourceMerger.merge(/* sourceSets = */ sourceSets, /* outputDir = */ outputDir)
+        ResourceMerger.merge(
+            /* sourceSets = */ sourceSets,
+            /* outputDir = */ outputDir,
+            /* manifest = */ manifest
+        )
         OutputFixer.process(outputDir = outputDir, declaredOutputs = outputs)
     }
 }
