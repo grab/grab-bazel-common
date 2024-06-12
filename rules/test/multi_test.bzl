@@ -1,4 +1,3 @@
-load("@grab_bazel_common//rules:defs.bzl", "kotlin_library")
 load(":runtime_resources.bzl", "runtime_resources")
 
 # Unused

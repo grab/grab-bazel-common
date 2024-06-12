@@ -1,5 +1,4 @@
 load("@grab_bazel_common//tools/build_config:build_config.bzl", _build_config = "build_config")
-load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "kt_db_android_library")
 load(":resources.bzl", "build_resources")

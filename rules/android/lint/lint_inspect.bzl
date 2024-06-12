@@ -2,7 +2,6 @@ load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo")
 load("@grab_bazel_common//rules/android:utils.bzl", "utils")
 
 def _lint_inspector(ctx):
-    lint_target = ctx.attr.lint_target
     target = ctx.attr.target
 
     lint_checks = ctx.attr.lint_target[AndroidLintInfo].inspect_info.lint_checks

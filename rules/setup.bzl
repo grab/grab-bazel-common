@@ -5,7 +5,6 @@ load(
 )
 
 # Internal
-load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
 load("@grab_bazel_common//tools/buildifier:defs.bzl", "BUILDIFIER_DEFAULT_VERSION")
 load("@grab_bazel_common//android/tools:defs.bzl", "android_tools")
 

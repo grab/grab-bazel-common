@@ -7,7 +7,6 @@ def _to_path(f):
 
 def _resource_merger_impl(ctx):
     outputs = ctx.outputs.merged_resources
-    label = ctx.label.name
 
     # Args for compiler
     args = ctx.actions.args()

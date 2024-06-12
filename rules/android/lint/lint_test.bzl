@@ -1,5 +1,4 @@
 load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo")
-load("@grab_bazel_common//rules/android/lint:lint_aspect.bzl", "lint_aspect")
 
 def _lint_test_impl(ctx):
     target = ctx.attr.target

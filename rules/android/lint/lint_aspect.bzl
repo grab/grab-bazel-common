@@ -1,8 +1,6 @@
 load("@grab_bazel_common//rules/android:utils.bzl", "utils")
 load(
     "@grab_bazel_common//rules/android/lint:providers.bzl",
-    "AarInfo",
-    "AarNodeInfo",
     "AndroidLintInfo",
     "AndroidLintInspectInfo",
     "AndroidLintNodeInfo",
