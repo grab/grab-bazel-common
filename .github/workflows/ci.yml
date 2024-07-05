@@ -1,4 +1,4 @@
-name: Build workflow
+name: CI workflow
 
 on:
   push:
@@ -6,11 +6,15 @@ on:
       - master
   pull_request:
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Bazel build
         uses: ./.github/actions/bazel
         with:
@@ -20,7 +24,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Bazel build
         uses: ./.github/actions/bazel
         with:
@@ -30,7 +34,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Bazel test
         uses: ./.github/actions/bazel
         with:

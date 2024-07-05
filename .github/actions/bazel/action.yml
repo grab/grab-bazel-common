@@ -17,7 +17,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install JDK 1&
+    - name: Install JDK 17
       uses: actions/setup-java@v4
       with:
         distribution: "zulu"
@@ -27,7 +27,7 @@ runs:
       with:
         bazelisk-cache: true
         # Store build cache per workflow.
-        disk-cache: ${{ inputs.cache-key }}
+        disk-cache: ${{ inputs.cache-key }}-${{ github.workflow }}
         # Share repository cache between workflows.
         repository-cache: true
 

@@ -83,6 +83,6 @@ run --ui_event_filters=-info,-stdout --noshow_progress
 
 # Ci Config
 common:ci --noshow_progress
-common:ci --color=no
+common:ci --color=yes
 
 try-import local.bazelrc
