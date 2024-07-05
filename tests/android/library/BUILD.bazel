@@ -1,4 +1,4 @@
-load("@grab_bazel_common//rules:defs.bzl", "android_library", "android_unit_test")
+load("@grab_bazel_common//rules:defs.bzl", "android_library", "android_unit_test", "detekt_options")
 
 android_library(
     name = "android_library_sample",
@@ -6,6 +6,10 @@ android_library(
         "src/main/java/**/*.kt",
     ]),
     custom_package = "com.grab.test.lib",
+    detekt_options = detekt_options(
+        baseline = "detekt_baseline.xml",
+        enabled = True,
+    ),
     enable_data_binding = True,
     lint_options = {
         "enabled": True,

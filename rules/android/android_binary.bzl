@@ -2,6 +2,7 @@ load("@grab_bazel_common//tools/build_config:build_config.bzl", _build_config = 
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "DATABINDING_DEPS")
 load("@grab_bazel_common//rules/android/lint:defs.bzl", "LINT_ENABLED", "lint", "lint_sources", _lint_baseline = "baseline")
+load("@grab_bazel_common//rules/check/detekt:defs.bzl", "detekt")
 load(":resources.bzl", "build_resources")
 
 def android_binary(
@@ -13,6 +14,7 @@ def android_binary(
         enable_data_binding = False,
         enable_compose = False,
         lint_options = {},
+        detekt_options = {},
         **attrs):
     """
     `android_binary` wrapper that setups a native.android_binary with various customizations
@@ -26,6 +28,7 @@ def android_binary(
                  resource for `android_binary`.
       custom_package: The package name for android_binary, must be same as one declared in AndroidManifest.xml
       lint_options: Lint options to pass to lint, typically contains baselines and config.xml
+      detekt_options: detekt options to pass to detekt, typically contains baselines and config.yml
       enable_data_binding: Enable android databinding support for this target
       enable_compose: Enable Jetpack Compose support for this target
       **attrs: Additional attrs to pass to generated android_binary.
@@ -93,6 +96,20 @@ def android_binary(
             name = name,
             linting_target = name,
             lint_baseline = lint_baseline,
+        )
+
+    if (detekt_options.get("enabled", False) and len(attrs.get("srcs", default = [])) > 0):
+        detekt(
+            name = name,
+            baseline = detekt_options.get("baseline", None),
+            cfgs = detekt_options.get("config", None),
+            srcs = attrs.get("srcs", default = []),
+            parallel = detekt_options.get("parallel", default = False),
+            all_rules = detekt_options.get("all_rules", default = False),
+            build_upon_default_config = detekt_options.get("build_upon_default_config", default = False),
+            disable_default_rule_sets = detekt_options.get("disable_default_rule_sets", default = False),
+            auto_correct = detekt_options.get("auto_correct", default = False),
+            detekt_checks = detekt_options.get("detekt_checks", default = []),
         )
 
     if enable_data_binding:

@@ -37,6 +37,18 @@ def _kotlin():
         urls = ["https://github.com/bazelbuild/rules_kotlin/releases/download/v%s/rules_kotlin_release.tgz" % RULES_KOTLIN_VERSION],
     )
 
+def _detekt():
+    rules_detekt_version = "0.8.1.4"
+
+    rules_detekt_sha = "95640b50bbb4d196ad00cce7455f6033f2a262aa56ac502b559160ca7ca84e3f"
+
+    http_archive(
+        name = "rules_detekt",
+        sha256 = rules_detekt_sha,
+        strip_prefix = "bazel_rules_detekt-{v}".format(v = rules_detekt_version),
+        url = "https://github.com/mohammadkahelghi-grabtaxi/bazel_rules_detekt/releases/download/v{v}/bazel_rules_detekt-v{v}.tar.gz".format(v = rules_detekt_version),
+    )
+
 def _proto():
     http_archive(
         name = "com_google_protobuf",
@@ -70,3 +82,4 @@ def bazel_common_dependencies():
     #_proto
     _maven()
     _kotlin()
+    _detekt()

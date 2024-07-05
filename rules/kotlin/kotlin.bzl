@@ -2,6 +2,7 @@ load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", _kt_jvm_library = "kt_jvm_library
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", _kt_compiler_plugin = "kt_compiler_plugin")
 load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint", "lint_sources")
 load("@grab_bazel_common//rules/android/lint:providers.bzl", "LINT_ENABLED")
+load("@grab_bazel_common//rules/check/detekt:defs.bzl", "detekt")
 
 kt_jvm_library = _kt_jvm_library
 kt_compiler_plugin = _kt_compiler_plugin
@@ -10,6 +11,7 @@ def kt_jvm_library_interal(
         name,
         exec_properties = None,
         lint_options = {},
+        detekt_options = {},
         **attrs):
     srcs = attrs.get("srcs", default = [])
     lint_sources_target = "_" + name + "_lint_sources"
@@ -38,6 +40,20 @@ def kt_jvm_library_interal(
 
         attrs["deps"] = deps
         attrs["tags"] = tags
+
+    if (detekt_options.get("enabled", False) and len(srcs) > 0):
+        detekt(
+            name = name,
+            baseline = detekt_options.get("baseline", None),
+            cfgs = detekt_options.get("config", None),
+            srcs = srcs,
+            parallel = detekt_options.get("parallel", default = False),
+            all_rules = detekt_options.get("all_rules", default = False),
+            build_upon_default_config = detekt_options.get("build_upon_default_config", default = False),
+            disable_default_rule_sets = detekt_options.get("disable_default_rule_sets", default = False),
+            auto_correct = detekt_options.get("auto_correct", default = False),
+            detekt_checks = detekt_options.get("detekt_checks", default = []),
+        )
 
     kt_jvm_library(
         name = name,

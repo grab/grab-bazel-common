@@ -3,6 +3,7 @@ load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "kt_db_android_library")
 load(":resources.bzl", "build_resources")
 load("@grab_bazel_common//rules/android/lint:defs.bzl", "LINT_ENABLED", "lint", "lint_sources")
+load("@grab_bazel_common//rules/check/detekt:defs.bzl", "detekt")
 
 def android_library(
         name,
@@ -14,6 +15,7 @@ def android_library(
         enable_data_binding = False,
         enable_compose = False,
         lint_options = {},
+        detekt_options = {},
         **attrs):
     """
     `android_binary` wrapper that setups a native.android_binary with various customizations
@@ -76,6 +78,20 @@ def android_library(
             lint_baseline = lint_baseline,
         )
         tags = tags + [LINT_ENABLED]
+
+    if (detekt_options.get("enabled", False) and len(srcs) > 0):
+        detekt(
+            name = name,
+            baseline = detekt_options.get("baseline", None),
+            cfgs = detekt_options.get("config", None),
+            srcs = srcs,
+            parallel = detekt_options.get("parallel", default = False),
+            all_rules = detekt_options.get("all_rules", default = False),
+            build_upon_default_config = detekt_options.get("build_upon_default_config", default = False),
+            disable_default_rule_sets = detekt_options.get("disable_default_rule_sets", default = False),
+            auto_correct = detekt_options.get("auto_correct", default = False),
+            detekt_checks = detekt_options.get("detekt_checks", default = []),
+        )
 
     if enable_compose:
         android_library_deps.extend(["@grab_bazel_common//rules/android/compose:compose-plugin"])
