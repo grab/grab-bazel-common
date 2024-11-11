@@ -18,7 +18,7 @@ class SourceSetTest {
         SourceSet.from("target", "res::manifest").let { sourceSet ->
             assertTrue("Res is parsed", sourceSet.resourceDirs.all { it.name == "res" })
             assertTrue("Empty paths are skipped", sourceSet.assetDirs.isEmpty())
-            assertTrue("Manifest is parsed", sourceSet.manifest.name == "manifest")
+            assertTrue("Manifest is only parsed when it exists on disk", sourceSet.manifest?.name == null)
         }
     }
 }

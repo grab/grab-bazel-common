@@ -16,6 +16,7 @@
 
 package com.grab.aapt.databinding.binding.store
 
+import com.grab.aapt.databinding.common.BASE_DIR
 import com.grab.aapt.databinding.common.CLASS_INFOS
 import com.grab.aapt.databinding.common.LAYOUT_FILES
 import com.grab.aapt.databinding.common.PACKAGE_NAME
@@ -26,7 +27,7 @@ import com.squareup.javapoet.TypeName
 import dagger.Binds
 import dagger.Module
 import java.io.File
-import java.nio.file.Files
+import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import javax.inject.Inject
 import javax.inject.Named
@@ -107,6 +108,8 @@ constructor(
 class DependenciesLayoutTypeStore
 @Inject
 constructor(
+    @Named(BASE_DIR)
+    private val baseDir: File,
     @Named(CLASS_INFOS) private val classInfoZips: List<File>,
     private val bindingClassJsonParser: BindingClassJsonParser,
 ) : LayoutTypeStore {
@@ -114,7 +117,7 @@ constructor(
     /**
      * The directory where the classInfo.zips will be extracted to
      */
-    var extractionDir: File = Files.createTempDirectory("temp").toFile()
+    val extractionDir: File = baseDir.toPath().resolve("class_infos").toFile()
 
     /**
      * Stores classInfo.zip extraction result. This is used to avoid doing repeat extractions when
@@ -122,8 +125,7 @@ constructor(
      * Key: name of the classInfo zip file
      * Values: Binding class json files
      */
-    private val classInfoZipContentCache = mutableMapOf<String, List<File>>()
-        .withDefault { emptyList() }
+    private val classInfoZipContentCache = mutableMapOf<String, List<File>>().withDefault { emptyList() }
 
     /**
      * Extract the classInfo.zip to [extractionDir] and return list of binding class json files in
@@ -139,30 +141,32 @@ constructor(
             return classInfoZipContentCache.getValue(cacheKey)
         } else {
             // Perform an extraction and cache the result
+            val dirName = classInfoZip.parentFile?.name ?: error("$classInfoZip does not exist")
+            val targetDir = File(extractionDir, dirName).apply { mkdirs() }
             val jsonFiles = mutableListOf<File>()
             ZipFile(classInfoZip).use { zip ->
-                zip.entries().asSequence().forEach { entry ->
-                    zip.getInputStream(entry).buffered().use { input ->
-                        val dir = File(
-                            extractionDir,
-                            classInfoZip.parentFile?.name ?: error("$classInfoZip does not exist")
-                        )
-                        val extractedFile = File(dir, entry.name).apply { parentFile?.mkdirs() }
-                        when {
-                            entry.isDirectory -> extractedFile.mkdirs()
-                            else -> {
-                                extractedFile
-                                    .also { jsonFiles.add(it) }
-                                    .outputStream()
-                                    .buffered()
-                                    .use { output -> input.copyTo(output) }
-                            }
-                        }
+                zip.entries().asSequence()
+                    .filterNot { it.isDirectory }
+                    .forEach { entry ->
+                        val extractedFile = File(targetDir, entry.name)
+                        extractFile(zip, entry, extractedFile)
+                        jsonFiles.add(extractedFile)
                     }
-                }
             }
             classInfoZipContentCache[cacheKey] = jsonFiles
             return jsonFiles
+        }
+    }
+
+    /**
+     * Extracts a single file from the ZIP archive.
+     */
+    private fun extractFile(zip: ZipFile, entry: ZipEntry, outputFile: File) {
+        outputFile.parentFile?.mkdirs()
+        zip.getInputStream(entry).buffered().use { input ->
+            outputFile.outputStream().buffered().use { output ->
+                input.copyTo(output)
+            }
         }
     }
 

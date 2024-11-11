@@ -25,6 +25,7 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
 import com.grab.cli.WorkingDirectory
 import java.io.File
+import java.nio.file.Files
 
 class AaptLiteCommand : CliktCommand() {
 
@@ -70,16 +71,23 @@ class AaptLiteCommand : CliktCommand() {
         help = "The stubs srcjar location where the generated stubs will be written to"
     ).convert { File(it) }.required()
 
+    private val targetName by option(
+        "-n",
+        "--name",
+    ).required()
+
     override fun run() {
-        val resourcesFiles = resources.map { path -> File(path) }
+        val resourcesFiles = resources.map(::File)
         val layoutFiles = resourcesFiles.filter { it.path.contains("/layout") }
 
-        val classInfoZip = classInfos.map { File(it) }
-        val depRTxts = rTxts.map { File(it) }
+        val classInfoZip = classInfos.map(::File)
+        val depRTxts = rTxts.map(::File)
 
-        WorkingDirectory().use {
-            val command = DaggerAaptLiteComponent.factory().create(
-                baseDir = it.dir.toFile(),
+        val prefix = targetName.replace("/", "_").replace(":", "_")
+
+        WorkingDirectory(dir = Files.createTempDirectory(prefix)).use { workingDirectory ->
+            val aaptLite: AaptLiteComponent = DaggerAaptLiteComponent.factory().create(
+                baseDir = workingDirectory.dir.toFile(),
                 packageName = packageName,
                 resourceFiles = resourcesFiles,
                 layoutFiles = layoutFiles,
@@ -87,20 +95,14 @@ class AaptLiteCommand : CliktCommand() {
                 rTxts = depRTxts,
                 nonTransitiveRClass = nonTransitiveRClass,
             )
-            val layoutBindings = command.layoutBindingsParser().parse(packageName, layoutFiles)
-            command.resToRClassGenerator().generate(packageName, resourcesFiles, depRTxts)
+            val layoutBindings = aaptLite.layoutBindingsParser.parse(packageName, layoutFiles)
+            aaptLite.resToRClassGenerator.generate(packageName, resourcesFiles, depRTxts)
 
-            val rClasses = command.brClassGenerator().generate(packageName, layoutBindings)
-            command.srcJarPackager.packageSrcJar(inputDir = rClasses, outputFile = rClassSrcJar)
+            val rClassesDir = aaptLite.brClassGenerator.generate(packageName, layoutBindings)
+            aaptLite.srcJarPackager.packageSrcJar(inputDir = rClassesDir, outputFile = rClassSrcJar)
 
-            val dataBindingClasses = command.bindingClassGenerator().generate(
-                packageName,
-                layoutBindings
-            )
-            command.srcJarPackager.packageSrcJar(
-                inputDir = dataBindingClasses,
-                outputFile = stubClassJar
-            )
+            val dataBindingClassesDir = aaptLite.bindingClassGenerator.generate(packageName, layoutBindings)
+            aaptLite.srcJarPackager.packageSrcJar(inputDir = dataBindingClassesDir, outputFile = stubClassJar)
         }
     }
 }

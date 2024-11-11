@@ -17,6 +17,7 @@ Args:
 Outputs:
     %{name}_r.srcjar: The R and BR classes
     %{name}_binding.srcjar: All the databinding *Binding classes
+    %{name}_mapper.srcjar: Stub DatabindingMapperImpl class
 """
 
 def _to_path(f):
@@ -75,6 +76,7 @@ def _databinding_stubs_impl(ctx):
     args.use_param_file("--flagfile=%s", use_always = True)
 
     args.add("AAPT_LITE")
+    args.add("--name", str(ctx.label).lstrip("@"))
     args.add("--package", custom_package)
     args.add_joined(
         "--resource-files",

@@ -25,7 +25,7 @@ import com.grab.aapt.databinding.util.events
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.File
-import java.util.*
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -45,7 +45,9 @@ private const val ANDROID_ID = "android:id"
 private const val TAG_TYPE = "type"
 
 @AaptScope
-class DefaultResToRParser @Inject constructor(
+class DefaultResToRParser
+@Inject
+constructor(
     private val parsers: Map<ParserType, @JvmSuppressWildcards ResourceFileParser>,
     @param:Named(NON_TRANSITIVE_R) private val nonTransitiveRClass: Boolean
 ) : ResToRParser {
@@ -57,7 +59,6 @@ class DefaultResToRParser @Inject constructor(
     }
 
     private val resources: MutableMap<Type, MutableSet<RFieldEntry>> = mutableMapOf()
-    private val xpp = XmlPullParserFactory.newInstance().newPullParser()
 
     override fun parse(
         resources: List<File>,
@@ -109,19 +110,22 @@ class DefaultResToRParser @Inject constructor(
 
     private fun processValues(file: File) {
         file.inputStream().buffered().use { stream ->
-            xpp.setInput(stream, null)
+            val xpp = XmlPullParserFactory.newInstance().newPullParser().apply {
+                setInput(stream, null)
+            }
             xpp.events()
                 .asSequence()
                 .filter { xpp.attributesNameValue().isNotEmpty() }
                 .filter { xpp.attributesNameValue().contains(NAME) }
                 .forEach { _ ->
-                    val name = xpp.attributeName()
-                    val type = enumTypeValue(xpp.name).let {
-                        getTypedItem(it, xpp.attributesNameValue()) ?: it
-                    }
-                    if (type != XmlTypeValues.ITEM) {
-                        // If item is not typed, we do not include it
-                        parseIntoRField(type, name, xpp)
+                    xpp.attributeName()?.let { name ->
+                        val type = enumTypeValue(xpp.name).let {
+                            getTypedItem(it, xpp.attributesNameValue()) ?: it
+                        }
+                        if (type != XmlTypeValues.ITEM) {
+                            // If item is not typed, we do not include it
+                            parseIntoRField(type, name, xpp)
+                        }
                     }
                 }
         }
@@ -144,10 +148,12 @@ class DefaultResToRParser @Inject constructor(
     private fun collectIDs(file: File) {
         if (file.extension != "xml") return //process only xml files to get IDs
         file.inputStream().buffered().use { stream ->
-            xpp.setInput(stream, null)
+            val xpp = XmlPullParserFactory.newInstance().newPullParser().apply {
+                setInput(stream, null)
+            }
             xpp.events()
                 .asSequence()
-                .filter { xpp.attributesNameValue().contains(ANDROID_ID) }
+                .filter { ANDROID_ID in xpp.attributesNameValue() }
                 .map { xpp.attributesNameValue()[ANDROID_ID] }
                 .filterNotNull()
                 .filter { !it.contains("@android:") }
@@ -164,7 +170,7 @@ class DefaultResToRParser @Inject constructor(
         isArray: Boolean = false
     ) {
         resources.getOrPut(type) { mutableSetOf() }.apply {
-            this.add(
+            add(
                 RFieldEntry(
                     type,
                     name,
@@ -197,12 +203,9 @@ class DefaultResToRParser @Inject constructor(
                 name,
                 type
             )
+
             XmlTypeValues.ENUM -> parse(ParserType.ID_PARSER, name, type)
-            XmlTypeValues.DECLARE_STYLEABLE -> parseParentEntry(
-                ParserType.STYLEABLE_PARSER,
-                name,
-                xpp
-            )
+            XmlTypeValues.DECLARE_STYLEABLE -> parseStyleableEntry(name, xpp)
             else -> parse(ParserType.DEFAULT_PARSER, name, type)
         }.apply {
             addResources(this)
@@ -214,13 +217,13 @@ class DefaultResToRParser @Inject constructor(
             ?: throw NullPointerException("Missing implementation. Parser must not be null.")
     }
 
-    private fun parseParentEntry(type: ParserType, name: String, xpp: XmlPullParser): ParserResult {
+    private fun parseStyleableEntry(name: String, xpp: XmlPullParser): ParserResult {
         val children = mutableListOf<String>()
 
         xpp.next() // Proceed to the next (child) node once we save parent
+        xpp.attributeName()?.replace(":", "_")?.let(children::add)
 
         while (xpp.name != XmlTypeValues.DECLARE_STYLEABLE.entry) {
-
             // Get next item
             xpp.next()
 
@@ -229,15 +232,15 @@ class DefaultResToRParser @Inject constructor(
                 continue
             }
 
-            val childName = xpp.attributeName().replace(":", "_")
-            // Add every child as a dependent for Parent node
-            children.add(childName)
+            xpp.attributeName()?.replace(":", "_")?.let { childName ->
+                // Add every child as a dependent for Parent node
+                children.add(childName)
 
-            // Add every child as a independent attribute as well
-            parseIntoRField(XmlTypeValues.ATTR, childName, xpp)
+                // Add every child as a independent attribute as well
+                parseIntoRField(XmlTypeValues.ATTR, childName, xpp)
+            }
         }
-
-        return parsers[type]
+        return parsers[ParserType.STYLEABLE_PARSER]
             ?.parse(ParentXmlEntryImpl(name, XmlTypeValues.DECLARE_STYLEABLE, children))
             ?: throw NullPointerException("Missing implementation. Parser must not be null.")
     }

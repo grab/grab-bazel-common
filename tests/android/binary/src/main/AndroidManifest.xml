@@ -4,7 +4,8 @@
     <application android:label="@string/app_name">
         <activity
             android:name="com.grab.test.TestActivity"
-            android:exported="true" />
+            android:exported="true"
+            android:screenOrientation="${orientation}" />
     </application>
 
 </manifest>

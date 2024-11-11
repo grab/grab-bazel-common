@@ -23,13 +23,13 @@ class DependenciesLayoutTypeStoreTest : BaseTest() {
     fun setup() {
         val classInfoDir = temporaryFolder.newFolder("classInfoDir")
         dependenciesLayoutTypeStore = DependenciesLayoutTypeStore(
+            baseDir = temporaryFolder.newFolder("base"),
             classInfoZips = listOf(
                 createClassInfoZip(classInfoDir, "clock", DEFAULT_JSON_CONTENT),
                 createClassInfoZip(classInfoDir, "clock2", DEFAULT_JSON_CONTENT)
             ),
             bindingClassJsonParser = CachingBindingClassJsonParser()
         )
-        dependenciesLayoutTypeStore.extractionDir = temporaryFolder.newFolder("extracted")
     }
 
     /**

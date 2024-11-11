@@ -5,7 +5,7 @@
         id="LocaleFolder"
         message="The locale folder &quot;`id`&quot; should be called &quot;`in`&quot; instead; see the `java.util.Locale` documentation">
         <location
-            file="../../../../../../../tests/android/binary/src/main/res/values-id"/>
+            file="../../../../../../armeabi-v7a-fastbuild-android-ST-5b74a929aefd/bin/tests/android/binary/_android_binary_sample_res/out/res/values-id"/>
     </issue>
 
     <issue
@@ -31,13 +31,24 @@
     </issue>
 
     <issue
+        id="DiscouragedApi"
+        message="Should not restrict activity to fixed orientation. This may not be suitable for different form factors, causing the app to be letterboxed."
+        errorLine1="            android:screenOrientation=&quot;${orientation}&quot; />"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="../../../../../../armeabi-v7a-fastbuild-android-ST-5b74a929aefd/bin/tests/android/binary/_android_binary_sample_res/_merged/AndroidManifest.xml"
+            line="11"
+            column="13"/>
+    </issue>
+
+    <issue
         id="MissingVersion"
         message="Should set `android:versionCode` to specify the application version"
         errorLine1="&lt;manifest xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2=" ~~~~~~~~">
         <location
-            file="../../../../../../../tests/android/binary/src/main/AndroidManifest.xml"
-            line="1"
+            file="../../../../../../armeabi-v7a-fastbuild-android-ST-5b74a929aefd/bin/tests/android/binary/_android_binary_sample_res/_merged/AndroidManifest.xml"
+            line="2"
             column="2"/>
     </issue>
 
@@ -47,31 +58,31 @@
         errorLine1="&lt;manifest xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2=" ~~~~~~~~">
         <location
-            file="../../../../../../../tests/android/binary/src/main/AndroidManifest.xml"
-            line="1"
+            file="../../../../../../armeabi-v7a-fastbuild-android-ST-5b74a929aefd/bin/tests/android/binary/_android_binary_sample_res/_merged/AndroidManifest.xml"
+            line="2"
             column="2"/>
     </issue>
 
     <issue
         id="MissingTranslation"
         message="&quot;app_name&quot; is not translated in &quot;id&quot; (Indonesian)"
-        errorLine1="    &lt;string name=&quot;app_name&quot;>Test&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~">
+        errorLine1="&lt;string name=&quot;app_name&quot;>Flavor&lt;/string>"
+        errorLine2="        ~~~~~~~~~~~~~~~">
         <location
-            file="../../../../../../../tests/android/binary/src/main/res/values/strings.xml"
-            line="2"
-            column="13"/>
+            file="../../../../../../armeabi-v7a-fastbuild-android-ST-5b74a929aefd/bin/tests/android/binary/_android_binary_sample_res/out/res/values/values.xml"
+            line="5"
+            column="9"/>
     </issue>
 
     <issue
         id="ExtraTranslation"
         message="&quot;app_name1&quot; is translated here but not found in default locale"
-        errorLine1="    &lt;string name=&quot;app_name1&quot;>Test&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~">
+        errorLine1="&lt;string name=&quot;app_name1&quot;>Test&lt;/string>"
+        errorLine2="        ~~~~~~~~~~~~~~~~">
         <location
-            file="../../../../../../../tests/android/binary/src/main/res/values-id/strings.xml"
-            line="2"
-            column="13"/>
+            file="../../../../../../armeabi-v7a-fastbuild-android-ST-5b74a929aefd/bin/tests/android/binary/_android_binary_sample_res/out/res/values-id/values.xml"
+            line="5"
+            column="9"/>
     </issue>
 
     <issue
@@ -91,7 +102,7 @@
         errorLine1="&lt;layout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
         errorLine2="^">
         <location
-            file="../../../../../../../tests/android/binary/src/main/res/layout/layout_test.xml"
+            file="../../../../../../../tests/android/library/src/main/res/layout/layout_test.xml"
             line="2"
             column="1"/>
     </issue>
@@ -102,20 +113,9 @@
         errorLine1="&lt;layout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
         errorLine2="^">
         <location
-            file="../../../../../../../tests/android/library/src/main/res/layout/layout_test.xml"
+            file="../../../../../../armeabi-v7a-fastbuild-android-ST-5b74a929aefd/bin/tests/android/binary/_android_binary_sample_res/out/res/layout/layout_test.xml"
             line="2"
             column="1"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.app_name1` appears to be unused"
-        errorLine1="    &lt;string name=&quot;app_name1&quot;>Test&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~">
-        <location
-            file="../../../../../../../tests/android/binary/src/main/res/values-id/strings.xml"
-            line="2"
-            column="13"/>
     </issue>
 
     <issue
@@ -130,13 +130,24 @@
     </issue>
 
     <issue
+        id="UnusedResources"
+        message="The resource `R.string.app_name1` appears to be unused"
+        errorLine1="&lt;string name=&quot;app_name1&quot;>Test&lt;/string>"
+        errorLine2="        ~~~~~~~~~~~~~~~~">
+        <location
+            file="../../../../../../armeabi-v7a-fastbuild-android-ST-5b74a929aefd/bin/tests/android/binary/_android_binary_sample_res/out/res/values-id/values.xml"
+            line="5"
+            column="9"/>
+    </issue>
+
+    <issue
         id="MissingApplicationIcon"
         message="Should explicitly set `android:icon`, there is no default"
-        errorLine1="    &lt;application android:label=&quot;@string/app_name&quot;>"
+        errorLine1="    &lt;application android:label=&quot;@string/app_name&quot; >"
         errorLine2="     ~~~~~~~~~~~">
         <location
-            file="../../../../../../../tests/android/binary/src/main/AndroidManifest.xml"
-            line="4"
+            file="../../../../../../armeabi-v7a-fastbuild-android-ST-5b74a929aefd/bin/tests/android/binary/_android_binary_sample_res/_merged/AndroidManifest.xml"
+            line="7"
             column="6"/>
     </issue>
 

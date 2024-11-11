@@ -36,7 +36,7 @@ class DefaultSrcJarPackager @Inject constructor() : SrcJarPackager {
         outputFile.parentFile?.mkdirs()
         SourceJarCreator(path = outputFile.toPath(), verbose = verbose).apply {
             addSources(
-                File(inputDir.toURI())
+                inputDir
                     .walkTopDown()
                     .filter { it.isFile }
                     .map { it.toPath() }

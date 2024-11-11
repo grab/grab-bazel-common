@@ -130,7 +130,7 @@ constructor(
                 val bindingClassName = ClassName.get(genPackageName, bindingClass)
 
                 val bindings = layoutBinding.bindings.filterNot { binding ->
-                    invalidBindingTypes.contains(binding.typeName.toString())
+                    binding.typeName.toString() in invalidBindingTypes
                 }
 
                 val fields = buildFields(bindings, layoutBinding.bindables)

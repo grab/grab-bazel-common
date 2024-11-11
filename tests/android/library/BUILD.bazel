@@ -16,8 +16,10 @@ android_library(
         "baseline": "lint_baseline.xml",
     },
     manifest = "src/main/AndroidManifest.xml",
-    resources = {
-        "src/main/res": {
+    resource_sets = {
+        "main": {
+            "res": "src/main/res",
+            "manifest": "src/main/AndroidManifest.xml",
         },
     },
     visibility = [

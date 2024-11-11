@@ -1,7 +1,7 @@
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load(":databinding_stubs.bzl", "databinding_stubs")
 load("@grab_bazel_common//rules/android/lint:defs.bzl", "LINT_ENABLED")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
+load(":databinding_stubs.bzl", "databinding_stubs")
 
 # TODO(arun) Replace with configurable maven targets
 _DATABINDING_DEPS = [
@@ -36,36 +36,38 @@ def kt_db_android_library(
         plugins = [],
         visibility = None,
         tags = []):
-    """Configures rules for compiling android module that uses Databinding and Kotlin.
+    """Generates Android library with Kotlin sources and Databinding support.
 
-    The macro ensures that Kotlin code referenced in any XMLs are compiled first using kt_jvm_library
-    and then uses android_library's enable_data_binding to generate required Databinding classes.
+    This macro resolves circular dependencies that occur when using Databinding with Kotlin
+    sources. It first compiles Kotlin code referenced in XML layouts using kt_jvm_library,
+    then processes Databinding in android_library.
 
-    This helps in breaking circular dependency when we have android_library (databinding enabled) -> kt_jvm_library.
-    In that case, Databinding classes can't be generated until resources are processed and that
-    happens only in android_library target. So compiling Koltin classes becomes dependent on
-    android_library and android_library depends on kt_jvm_library since it needs class files to
-    process class references in XML. This macro alleviates this problem by processing resources
-    without `aapt` via a custom compiler and generates stub classes like
-    R.java, BR.java and *Binding.java.
+    Without this macro, a circular dependency occurs because:
+    1. android_library needs Kotlin classes to process XML references
+    2. Kotlin classes need generated Databinding classes
+    3. Databinding classes can't be generated until android_library processes resources
 
-    Then Kotlin code can be safely compiled without errors. In the final stage, the stub classes
-    are replaced with actual classes by android_library target.
-
-    It also supports @BindingAdapters written in Kotlin.
+    The macro breaks this cycle by:
+    1. Processing resources without aapt to generate stub classes (R.java, BR.java, *Binding.java)
+    2. Compiling Kotlin against these stubs
+    3. Replacing stubs with actual classes in a final android_library
 
     Args:
-        name: The name of the target.
-        srcs: Kotlin and Java classes for the target.
-        custom_package: Custom package for the target. Forwards to 'kt_|android_library'.
-        manifest: The AndroidManifest.xml file for android library.
-        assets: Assets for android_library rule
-        assets_dir: Assets dir for android_library rule
-        resource_files: The resource files for the target.
-        deps: The dependencies for the whole target.
-        plugins: Kotlin compiler plugins for internal Kotlin target
-        visibility: Visibility of the target.
-        tags: Tags for both Kotlin and Android resources target.
+        name: Name of the target.
+        srcs: List of Kotlin and Java source files.
+        custom_package: str, optional. Java package for generated R.java and BuildConfig files.
+            If not specified, derived from the manifest's package attribute.
+        manifest: Label, optional. Android manifest file.
+        assets: List of files, optional. Asset files to include in the library.
+        assets_dir: str, optional. Directory containing the assets.
+        resource_files: List of Android resource files (layouts, drawables, etc).
+            Must include any XML files that use data binding expressions.
+        deps: List of targets, optional. Dependencies required by both Kotlin sources
+            and Android resources.
+        plugins: List of Kotlin compiler plugins, optional. Applied only to the Kotlin
+            compilation phase.
+        visibility: List of visibility specifications, optional.
+        tags: List of tags, optional. Applied to both Kotlin and Android targets.
     """
 
     # Create R.java and stub classes for classes that Android databinding and AAPT would produce

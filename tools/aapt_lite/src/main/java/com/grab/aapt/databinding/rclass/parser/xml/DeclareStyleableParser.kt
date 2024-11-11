@@ -26,7 +26,7 @@ import javax.inject.Inject
 
 /**
  * DeclareStyleableParser is supposed to parse attribute <declare-styleable>
- * and nexted children under nexted R class `styleable`
+ * and nested children under nested R class `styleable`
  *
  * Parent attribute must be an array with size of nested children
  * e.g. if children size is 2 => public static final int[] StyleableParentName = { 0x00000000,0x00000000 };

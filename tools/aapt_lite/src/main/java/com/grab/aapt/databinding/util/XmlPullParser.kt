@@ -47,5 +47,4 @@ fun XmlPullParser.attributesNameValue() = attributes { index ->
 /**
  * Return value by using key "name" or the first value if it is null
  */
-fun XmlPullParser.attributeName() =
-    attributesNameValue()[NAME] ?: attributesNameValue().values.first()
+fun XmlPullParser.attributeName() = attributesNameValue()[NAME] ?: attributesNameValue().values.firstOrNull()

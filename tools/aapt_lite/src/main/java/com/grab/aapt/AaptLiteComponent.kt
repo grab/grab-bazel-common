@@ -52,10 +52,10 @@ import javax.inject.Named
     ]
 )
 interface AaptLiteComponent {
-    fun layoutBindingsParser(): LayoutBindingsParser
-    fun resToRClassGenerator(): ResToRClassGenerator
-    fun bindingClassGenerator(): BindingClassGenerator
-    fun brClassGenerator(): BrClassGenerator
+    val layoutBindingsParser: LayoutBindingsParser
+    val resToRClassGenerator: ResToRClassGenerator
+    val bindingClassGenerator: BindingClassGenerator
+    val brClassGenerator: BrClassGenerator
     val srcJarPackager: SrcJarPackager
 
     @Component.Factory

@@ -49,6 +49,10 @@ class ResToRStyleableValueParserTest : BaseTest() {
                         <attr name="colorAttr" />
                         <attr name="sizeAttr" />
                         <attr name="android:drawableTint" format="reference" />
+                        <attr name="useCase" format="enum">  
+                            <enum name="rating" value="0"/>
+                            <enum name="postTransit" value="2"/>
+                        </attr>
                     </declare-styleable>
                 </resources>
                 """.trimIndent(), path = "/src/res/values/"
@@ -59,18 +63,24 @@ class ResToRStyleableValueParserTest : BaseTest() {
             listTemp,
             emptyList()
         ) as MutableMap<Type, MutableSet<RFieldEntry>>
-        val parentValue = "{ 0,0,0 }"
+        val parentValue = "{ 0,0,0,0,0,0 }"
         val exptectedStyleable = setOf(
-            RFieldEntry(Type.STYLEABLE, "StyleableView", parentValue, isArray = true),
             RFieldEntry(Type.STYLEABLE, "StyleableView_colorAttr", value),
             RFieldEntry(Type.STYLEABLE, "StyleableView_sizeAttr", value),
             RFieldEntry(Type.STYLEABLE, "StyleableView_android_drawableTint", value),
+            RFieldEntry(Type.STYLEABLE, "StyleableView_useCase", value),
+            RFieldEntry(Type.STYLEABLE, "StyleableView_rating", value),
+            RFieldEntry(Type.STYLEABLE, "StyleableView_postTransit", value),
+            RFieldEntry(Type.STYLEABLE, "StyleableView", parentValue, isArray = true),
         )
 
         val exptectedAttrs = setOf(
             RFieldEntry(Type.ATTR, "colorAttr", value),
             RFieldEntry(Type.ATTR, "sizeAttr", value),
             RFieldEntry(Type.ATTR, "android_drawableTint", value),
+            RFieldEntry(Type.ATTR, "useCase", value),
+            RFieldEntry(Type.ATTR, "rating", value),
+            RFieldEntry(Type.ATTR, "postTransit", value),
         )
 
         assertEquals(

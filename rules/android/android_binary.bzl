@@ -1,15 +1,15 @@
-load("@grab_bazel_common//tools/build_config:build_config.bzl", _build_config = "build_config")
-load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "DATABINDING_DEPS")
 load("@grab_bazel_common//rules/android/lint:defs.bzl", "LINT_ENABLED", "lint", "lint_sources", _lint_baseline = "baseline")
 load("@grab_bazel_common//rules/check/detekt:defs.bzl", "detekt")
+load("@grab_bazel_common//tools/build_config:build_config.bzl", _build_config = "build_config")
+load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load(":resources.bzl", "build_resources")
 
 def android_binary(
         name,
         debug = True,
         build_config = {},
-        custom_package = {},
+        custom_package = "",
         res_values = {},
         enable_data_binding = False,
         enable_compose = False,
@@ -44,13 +44,17 @@ def android_binary(
         longs = build_config.get("longs", default = {}),
         strings = build_config.get("strings", default = {}),
     )
-
-    resource_files = build_resources(
+    merged_resources = build_resources(
         name = name,
+        is_binary = True,
+        namespace = attrs.get("manifest_values")["applicationId"],
+        manifest = attrs.get("manifest", None),
         resource_files = attrs.get("resource_files", default = []),
-        resources = attrs.get("resources", default = {}),
+        resource_sets = attrs.get("resource_sets", default = {}),
         res_values = res_values,
     )
+    resource_files = merged_resources.res
+    manifest = merged_resources.manifest
 
     # Kotlin compilation with kt_android_library
     kotlin_target = "lib_" + name
@@ -61,10 +65,10 @@ def android_binary(
     kt_android_library(
         name = kotlin_target,
         srcs = attrs.get("srcs", default = []),
-        assets = attrs.get("assets", default = None),
-        assets_dir = attrs.get("assets_dir", default = None),
+        assets = merged_resources.assets,
+        assets_dir = merged_resources.asset_dir,
         custom_package = custom_package,
-        manifest = attrs.get("manifest", default = None),
+        manifest = manifest,
         resource_files = resource_files,
         visibility = attrs.get("visibility", default = None),
         deps = kotlin_library_deps,
@@ -73,6 +77,7 @@ def android_binary(
     lint_enabled = lint_options.get("enabled", False) and (len(attrs.get("srcs", default = [])) > 0 or len(resource_files) > 0)
     tags = []
     android_binary_deps = [kotlin_target]
+
     if lint_enabled:
         lint_sources_target = "_" + name + "_lint_sources"
         lint_baseline = _lint_baseline(lint_options.get("baseline", None))
@@ -80,7 +85,7 @@ def android_binary(
             name = lint_sources_target,
             srcs = attrs.get("srcs", default = []),
             resources = [file for file in resource_files if file.endswith(".xml")],
-            manifest = attrs.get("manifest"),
+            manifest = manifest,
             baseline = lint_baseline,
             lint_config = lint_options.get("config", None),
             deps = kotlin_library_deps,
@@ -127,7 +132,7 @@ def android_binary(
         dexopts = attrs.get("dexopts", default = None),
         incremental_dexing = attrs.get("incremental_dexing", default = None),
         javacopts = attrs.get("javacopts", default = None),
-        manifest = attrs.get("manifest"),
+        manifest = manifest,
         multidex = attrs.get("multidex", default = None),
         manifest_values = attrs.get("manifest_values", default = None),
         resource_configuration_filters = attrs.get("resource_configuration_filters", default = None),

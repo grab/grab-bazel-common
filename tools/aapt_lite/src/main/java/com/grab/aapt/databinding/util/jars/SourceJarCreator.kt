@@ -19,7 +19,7 @@ package com.grab.aapt.databinding.util.jars
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.TreeMap
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 import java.util.regex.Pattern
@@ -32,6 +32,7 @@ class SourceJarCreator(
     path: Path,
     verbose: Boolean = false
 ) : JarHelper(path, normalize = true, verbose = verbose) {
+
     companion object {
         private const val BL = """\p{Blank}*"""
         private const val COM_BL = """$BL(?:/\*[^\n]*\*/$BL)*"""
@@ -132,8 +133,8 @@ class SourceJarCreator(
             for (entry in jar.entries()) {
                 if (!entry.isDirectory) {
                     if (isJavaSourceLike(entry.name)) {
-                        jar.getInputStream(entry).readBytes().also {
-                            addEntry(entry.name, path, it)
+                        jar.getInputStream(entry).buffered().use {
+                            addEntry(entry.name, path, it.readBytes())
                         }
                     }
                 }
@@ -170,7 +171,7 @@ class SourceJarCreator(
                 addEntry(jarFilename, path, bytes)
             }
         }
-        Files.newOutputStream(jarPath).use {
+        Files.newOutputStream(jarPath).buffered().use {
             JarOutputStream(it).use { out ->
                 for ((key, value) in entries) {
                     try {

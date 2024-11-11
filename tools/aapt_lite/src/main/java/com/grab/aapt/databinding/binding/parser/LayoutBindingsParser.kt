@@ -78,8 +78,6 @@ constructor(
         internal const val INCLUDE = "include"
     }
 
-    private val xpp = XmlPullParserFactory.newInstance().newPullParser()
-
     private val File.bindingName
         get() = name.split(".xml").first().toLayoutBindingName()
 
@@ -89,7 +87,9 @@ constructor(
     ): List<LayoutBindingData> {
         return layoutFiles.map { layoutFile ->
             layoutFile.inputStream().buffered().use { stream ->
-                xpp.setInput(stream, null)
+                val xpp = XmlPullParserFactory.newInstance().newPullParser().apply {
+                    setInput(stream, null)
+                }
                 val bindingClassName = layoutFile.bindingName
                 val bindings = mutableSetOf<Binding>()
                 val bindables = mutableSetOf<Binding>()
@@ -102,12 +102,12 @@ constructor(
                         if (event == START_TAG) {
                             when (val nodeName = xpp.name) {
                                 IMPORT -> {
-                                    val attributes = xpp.attributesNameValue()
-                                        .withDefault { error("Could not parse: $it") }
+                                    val attributes = xpp.attributesNameValue().withDefault { error("Could not parse: $it") }
                                     val typeFqcn = attributes.getValue(TYPE)
                                     val typeName = attributes[ALIAS] ?: typeFqcn.split(".").last()
                                     importedTypes[typeName] = ClassName.bestGuess(typeFqcn)
                                 }
+
                                 VARIABLE -> {
                                     val attributes = xpp.attributesNameValue()
                                         .withDefault { error("Could not parse: $it") }
@@ -121,6 +121,7 @@ constructor(
                                         )
                                     )
                                 }
+
                                 else -> {
                                     val attributes = xpp.attributesNameValue()
                                         .filterKeys { it == ANDROID_ID || it == LAYOUT }
@@ -175,8 +176,10 @@ constructor(
                 val klass = this.substring(0, genericStart)
                     .trim()
                     .toTypeName(importedTypes)
-                return ParameterizedTypeName.get(klass as ClassName,
-                        *typeParamsQualified.toTypedArray())
+                return ParameterizedTypeName.get(
+                    klass as ClassName,
+                    *typeParamsQualified.toTypedArray()
+                )
             }
         }
 
@@ -212,6 +215,7 @@ constructor(
                     layoutMissing = layoutMissing
                 )
             }
+
             else -> BindingType.View
         }
     }
@@ -235,12 +239,14 @@ constructor(
                     layoutMissing = missing
                     parsedType
                 }
+
                 else -> when (nodeName) {
                     "ViewStub" -> ClassName.bestGuess("androidx.databinding.ViewStubProxy")
                     // https://android.googlesource.com/platform/frameworks/data-binding/+/refs/tags/studio-4.1.1/compilerCommon/src/main/java/android/databinding/tool/store/ResourceBundle.java#70
                     "View", "ViewGroup", "TextureView", "SurfaceView" -> {
                         ClassName.get("android.view", nodeName)
                     }
+
                     "WebView" -> ClassName.get("android.webkit", nodeName)
                     else -> ClassName.get("android.widget", nodeName)
                 }
@@ -257,8 +263,7 @@ constructor(
      * direct dependencies
      */
     fun parseIncludedLayoutType(layoutName: String): TypeName? {
-        return localLayoutTypeStore[layoutName]
-            ?: depLayoutTypeStore[layoutName]
+        return localLayoutTypeStore[layoutName] ?: depLayoutTypeStore[layoutName]
     }
 
     /**
@@ -322,4 +327,5 @@ private val PRIMITIVE_TYPE_NAME_MAP = mapOf(
     TypeName.LONG.toString() to TypeName.LONG,
     TypeName.CHAR.toString() to TypeName.CHAR,
     TypeName.FLOAT.toString() to TypeName.FLOAT,
-    TypeName.DOUBLE.toString() to TypeName.DOUBLE)
+    TypeName.DOUBLE.toString() to TypeName.DOUBLE
+)
