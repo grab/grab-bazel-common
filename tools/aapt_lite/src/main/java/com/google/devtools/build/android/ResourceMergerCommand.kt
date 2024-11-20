@@ -58,17 +58,19 @@ class ResourceMergerCommand : CliktCommand() {
 
     override fun run() {
         val sourceSets = sourceSets.map { arg -> SourceSet.from(target, arg) }
-        val outputPath = commonPath(*outputs.toTypedArray()).split("/res/").first()
-        val outputDir = File(outputPath).apply {
-            deleteRecursively()
-            parentFile?.mkdirs()
-        }
+        val outputDir = if (outputs.isNotEmpty()) {
+            val outputPath = commonPath(*outputs.toTypedArray()).split("/res/").first()
+            File(outputPath).apply {
+                deleteRecursively()
+                parentFile?.mkdirs()
+            }
+        } else null
         ResourceMerger.merge(
             /* isBinary = */ binary,
             /* sourceSets = */ sourceSets,
             /* outputDir = */ outputDir,
             /* mergeManifest = */ mergedManifestOutput
         )
-        OutputFixer.process(outputDir = outputDir, declaredOutputs = outputs)
+        outputDir?.let { OutputFixer.process(outputDir = it, declaredOutputs = outputs) }
     }
 }

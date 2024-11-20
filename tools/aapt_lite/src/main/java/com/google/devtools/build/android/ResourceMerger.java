@@ -24,6 +24,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 public class ResourceMerger {
     private static final StdLogger STD_LOGGER = new StdLogger(StdLogger.Level.WARNING);
 
@@ -37,10 +39,12 @@ public class ResourceMerger {
 
     public static void merge(final boolean isBinary,
                              final List<SourceSet> sourceSets,
-                             final File outputDir,
+                             @Nullable final File outputDir,
                              final File mergeManifest) throws IOException {
         mergeManifests(isBinary, sourceSets, mergeManifest);
-        mergeResources(sourceSets, outputDir, mergeManifest);
+        if (outputDir != null) {
+            mergeResources(sourceSets, outputDir, mergeManifest);
+        }
     }
 
     private static void mergeResources(final List<SourceSet> sourceSets, final File outputDir, final File manifest) throws IOException {
