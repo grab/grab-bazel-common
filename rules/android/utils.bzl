@@ -19,9 +19,16 @@ def _collect_providers(provider_type, *all_deps):
 def _to_depset(list):
     return depset(list)
 
+def _to_set(items):
+    value_dict = {}
+    for item in items:
+        value_dict[item] = item
+    return list(value_dict.values())
+
 utils = struct(
     to_path = _to_path,
     inspect = _inspect,
     collect_providers = _collect_providers,
     to_depset = _to_depset,
+    to_set = _to_set,
 )

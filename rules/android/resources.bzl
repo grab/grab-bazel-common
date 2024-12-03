@@ -1,3 +1,4 @@
+load("@grab_bazel_common//rules/android:utils.bzl", "utils")
 load("@grab_bazel_common//rules/android/private:resource_merger.bzl", "resource_merger")
 load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
 
@@ -144,6 +145,8 @@ def build_resources(
                 source_sets.append("%s:%s:%s" % (resource_dir, asset_dir, manifest))
 
             merge_target_name = "_" + name + "_res"
+            all_resources = utils.to_set(all_resources)
+            all_assets = utils.to_set(all_assets)
             merged_resources = _calculate_output_files(merge_target_name, all_resources)
             merged_assets = _calculate_output_files(merge_target_name, all_assets)
 
