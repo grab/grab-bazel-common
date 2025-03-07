@@ -1,4 +1,6 @@
 load("@grab_bazel_common//rules/android/lint:defs.bzl", "LINT_ENABLED")
+load("@rules_android//android:rules.bzl", "android_library")
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(":databinding_stubs.bzl", "databinding_stubs")
@@ -91,7 +93,7 @@ def kt_db_android_library(
 
     # R classes are not meant to be packaged into the binary, so export it as java_library but don't
     # link it.
-    native.java_library(
+    java_library(
         name = r_classes,
         srcs = [r_classes_sources],
         tags = tags,
@@ -157,7 +159,7 @@ def kt_db_android_library(
     # DatabindingMapperImpl is in the public ABI among Databinding generated classes, use a stub
     # class instead so that we can avoid running entire databinding processor for header compilation.
     databinding_mapper = "_" + name + "_mapper"
-    native.java_library(
+    java_library(
         name = databinding_mapper,
         srcs = [databinding_stubs_target + "_mapper.srcjar"],
         tags = tags,
@@ -172,7 +174,7 @@ def kt_db_android_library(
     # * Kotlin/Java classes are already available via deps. So resources processing is safe.
     # * Kotlin @BindingAdapters are converted to Java via our annotation processor
     # * Our stub classes will be replaced by android_library's actual generated code.
-    native.android_library(
+    android_library(
         name = name,
         srcs = binding_adapter_sources,
         custom_package = custom_package,

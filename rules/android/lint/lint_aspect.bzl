@@ -7,6 +7,8 @@ load(
     "AndroidLintSourcesInfo",
     "LINT_ENABLED",
 )
+load("@rules_android//providers:providers.bzl", "AndroidLibraryResourceClassJarProvider", "AndroidManifestInfo", "AndroidSdkInfo")
+load("@rules_java//java/common:java_info.bzl", "JavaInfo")
 
 _LINT_ASPECTS_ATTR = ["deps", "runtime_deps", "exports", "associates"]  # Define attributes that aspect will propagate to
 

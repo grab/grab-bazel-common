@@ -1,3 +1,5 @@
+load("@rules_java//java:defs.bzl", "java_import")
+
 def mock_android_jar(name = "mock_android_jar"):
     """
     Create an mockable version of Android SDK Jar.
@@ -12,7 +14,7 @@ def mock_android_jar(name = "mock_android_jar"):
 
     """
     mock_jar_generator = "@grab_bazel_common//tools/android_mock:mocked_android_jar_generator"
-    android_jar = "@bazel_tools//tools/android:android_jar"
+    android_jar = "@rules_android//tools/android:android_jar"
     android_mock_jar = "android_mock.jar"
 
     native.genrule(
@@ -34,7 +36,7 @@ def mock_android_jar(name = "mock_android_jar"):
             android_mock_jar = android_mock_jar,
         ),
     )
-    native.java_import(
+    java_import(
         name = name,
         visibility = [
             "//visibility:public",
