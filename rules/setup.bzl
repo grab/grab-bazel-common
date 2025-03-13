@@ -33,21 +33,10 @@ def _android(patched_android_tools):
     if patched_android_tools:
         android_tools()
 
-def _kotlin():
-    kotlin_repositories(
-        compiler_release = kotlinc_version(
-            release = "1.8.10",
-            sha256 = "4c3fa7bc1bb9ef3058a2319d8bcc3b7196079f88e92fdcd8d304a46f4b6b5787",
-        ),
-    )
-    native.register_toolchains("//:kotlin_toolchain")
-
 def bazel_common_setup(
         patched_android_tools = True,
         buildifier_version = BUILDIFIER_DEFAULT_VERSION,
         pinned_maven_install = True):
-    #rules_proto_dependencies()
-    #rules_proto_toolchains()
 
     register_common_toolchains(
         buildifier = _buildifier_version(
@@ -100,7 +89,6 @@ def bazel_common_setup(
     )
 
     _android(patched_android_tools)
-    _kotlin()
 
     rules_detekt_dependencies()
 
