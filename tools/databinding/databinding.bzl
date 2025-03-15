@@ -37,7 +37,8 @@ def kt_db_android_library(
         deps = [],
         plugins = [],
         visibility = None,
-        tags = []):
+        tags = [],
+        **kwargs):
     """Generates Android library with Kotlin sources and Databinding support.
 
     This macro resolves circular dependencies that occur when using Databinding with Kotlin
@@ -203,6 +204,7 @@ def kt_db_android_library(
         # See: https://blog.bazel.build/2017/06/28/sjd-unused_deps.html
         # Can be also overcome by --strict_java_deps=warn
         exports = kotlin_targets,
+        **kwargs,
     )
 
     # Package aar correctly for Gradle builds.
