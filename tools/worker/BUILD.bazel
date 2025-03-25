@@ -6,6 +6,9 @@ kotlin_library(
     srcs = glob([
         "src/main/kotlin/**/*.kt",
     ]),
+    plugins = [
+        "//third_party/moshi-kotlin-codegen:ksp",
+    ],
     visibility = [
         "//visibility:public",
     ],

@@ -12,7 +12,7 @@ kotlin_library(
         "@bazel_common_maven//:com_google_auto_service_auto_service",
         "@bazel_common_maven//:com_google_guava_guava",
         "@bazel_common_maven//:com_squareup_javapoet",
-        "@maven//:androidx_databinding_databinding_adapters",
+        "@bazel_common_maven//:androidx_databinding_databinding_adapters",
     ],
 )
 
@@ -23,7 +23,7 @@ java_plugin(
     deps = [
         ":binding-adapter-processor",
         "@bazel_common_maven//:com_google_auto_service_auto_service",
-        "@maven//:androidx_databinding_databinding_adapters",
+        "@bazel_common_maven//:androidx_databinding_databinding_adapters",
     ],
 )
 
@@ -32,7 +32,7 @@ java_library(
     exported_plugins = ["binding-adapter-plugin"],
     visibility = ["//visibility:public"],
     exports = [
-        "@maven//:androidx_databinding_databinding_adapters",
+        "@bazel_common_maven//:androidx_databinding_databinding_adapters",
     ],
 )
 
@@ -46,6 +46,6 @@ kotlin_test(
         ":binding-adapter-processor",
         "@bazel_common_maven//:com_github_tschuchortdev_kotlin_compile_testing",
         "@bazel_common_maven//:junit_junit",
-        "@maven//:org_jetbrains_kotlin_kotlin_test",
+        "@bazel_common_maven//:org_jetbrains_kotlin_kotlin_test",
     ],
 )

@@ -1,12 +1,11 @@
 package io.bazel.value
 
-import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 data class WorkRequest(
-    @Json(name = "arguments")
     var arguments: Array<String>? = null,
 
-    @Json(name = "requestId")
     var requestId: Int = 0
 ) {
     override fun equals(other: Any?): Boolean {

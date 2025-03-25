@@ -19,7 +19,7 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 remote_android_extensions = use_extension(
     "@rules_android//bzlmod_extensions:android_extensions.bzl",
     "remote_android_tools_extensions")
-use_repo(remote_android_extensions, "android_gmaven_r8", "android_tools")
+use_repo(remote_android_extensions, "android_tools")
 
 
 DAGGER_TAG = "2.46.1"
@@ -68,9 +68,9 @@ maven.install(
         "javax.inject:javax.inject:1",
         "junit:junit:4.13",
         "net.sf.kxml:kxml2:2.3.0",
-        "org.jetbrains.kotlin:kotlin-parcelize-compiler:2.1.0",
-        "org.jetbrains.kotlin:kotlin-parcelize-runtime:2.1.0",
-        "org.jetbrains.kotlin:kotlin-stdlib:2.1.0",
+        "org.jetbrains.kotlin:kotlin-parcelize-compiler:1.9.0",
+        "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.9.0",
+        "org.jetbrains.kotlin:kotlin-stdlib:1.9.0",
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4",
         "org.json:json:20210307",
         "org.ow2.asm:asm-tree:6.0",

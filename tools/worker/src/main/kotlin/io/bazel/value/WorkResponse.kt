@@ -1,12 +1,11 @@
 package io.bazel.value
 
 import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 data class WorkResponse(
-    @Json(name = "exitCode")
     var exitCode: Int = 0,
-    @Json(name = "output")
     var output: String? = null,
-    @Json(name = "requestId")
     var requestId: Int = 0,
 )

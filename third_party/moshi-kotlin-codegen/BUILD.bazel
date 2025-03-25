@@ -1,0 +1,11 @@
+load("@rules_kotlin//kotlin:kotlin.bzl", "kt_ksp_plugin")
+
+kt_ksp_plugin(
+    name = "ksp",
+    processor_class = "com.squareup.moshi.kotlin.codegen.ksp.JsonClassSymbolProcessorProvider",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_common_maven//:com_squareup_kotlinpoet_jvm",
+        "@bazel_common_maven//:com_squareup_moshi_moshi_kotlin_codegen",
+    ],
+)

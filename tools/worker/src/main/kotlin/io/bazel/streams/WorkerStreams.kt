@@ -4,7 +4,9 @@ import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.bazel.value.WorkRequest
+import io.bazel.value.WorkRequestJsonAdapter
 import io.bazel.value.WorkResponse
+import io.bazel.value.WorkResponseJsonAdapter
 import io.reactivex.rxjava3.core.BackpressureStrategy
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.FlowableEmitter
@@ -34,7 +36,6 @@ interface WorkerStreams {
             init {
                 requestSource = streams.input.source().buffer()
                 requestAdapter = Moshi.Builder()
-                    .add(KotlinJsonAdapterFactory())
                     .build()
                     .adapter(WorkRequest::class.java)
             }
@@ -67,7 +68,6 @@ interface WorkerStreams {
             init {
                 responseSink = streams.output.sink().buffer()
                 responseAdapter = Moshi.Builder()
-                    .add(KotlinJsonAdapterFactory())
                     .build()
                     .adapter(WorkResponse::class.java)
             }
