@@ -36,8 +36,8 @@ def _android(patched_android_tools):
 def _kotlin():
     kotlin_repositories(
         compiler_release = kotlinc_version(
-            release = "1.8.10",
-            sha256 = "4c3fa7bc1bb9ef3058a2319d8bcc3b7196079f88e92fdcd8d304a46f4b6b5787",
+            release = "1.9.24",
+            sha256 = "eb7b68e01029fa67bc8d060ee54c12018f2c60ddc438cf21db14517229aa693b",
         ),
     )
     native.register_toolchains("//:kotlin_toolchain")
