@@ -14,6 +14,10 @@
 """"""
 
 load(
+    "@grab_bazel_common//tools/buildifier:buildifier_binary.bzl",
+    "buildifier_binary",
+)
+load(
     "@grab_bazel_common//tools/buildifier:defs.bzl",
     "BUILDIFIER_DEFAULT_TOOLCHAINS",
     "BUILDIFIER_DEFAULT_TOOLCHAIN_CONFIG",
@@ -22,10 +26,6 @@ load(
     "@grab_bazel_common//tools/buildifier:toolchains.bzl",
     "buildifier_register_toolchains",
     _buildifier_version = "buildifier_version",
-)
-load(
-    "@grab_bazel_common//tools/buildifier:buildifier_binary.bzl",
-    "buildifier_binary",
 )
 
 #exports

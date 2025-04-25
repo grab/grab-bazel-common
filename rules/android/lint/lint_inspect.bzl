@@ -1,5 +1,5 @@
-load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo")
 load("@grab_bazel_common//rules/android:utils.bzl", "utils")
+load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo")
 
 def _lint_inspector(ctx):
     target = ctx.attr.target

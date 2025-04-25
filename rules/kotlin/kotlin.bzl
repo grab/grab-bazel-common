@@ -1,8 +1,8 @@
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", _kt_jvm_library = "kt_jvm_library")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", _kt_compiler_plugin = "kt_compiler_plugin")
 load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint", "lint_sources")
 load("@grab_bazel_common//rules/android/lint:providers.bzl", "LINT_ENABLED")
 load("@grab_bazel_common//rules/check/detekt:defs.bzl", "detekt")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", _kt_jvm_library = "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", _kt_compiler_plugin = "kt_compiler_plugin")
 
 kt_jvm_library = _kt_jvm_library
 kt_compiler_plugin = _kt_compiler_plugin

@@ -1,5 +1,5 @@
-load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/private:test_manifest.bzl", "generate_manifest_xml")
+load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 
 def android_instrumentation_binary(
         name,

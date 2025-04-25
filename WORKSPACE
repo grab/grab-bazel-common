@@ -19,8 +19,8 @@ android_sdk_repository(
     name = "androidsdk",
 )
 
-load("@rules_jvm_external//:defs.bzl", "maven_install")
 load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
+load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 # Artifacts that need to be present on the consumer under @maven. They can be overridden
 # by the consumer's maven_install rule.

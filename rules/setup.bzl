@@ -1,3 +1,6 @@
+# Dagger
+load("@bazel_common_dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
+load("@grab_bazel_common//android/tools:defs.bzl", "android_tools")
 load(
     "@grab_bazel_common//toolchains:toolchains.bzl",
     "register_common_toolchains",
@@ -6,13 +9,6 @@ load(
 
 # Internal
 load("@grab_bazel_common//tools/buildifier:defs.bzl", "BUILDIFIER_DEFAULT_VERSION")
-load("@grab_bazel_common//android/tools:defs.bzl", "android_tools")
-
-# Dagger
-load("@bazel_common_dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
-
-# Rules Jvm External
-load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 # Kotlin
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
@@ -20,6 +16,9 @@ load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "
 #Detekt
 load("@rules_detekt//detekt:dependencies.bzl", "rules_detekt_dependencies")
 load("@rules_detekt//detekt:toolchains.bzl", "rules_detekt_toolchains")
+
+# Rules Jvm External
+load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 # Proto
 # load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")

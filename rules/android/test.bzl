@@ -1,5 +1,5 @@
-load("@grab_bazel_common//rules/test:test.bzl", "gen_test_targets")
 load("@grab_bazel_common//rules/android:runtime_resources.bzl", "runtime_resources")
+load("@grab_bazel_common//rules/test:test.bzl", "gen_test_targets")
 
 def android_unit_test(
         name,
