@@ -1,5 +1,4 @@
-load("@grab_bazel_common//rules:defs.bzl", "kotlin_library")
-load("@grab_bazel_common//rules:defs.bzl", "kotlin_test")
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_library", "kotlin_test")
 
 kotlin_library(
     name = "worker_lib",

@@ -202,11 +202,3 @@ def kt_db_android_library(
         # Can be also overcome by --strict_java_deps=warn
         exports = kotlin_targets,
     )
-
-    # Package aar correctly for Gradle builds.
-    # Disabled for now.
-    # databinding_aar(
-    #     name = name + "-databinding",
-    #     android_library = name,
-    #     kotlin_jar = kotlin_target + "_kt.jar",
-    # )

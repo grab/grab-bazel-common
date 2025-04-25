@@ -1,5 +1,5 @@
-load("@rules_detekt//detekt:defs.bzl", _detekt_create_baseline = "detekt_create_baseline", _detekt_test = "detekt_test")
 load("@grab_bazel_common//rules/android/lint:utils.bzl", _baseline_validator = "baseline")
+load("@rules_detekt//detekt:defs.bzl", _detekt_create_baseline = "detekt_create_baseline", _detekt_test = "detekt_test")
 
 def detekt(
         name,

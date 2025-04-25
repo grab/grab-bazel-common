@@ -1,8 +1,8 @@
 load("@grab_bazel_common//rules/android:android_binary.bzl", _android_binary = "android_binary")
-load("@grab_bazel_common//rules/android:android_library.bzl", _android_library = "android_library")
-load("@grab_bazel_common//rules/check/detekt:defs.bzl", _detekt_options = "detekt_options")
 load("@grab_bazel_common//rules/android:android_instrumentation.bzl", _android_instrumentation_binary = "android_instrumentation_binary")
+load("@grab_bazel_common//rules/android:android_library.bzl", _android_library = "android_library")
 load("@grab_bazel_common//rules/android:test.bzl", _android_unit_test = "android_unit_test")
+load("@grab_bazel_common//rules/check/detekt:defs.bzl", _detekt_options = "detekt_options")
 load(
     "@grab_bazel_common//rules/kotlin:kotlin.bzl",
     _kt_compiler_plugin = "kt_compiler_plugin",

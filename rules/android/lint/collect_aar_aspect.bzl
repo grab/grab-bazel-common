@@ -1,5 +1,5 @@
-load("@grab_bazel_common//rules/android/lint:providers.bzl", "AarInfo", "AarNodeInfo")
 load("@grab_bazel_common//rules/android:utils.bzl", "utils")
+load("@grab_bazel_common//rules/android/lint:providers.bzl", "AarInfo", "AarNodeInfo")
 
 def _collect_aar_aspect(_, ctx):
     transitive_aar_node_infos = depset(

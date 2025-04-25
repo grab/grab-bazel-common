@@ -1,5 +1,5 @@
-load(":build_config.bzl", "build_config")
 load("@grab_bazel_common//rules:defs.bzl", "kotlin_test")
+load(":build_config.bzl", "build_config")
 
 java_binary(
     name = "build_config_generator",

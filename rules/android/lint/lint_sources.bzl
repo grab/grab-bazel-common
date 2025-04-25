@@ -1,5 +1,5 @@
-load("@grab_bazel_common//rules/android/lint:providers.bzl", "AarInfo", "AndroidLintSourcesInfo")
 load("@grab_bazel_common//rules/android/lint:collect_aar_aspect.bzl", "collect_aar_aspect")
+load("@grab_bazel_common//rules/android/lint:providers.bzl", "AarInfo", "AndroidLintSourcesInfo")
 
 def _target_outputs(targets):
     results = []

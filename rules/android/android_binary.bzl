@@ -2,6 +2,7 @@ load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "DATABINDI
 load("@grab_bazel_common//rules/android/lint:defs.bzl", "LINT_ENABLED", "lint", "lint_sources", _lint_baseline = "baseline")
 load("@grab_bazel_common//rules/check/detekt:defs.bzl", "detekt")
 load("@grab_bazel_common//tools/build_config:build_config.bzl", _build_config = "build_config")
+load("@grab_bazel_common//tools/databinding:databinding_mapper.bzl", "databinding_mapper_library")
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load(":resources.bzl", "build_resources")
 
@@ -62,6 +63,20 @@ def android_binary(
     if enable_compose:
         kotlin_library_deps.extend(["@grab_bazel_common//rules/android/compose:compose-plugin"])
 
+    android_binary_deps = []
+
+    if enable_data_binding:
+        android_binary_deps.extend(DATABINDING_DEPS)
+        kotlin_library_deps.extend(DATABINDING_DEPS)
+
+        # Create databinding mapper library
+        databinding_mapper_name = name + "_mapper"
+        databinding_mapper_library(
+            name = databinding_mapper_name,
+            custom_package = custom_package,
+        )
+        kotlin_library_deps.append(databinding_mapper_name)
+
     kt_android_library(
         name = kotlin_target,
         srcs = attrs.get("srcs", default = []),
@@ -76,7 +91,7 @@ def android_binary(
 
     lint_enabled = lint_options.get("enabled", False) and (len(attrs.get("srcs", default = [])) > 0 or len(resource_files) > 0)
     tags = []
-    android_binary_deps = [kotlin_target]
+    android_binary_deps.extend([kotlin_target])
 
     if lint_enabled:
         lint_sources_target = "_" + name + "_lint_sources"
@@ -116,9 +131,6 @@ def android_binary(
             auto_correct = detekt_options.get("auto_correct", default = False),
             detekt_checks = detekt_options.get("detekt_checks", default = []),
         )
-
-    if enable_data_binding:
-        android_binary_deps.extend(DATABINDING_DEPS)
 
     native.android_binary(
         name = name,

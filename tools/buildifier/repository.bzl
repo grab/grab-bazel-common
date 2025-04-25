@@ -13,8 +13,8 @@
 # limitations under the License.
 """"""
 
-load(":defs.bzl", "BUILDIFIER_RELEASE_URL_TEMPLATE")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+load(":defs.bzl", "BUILDIFIER_RELEASE_URL_TEMPLATE")
 
 def _buildifier_repository_impl(repository_ctx):
     attr = repository_ctx.attr
