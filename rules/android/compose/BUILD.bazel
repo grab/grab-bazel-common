@@ -2,7 +2,10 @@ load("@grab_bazel_common//rules:defs.bzl", "kotlin_library", "kt_compiler_plugin
 
 kt_compiler_plugin(
     name = "compose-compiler-plugin",
-    id = "androidx.compose.compiler",
+    id = "androidx.compose.compiler.plugins.kotlin",
+    options = {
+        "experimentalStrongSkipping": "true",
+    },
     target_embedded_compiler = True,
     deps = [
         "@maven//:androidx_compose_compiler_compiler",
