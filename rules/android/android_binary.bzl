@@ -132,6 +132,15 @@ def android_binary(
             detekt_checks = detekt_options.get("detekt_checks", default = []),
         )
 
+    min_sdk_version_value = attrs.get("min_sdk_version")
+    if min_sdk_version_value == None:
+        manifest_values = attrs.get("manifest_values", {})
+        manifest_min_sdk = manifest_values.get("minSdkVersion") if manifest_values else None
+        if manifest_min_sdk == None:
+            min_sdk_version_value = 24
+        else:
+            min_sdk_version_value = int(manifest_min_sdk)
+
     native.android_binary(
         name = name,
         custom_package = custom_package,
@@ -147,6 +156,7 @@ def android_binary(
         manifest = manifest,
         multidex = attrs.get("multidex", default = None),
         manifest_values = attrs.get("manifest_values", default = None),
+        min_sdk_version = min_sdk_version_value,
         resource_configuration_filters = attrs.get("resource_configuration_filters", default = None),
         plugins = attrs.get("plugins", default = None),
         tags = tags,
