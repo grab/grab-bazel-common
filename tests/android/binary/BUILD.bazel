@@ -5,8 +5,10 @@ android_binary(
     srcs = glob([
         "src/main/java/**/*.kt",
     ]),
+    crunch_png = False,
     custom_package = "com.grab.test",
     enable_data_binding = True,
+    incremental_dexing = True,
     lint_options = {
         "enabled": True,
         "baseline": "lint_baseline.xml",
@@ -16,11 +18,13 @@ android_binary(
     manifest_values = {
         "versionCode": "1",
         "versionName": "1.0",
-        "minSdkVersion": "21",
+        "minSdkVersion": "24",
         "targetSdkVersion": "31",
         "applicationId": "com.grab.test",
         "orientation": "portrait",
     },
+    min_sdk_version = 0,  # https://github.com/bazelbuild/bazel/commit/84861027d3f94ce6fc0bcf25ebbb787d6be8567a did not make it to 7.x version
+    multidex = "native",
     resource_configuration_filters = [
         "en",
         "id",

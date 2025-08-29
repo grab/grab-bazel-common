@@ -44,3 +44,4 @@ _sandbox
 
 # Bazel
 bazel-*
+local.bazelrc

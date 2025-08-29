@@ -18,12 +18,15 @@ common --verbose_failures
 common --incompatible_strict_action_env
 common --reuse_sandbox_directories
 common --repo_env=RJE_VERBOSE=true
+common --repo_env=COURSIER_CACHE=/tmp/coursier # Store coursier cache in tmp
 
 # JVM External rules
 common --@rules_jvm_external//settings:stamp_manifest=False
 
 # Resources
 common --local_resources=cpu=HOST_CPUS*.75 # Android actions start their own threads which can overwhelm the system
+common --experimental_merged_skyframe_analysis_execution=true
+common --experimental_skymeld_analysis_overlap_percentage=100
 
 # JAVA - START
 common --experimental_strict_java_deps=off # Turn off strict java deps
@@ -42,10 +45,8 @@ common --experimental_java_header_input_pruning
 common --experimental_google_legacy_api
 common --noincompatible_enable_android_toolchain_resolution
 common --noincompatible_enable_cc_toolchain_resolution
-# D8 and Dexing flags
 common --define=android_incremental_dexing_tool=d8_dexbuilder
 common --define=android_standalone_dexing_tool=d8_compat_dx
-common --define=android_dexmerger_tool=d8_dexmerger
 # Resource Merging
 common --experimental_disable_instrumentation_manifest_merge
 common --features=android_resources_strict_deps
