@@ -16,6 +16,7 @@ def android_instrumentation_binary(
         associates = [],
         test_instrumentation_runner = "androidx.test.runner.AndroidJUnitRunner",
         enable_compose = False,
+        min_sdk_version = 24,
         **attrs):
     """A macro that creates an Android instrumentation binary.
 
@@ -62,9 +63,8 @@ def android_instrumentation_binary(
         deps = deps,
     )
 
-    min_sdk_version_value = attrs.get("min_sdk_version")
+    min_sdk_version_value = min_sdk_version
     if min_sdk_version_value == None:
-        manifest_values = attrs.get("manifest_values", {})
         manifest_min_sdk = manifest_values.get("minSdkVersion") if manifest_values else None
         if manifest_min_sdk == None:
             min_sdk_version_value = 24
