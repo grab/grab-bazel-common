@@ -25,6 +25,9 @@ android_binary(
     },
     min_sdk_version = 0,  # https://github.com/bazelbuild/bazel/commit/84861027d3f94ce6fc0bcf25ebbb787d6be8567a did not make it to 7.x version
     multidex = "native",
+    plugins = [
+        "//tests:room-compiler-ksp",
+    ],
     resource_configuration_filters = [
         "en",
         "id",

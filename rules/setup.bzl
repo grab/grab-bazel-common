@@ -11,7 +11,7 @@ load(
 load("@grab_bazel_common//tools/buildifier:defs.bzl", "BUILDIFIER_DEFAULT_VERSION")
 
 # Kotlin
-load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
+load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version", "ksp_version")
 
 #Detekt
 load("@rules_detekt//detekt:dependencies.bzl", "rules_detekt_dependencies")
@@ -35,8 +35,12 @@ def _android(patched_android_tools):
 def _kotlin():
     kotlin_repositories(
         compiler_release = kotlinc_version(
-            release = "1.9.24",
-            sha256 = "eb7b68e01029fa67bc8d060ee54c12018f2c60ddc438cf21db14517229aa693b",
+            release = "1.9.25",
+            sha256 = "6ab72d6144e71cbbc380b770c2ad380972548c63ab6ed4c79f11c88f2967332e",
+        ),
+        ksp_compiler_release = ksp_version(
+            release = "1.9.25-1.0.20",
+            sha256 = "3a2d24623409ac5904c87a7e130f5b39ce9fd67ca8b44e4fe5b784a6ec102b81",
         ),
     )
     native.register_toolchains("//:kotlin_toolchain")
@@ -60,6 +64,7 @@ def bazel_common_setup(
     maven_install(
         name = repo_name,
         artifacts = DAGGER_ARTIFACTS + [
+            "androidx.room:room-compiler:2.6.1",
             "com.android.tools.lint:lint:31.5.0-alpha02",
             "com.android.tools.lint:lint-checks:31.5.0-alpha02",
             "com.android.tools.lint:lint-api:31.5.0-alpha02",

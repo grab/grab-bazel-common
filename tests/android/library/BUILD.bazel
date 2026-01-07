@@ -16,6 +16,9 @@ android_library(
         "baseline": "lint_baseline.xml",
     },
     manifest = "src/main/AndroidManifest.xml",
+    plugins = [
+        "//tests:room-compiler-ksp",
+    ],
     resource_sets = {
         "main": {
             "res": "src/main/res",

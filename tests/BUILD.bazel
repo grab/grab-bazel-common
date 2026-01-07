@@ -1,0 +1,13 @@
+load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_ksp_plugin")
+
+kt_ksp_plugin(
+    name = "room-compiler-ksp",
+    processor_class = "androidx.room.RoomKspProcessor",
+    target_embedded_compiler = True,
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "@bazel_common_maven//:androidx_room_room_compiler",
+    ],
+)
