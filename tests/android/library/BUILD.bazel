@@ -17,7 +17,7 @@ android_library(
     },
     manifest = "src/main/AndroidManifest.xml",
     plugins = [
-        "//tests:room-compiler-ksp",
+        "//tests:dagger-compiler-ksp",
     ],
     resource_sets = {
         "main": {
@@ -30,6 +30,7 @@ android_library(
     ],
     deps = [
         "//:parcelize",
+        "//tests:dagger-runtime",
         "@bazel_common_maven//:com_google_android_material_material",
     ],
 )

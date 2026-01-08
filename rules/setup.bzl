@@ -20,6 +20,9 @@ load("@rules_detekt//detekt:toolchains.bzl", "rules_detekt_toolchains")
 # Rules Jvm External
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
+# Test Maven
+load("@grab_bazel_common//rules/test:setup.bzl", "bazel_common_test_maven")
+
 # Proto
 # load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
@@ -64,7 +67,6 @@ def bazel_common_setup(
     maven_install(
         name = repo_name,
         artifacts = DAGGER_ARTIFACTS + [
-            "androidx.room:room-compiler:2.6.1",
             "com.android.tools.lint:lint:31.5.0-alpha02",
             "com.android.tools.lint:lint-checks:31.5.0-alpha02",
             "com.android.tools.lint:lint-api:31.5.0-alpha02",
@@ -109,3 +111,5 @@ def bazel_common_setup(
     rules_detekt_dependencies()
 
     rules_detekt_toolchains()
+
+    bazel_common_test_maven(pinned_maven_install = pinned_maven_install)
