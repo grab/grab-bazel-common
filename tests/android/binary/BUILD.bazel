@@ -25,6 +25,9 @@ android_binary(
     },
     min_sdk_version = 0,  # https://github.com/bazelbuild/bazel/commit/84861027d3f94ce6fc0bcf25ebbb787d6be8567a did not make it to 7.x version
     multidex = "native",
+    plugins = [
+        "//tests:dagger-compiler-ksp",
+    ],
     resource_configuration_filters = [
         "en",
         "id",
@@ -52,6 +55,7 @@ android_binary(
     },
     deps = [
         "//:parcelize",
+        "//tests:dagger-runtime",
         "//tests/android/library:android_library_sample",
         "@bazel_common_maven//:com_google_android_material_material",
     ],

@@ -1,0 +1,22 @@
+load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_ksp_plugin")
+
+alias(
+    name = "dagger-runtime",
+    actual = "@bazel_common_test_maven//:com_google_dagger_dagger",
+    visibility = [
+        "//visibility:public",
+    ],
+)
+
+kt_ksp_plugin(
+    name = "dagger-compiler-ksp",
+    generates_java = True,
+    processor_class = "dagger.internal.codegen.KspComponentProcessor",
+    target_embedded_compiler = True,
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "@bazel_common_test_maven//:com_google_dagger_dagger_compiler",
+    ],
+)

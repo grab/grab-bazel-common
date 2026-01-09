@@ -16,6 +16,9 @@ android_library(
         "baseline": "lint_baseline.xml",
     },
     manifest = "src/main/AndroidManifest.xml",
+    plugins = [
+        "//tests:dagger-compiler-ksp",
+    ],
     resource_sets = {
         "main": {
             "res": "src/main/res",
@@ -27,6 +30,7 @@ android_library(
     ],
     deps = [
         "//:parcelize",
+        "//tests:dagger-runtime",
         "@bazel_common_maven//:com_google_android_material_material",
     ],
 )

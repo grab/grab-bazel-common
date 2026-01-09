@@ -87,6 +87,7 @@ def android_binary(
         resource_files = resource_files,
         visibility = attrs.get("visibility", default = None),
         deps = kotlin_library_deps,
+        plugins = attrs.get("plugins", default = None),
     )
 
     lint_enabled = lint_options.get("enabled", False) and (len(attrs.get("srcs", default = [])) > 0 or len(resource_files) > 0)
@@ -158,7 +159,6 @@ def android_binary(
         manifest_values = attrs.get("manifest_values", default = None),
         min_sdk_version = min_sdk_version_value,
         resource_configuration_filters = attrs.get("resource_configuration_filters", default = None),
-        plugins = attrs.get("plugins", default = None),
         tags = tags,
         visibility = attrs.get("visibility", default = None),
     )
