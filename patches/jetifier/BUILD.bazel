@@ -1,0 +1,12 @@
+package(default_visibility = ["//visibility:public"])
+
+java_binary(
+    name = "jetifier_standalone",
+    main_class = "com.android.tools.build.jetifier.standalone.Main",
+    runtime_deps = [":jetifier_standalone_lib"],
+)
+
+java_import(
+    name = "jetifier_standalone_lib",
+    jars = glob(["jetifier-standalone/lib/*.jar"]),
+)
