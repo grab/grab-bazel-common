@@ -24,6 +24,14 @@ def _rules_jvm_deps():
         sha256 = "26d4021f6898e23b82ef953078389dd49ac2b5618ac564ade4ef87cced147b38",
     )
 
+def _java():
+    version_tag = "9.2.0"
+    http_archive(
+        name = "rules_java",
+        sha256 = "2f822fbc33b99de5bbeaceada4be2bd3bb5c8da80e2f7462a9d300c8fc312f11",
+        url = "https://github.com/bazelbuild/rules_java/releases/download/%s/rules_java-%s.tar.gz" % (version_tag, version_tag),
+    )
+
 def _android():
     rules_android_tag = "0.7.1"
     http_archive(
@@ -122,6 +130,7 @@ def _jetifier():
 def bazel_common_dependencies():
     #_proto
     _rules_jvm_deps()
+    _java()
     _android()
     _maven()
     _kotlin()

@@ -1,7 +1,6 @@
 workspace(name = "grab_bazel_common")
 
 load("@grab_bazel_common//rules:repositories.bzl", "bazel_common_dependencies")
-
 bazel_common_dependencies()
 
 # rules_android necessary setup
@@ -24,14 +23,12 @@ load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
 rules_jvm_external_setup()
 
 load("@grab_bazel_common//rules:setup.bzl", "bazel_common_setup")
-
 bazel_common_setup(
     buildifier_version = "6.3.3",
     pinned_maven_install = True,
 )
 
 load("@grab_bazel_common//rules:maven.bzl", "pin_bazel_common_dependencies")
-
 pin_bazel_common_dependencies()
 
 load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
