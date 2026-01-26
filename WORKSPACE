@@ -19,10 +19,6 @@ load("@grab_bazel_common//rules:maven.bzl", "pin_bazel_common_dependencies")
 
 pin_bazel_common_dependencies()
 
-android_sdk_repository(
-    name = "androidsdk",
-)
-
 load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
