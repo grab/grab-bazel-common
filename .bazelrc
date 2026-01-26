@@ -52,6 +52,7 @@ common --define=android_standalone_dexing_tool=d8_compat_dx
 common --experimental_disable_instrumentation_manifest_merge
 common --features=android_resources_strict_deps
 common --output_library_merged_assets=false # Turn off asset merging artifact
+common --incompatible_disallow_empty_glob=false
 # common --android_non_transitive_r_class=true # Disable resource merging a.k.a non transitive R class
 # common --experimental_use_package_aware_rtxt=true # Use package aware R.txt files (required for databinding)
 # common --define=nontransitive_r_class=1 # Adapt bazel common rules for non transitive R class
