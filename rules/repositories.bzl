@@ -4,14 +4,6 @@ load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 def http_archive(name, **kwargs):
     maybe(_http_archive, name = name, **kwargs)
 
-def _java():
-    version_tag = "9.2.0"
-    http_archive(
-        name = "rules_java",
-        sha256 = "2f822fbc33b99de5bbeaceada4be2bd3bb5c8da80e2f7462a9d300c8fc312f11",
-        url = "https://github.com/bazelbuild/rules_java/releases/download/%s/rules_java-%s.tar.gz" % (version_tag, version_tag),
-    )
-
 def _android():
     rules_android_tag = "0.7.1"
     http_archive(
@@ -66,12 +58,15 @@ def _detekt():
         url = "https://github.com/mohammadkahelghi-grabtaxi/bazel_rules_detekt/releases/download/v{v}/bazel_rules_detekt-v{v}.tar.gz".format(v = rules_detekt_version),
     )
 
-def _proto_old():
+def _proto():
     http_archive(
         name = "com_google_protobuf",
-        sha256 = "bc670a4e34992c175137ddda24e76562bb928f849d712a0e3c2fb2e19249bea1",
-        strip_prefix = "protobuf-33.4",
-        url = "https://github.com/protocolbuffers/protobuf/releases/download/v33.4/protobuf-33.4.tar.gz",
+        sha256 = "cf754718b0aa945b00550ed7962ddc167167bd922b842199eeb6505e6f344852",
+        strip_prefix = "protobuf-%s" % "3.11.3",
+        urls = [
+            "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v%s.tar.gz" % "3.11.3",
+            "https://github.com/protocolbuffers/protobuf/archive/v%s.tar.gz" % "3.11.3",
+        ],
     )
 
     http_archive(
@@ -94,7 +89,6 @@ def _proto_old():
 
 def bazel_common_dependencies():
     #_proto
-    _java()
     _android()
     _maven()
     _kotlin()
