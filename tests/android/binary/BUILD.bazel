@@ -5,10 +5,9 @@ android_binary(
     srcs = glob([
         "src/main/java/**/*.kt",
     ]),
-    crunch_png = False,
     custom_package = "com.grab.test",
     enable_data_binding = True,
-    incremental_dexing = True,
+    incremental_dexing = 1,
     lint_options = {
         "enabled": True,
         "baseline": "lint_baseline.xml",
