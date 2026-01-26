@@ -24,6 +24,15 @@ def _rules_jvm_deps():
         sha256 = "26d4021f6898e23b82ef953078389dd49ac2b5618ac564ade4ef87cced147b38",
     )
 
+def _android():
+    rules_android_tag = "0.7.1"
+    http_archive(
+        name = "rules_android",
+        sha256 = "7c45b6aaa837fb6f2f23ad11387638cb00fa9f839a04ec564caac70a543a9cd5",
+        strip_prefix = "rules_android-%s" % rules_android_tag,
+        url = "https://github.com/bazelbuild/rules_android/releases/download/v%s/rules_android-v%s.tar.gz" % (rules_android_tag, rules_android_tag),
+    )
+
 def _maven():
     RULES_JVM_EXTERNAL_TAG = "6.9"
     RULES_JVM_EXTERNAL_SHA = "3c41eae4226a7dfdce7b213bc541557b8475c92da71e2233ec7c306630243a65"
@@ -113,6 +122,7 @@ def _jetifier():
 def bazel_common_dependencies():
     #_proto
     _rules_jvm_deps()
+    _android()
     _maven()
     _kotlin()
     _detekt()
