@@ -4,19 +4,41 @@ load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 def http_archive(name, **kwargs):
     maybe(_http_archive, name = name, **kwargs)
 
-def _maven():
-    RULES_JVM_EXTERNAL_TAG = "5.3"
-    RULES_JVM_EXTERNAL_SHA = "d31e369b854322ca5098ea12c69d7175ded971435e55c18dd9dd5f29cc5249ac"
+def _rules_jvm_deps():
+    rules_java_tag = "7.6.5"
+    http_archive(
+        name = "rules_java",
+        urls = [
+            "https://github.com/bazelbuild/rules_java/releases/download/%s/rules_java-%s.tar.gz" % (rules_java_tag, rules_java_tag)
+        ],
+        sha256 = "8afd053dd2a7b85a4f033584f30a7f1666c5492c56c76e04eec4428bdb2a86cf",
+    )
+
+    rules_license_tag = "1.0.0"
+    http_archive(
+        name = "rules_license",
+        urls = [
+            "https://mirror.bazel.build/github.com/bazelbuild/rules_license/releases/download/%s/rules_license-%s.tar.gz" % (rules_license_tag, rules_license_tag),
+            "https://github.com/bazelbuild/rules_license/releases/download/%s/rules_license-%s.tar.gz" % (rules_license_tag, rules_license_tag)
+        ],
+        sha256 = "26d4021f6898e23b82ef953078389dd49ac2b5618ac564ade4ef87cced147b38",
+    )
+
+
+def _maven():    
+    RULES_JVM_EXTERNAL_TAG = "6.9"
+    RULES_JVM_EXTERNAL_SHA = "3c41eae4226a7dfdce7b213bc541557b8475c92da71e2233ec7c306630243a65"
 
     http_archive(
         name = "rules_jvm_external",
         sha256 = RULES_JVM_EXTERNAL_SHA,
         strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
         url = "https://github.com/bazelbuild/rules_jvm_external/releases/download/%s/rules_jvm_external-%s.tar.gz" % (RULES_JVM_EXTERNAL_TAG, RULES_JVM_EXTERNAL_TAG),
+        patches = ["@grab_bazel_common//patches/rules_jvm_external:jetifier.patch"],
+        patch_args = ["-p1"]
     )
 
     DAGGER_TAG = "2.46.1"
-
     DAGGER_SHA = "bbd75275faa3186ebaa08e6779dc5410741a940146d43ef532306eb2682c13f7"
 
     http_archive(
@@ -78,8 +100,21 @@ def _proto():
         ],
     )
 
+def _jetifier():
+    JETIFIER_SOURCE_SHA = "8ac1c5c2a8681c398883bb2cabc18f913337f165059f24e8c55714e05757761e"
+
+    http_archive(
+        name = "jetifier",
+        sha256 = JETIFIER_SOURCE_SHA,
+        strip_prefix = "rules_jvm_external-5.3/third_party/jetifier",
+        urls = ["https://github.com/bazelbuild/rules_jvm_external/archive/refs/tags/5.3.tar.gz"],
+        build_file = "@grab_bazel_common//patches/jetifier:BUILD.bazel"
+    )
+
 def bazel_common_dependencies():
     #_proto
+    _rules_jvm_deps()
     _maven()
     _kotlin()
     _detekt()
+    _jetifier()

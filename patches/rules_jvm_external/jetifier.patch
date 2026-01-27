@@ -1,0 +1,465 @@
+diff -ruN original/private/dependency_tree_parser.bzl modified/private/dependency_tree_parser.bzl
+--- original/private/dependency_tree_parser.bzl	2026-01-21 22:32:17
++++ modified/private/dependency_tree_parser.bzl	2026-01-21 22:45:44
+@@ -32,6 +32,8 @@
+ load("//private/lib:coordinates.bzl", "to_purl", "unpack_coordinates")
+ load("//private/lib:urls.bzl", "scheme_and_host")
+ 
++JETIFY_INCLUDE_LIST_JETIFY_ALL = ["*"]
++
+ def _genrule_copy_artifact_from_http_file(artifact, visibilities):
+     http_file_repository = to_repository_name(artifact["coordinates"])
+ 
+@@ -96,7 +98,9 @@
+         testonly_artifacts,
+         exclusions,
+         default_visibilities,
+-        artifact):
++        artifact,
++        jetify_all = False,
++        jetify_include_dict = {}):
+     to_return = []
+     simple_coord = strip_packaging_and_classifier_and_version(artifact["coordinates"])
+     target_label = escape(simple_coord)
+@@ -104,7 +108,7 @@
+ 
+     # 1. Generate the rule class.
+     #
+-    # (jvm|aar)_import(
++    # (jetify_)(jvm|aar)_import(
+     #
+     packaging = artifact_path.split(".").pop()
+     if packaging == "jar":
+@@ -121,6 +125,11 @@
+     else:
+         fail("Unsupported packaging type: " + packaging)
+ 
++    # Check if this artifact should be jetified
++    jetify = jetify_all or (repository_ctx.attr.jetify and simple_coord in jetify_include_dict)
++    if jetify:
++        import_rule = "jetify_" + import_rule
++
+     target_import_string = [import_rule + "("]
+ 
+     # 2. Generate the target label.
+@@ -148,6 +157,11 @@
+         target_import_string.append("\taar = \"%s\"," % artifact_path)
+         if srcjar_paths != None and target_label in srcjar_paths:
+             target_import_string.append("\tsrcjar = \"%s\"," % srcjar_paths[target_label])
++        if jetify and repository_ctx.attr.use_starlark_android_rules:
++            # Because jetifier.bzl cannot conditionally import the starlark rules
++            # (it's not a generated file), inject the aar_import rule from
++            # the load statement in the generated file.
++            target_import_string.append("\t_aar_import = aar_import,")
+     elif packaging in ["so", "dylib", "dll"]:
+         is_dylib = True
+         jar_versionless_target_labels.append(target_label)
+@@ -467,6 +481,14 @@
+                     if repository_ctx.attr.maven_install_json:
+                         all_imports.append(_genrule_copy_artifact_from_http_file(artifact, default_visibilities))
+ 
++    # Compute jetify settings
++    jetify_all = repository_ctx.attr.jetify and repository_ctx.attr.jetify_include_list == JETIFY_INCLUDE_LIST_JETIFY_ALL
++
++    # Write artifacts to dict to achieve O(1) lookup instead of O(n).
++    jetify_include_dict = {}
++    for jetify_include_artifact in repository_ctx.attr.jetify_include_list:
++        jetify_include_dict[jetify_include_artifact] = None
++
+     # Iterate through the list of artifacts, and generate the target declaration strings.
+     for artifact in dependencies:
+         artifact_path = artifact["file"]
+@@ -529,6 +551,8 @@
+                 exclusions,
+                 default_visibilities,
+                 raw_artifact,
++                jetify_all,
++                jetify_include_dict,
+             ))
+ 
+         elif artifact_path != None and packaging != "pom":
+@@ -545,6 +569,8 @@
+                 exclusions,
+                 default_visibilities,
+                 artifact,
++                jetify_all,
++                jetify_include_dict,
+             ))
+         else:  # artifact_path == None or packaging == "pom":
+             # Special case for certain artifacts that only come with a POM file.
+diff -ruN original/private/rules/coursier.bzl modified/private/rules/coursier.bzl
+--- original/private/rules/coursier.bzl	2026-01-21 22:32:17
++++ modified/private/rules/coursier.bzl	2026-01-21 22:46:36
+@@ -20,7 +20,7 @@
+     "is_maven_local_path",
+     "to_repository_name",
+ )
+-load("//private:dependency_tree_parser.bzl", "parser")
++load("//private:dependency_tree_parser.bzl", "JETIFY_INCLUDE_LIST_JETIFY_ALL", "parser")
+ load("//private:java_utilities.bzl", "build_java_argsfile_content")
+ load("//private:proxy.bzl", "get_java_proxy_args")
+ load(
+@@ -30,6 +30,7 @@
+     "COURSIER_CLI_SHA256",
+ )
+ load("//private/lib:urls.bzl", "remove_auth_from_url")
++load("//private/rules:jetifier.bzl", "jetify_artifact_dependencies", "jetify_maven_coord")
+ load("//private/rules:v1_lock_file.bzl", "v1_lock_file")
+ load("//private/rules:v2_lock_file.bzl", "v2_lock_file")
+ 
+@@ -43,6 +44,7 @@
+ load("@rules_java//java:defs.bzl", "java_binary", "java_library", "java_plugin")
+ load("@rules_jvm_external//private/rules:pin_dependencies.bzl", "pin_dependencies")
+ load("@rules_jvm_external//private/rules:jvm_import.bzl", "jvm_import")
++load("@rules_jvm_external//private/rules:jetifier.bzl", "jetify_aar_import", "jetify_jvm_import")
+ load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+ {aar_import_statement}
+ 
+@@ -1105,6 +1107,14 @@
+ 
+     files_to_inspect = []
+ 
++    # Compute jetify settings
++    jetify_all = repository_ctx.attr.jetify and repository_ctx.attr.jetify_include_list == JETIFY_INCLUDE_LIST_JETIFY_ALL
++
++    # Write artifacts to dict to achieve O(1) lookup instead of O(n).
++    jetify_include_dict = {}
++    for jetify_include_artifact in repository_ctx.attr.jetify_include_list:
++        jetify_include_dict[jetify_include_artifact] = None
++
+     # Also, replace '//' with '/', otherwise parsing of the file path for the
+     # coursier cache will fail if variables like HOME or COURSIER_CACHE have a
+     # trailing slash.
+@@ -1125,6 +1135,12 @@
+         coord_split = artifact["coord"].split(":")
+         coord_unversioned = "{}:{}".format(coord_split[0], coord_split[1])
+ 
++        # Transform dependency coordinates if jetifier is enabled
++        should_jetify = jetify_all or (repository_ctx.attr.jetify and coord_unversioned in jetify_include_dict)
++        if should_jetify:
++            artifact["directDependencies"] = jetify_artifact_dependencies(artifact["directDependencies"])
++            artifact["dependencies"] = jetify_artifact_dependencies(artifact["dependencies"])
++
+         # Normalize paths in place here.
+         artifact.update({"file": _normalize_to_unix_path(artifact["file"])})
+ 
+@@ -1460,6 +1476,8 @@
+             default = False,
+         ),
+         "strict_visibility_value": attr.label_list(default = ["//visibility:private"]),
++        "jetify": attr.bool(doc = "Runs the AndroidX [Jetifier](https://developer.android.com/studio/command-line/jetifier) tool on artifacts specified in jetify_include_list. If jetify_include_list is not specified, run Jetifier on all artifacts.", default = False),
++        "jetify_include_list": attr.string_list(doc = "List of artifacts that need to be jetified in `groupId:artifactId` format. By default all artifacts are jetified if `jetify` is set to True.", default = JETIFY_INCLUDE_LIST_JETIFY_ALL),
+         "additional_netrc_lines": attr.string_list(doc = "Additional lines prepended to the netrc file used by `http_file` (with `maven_install_json` only).", default = []),
+         "use_credentials_from_home_netrc_file": attr.bool(default = False, doc = "Whether to include coursier credentials gathered from the user home ~/.netrc file"),
+         "fail_if_repin_required": attr.bool(doc = "Whether to fail the build if the maven_artifact inputs have changed but the lock file has not been repinned.", default = False),
+@@ -1530,6 +1548,8 @@
+             default = False,
+         ),
+         "strict_visibility_value": attr.label_list(default = ["//visibility:private"]),
++        "jetify": attr.bool(doc = "Runs the AndroidX [Jetifier](https://developer.android.com/studio/command-line/jetifier) tool on artifacts specified in jetify_include_list. If jetify_include_list is not specified, run Jetifier on all artifacts.", default = False),
++        "jetify_include_list": attr.string_list(doc = "List of artifacts that need to be jetified in `groupId:artifactId` format. By default all artifacts are jetified if `jetify` is set to True.", default = JETIFY_INCLUDE_LIST_JETIFY_ALL),
+         "resolve_timeout": attr.int(default = 600),
+         "use_starlark_android_rules": attr.bool(default = False, doc = "Whether to use the native or Starlark version of the Android rules."),
+         "aar_import_bzl_label": attr.string(default = DEFAULT_AAR_IMPORT_LABEL, doc = "The label (as a string) to use to import aar_import from"),
+diff -ruN original/private/rules/jetifier.bzl modified/private/rules/jetifier.bzl
+--- original/private/rules/jetifier.bzl	2026-01-21 22:32:17
++++ modified/private/rules/jetifier.bzl	2026-01-21 22:32:52
+@@ -1,10 +1,103 @@
+-# Some rulesets (eg. `contrib_rules_jvm`) have "frozen" their `rules_jvm_external`
+-# dependencies to avoid needing consumers of those rulesets from needing to run
+-# a resolution. Provide a place-holder `jetifier.bzl` file so that those rulesets
+-# don't need to jump to the latest `rules_jvm_external` immediately.
++load("//:specs.bzl", "parse")
++load(":jetifier_maven_map.bzl", "jetifier_maven_map")
++load(":jvm_import.bzl", "jvm_import")
+ 
+-def jetify_aar_import(**kwargs):
+-    fail("This functionality is no longer supported")
++def _jetify_impl(ctx):
++    srcs = ctx.attr.srcs
++    outfiles = []
++    for src in srcs:
++        for artifact in src.files.to_list():
++            jetified_outfile = ctx.actions.declare_file("jetified_" + artifact.basename, sibling = artifact)
++            jetify_args = ctx.actions.args()
++            jetify_args.add("-l", "error")
++            jetify_args.add("-o", jetified_outfile)
++            jetify_args.add("-i", artifact)
++            jetify_args.add("-timestampsPolicy", "keepPrevious")
++            ctx.actions.run(
++                mnemonic = "Jetify",
++                inputs = [artifact],
++                outputs = [jetified_outfile],
++                progress_message = "Jetifying {}".format(artifact.owner),
++                executable = ctx.executable._jetifier,
++                arguments = [jetify_args],
++            )
++            outfiles.append(jetified_outfile)
+ 
+-def jetify_jvm_import(**kwargs):
+-    fail("This functionality is no longer supported")
++    return [DefaultInfo(files = depset(outfiles))]
++
++jetify = rule(
++    attrs = {
++        "srcs": attr.label_list(allow_files = [".jar", ".aar"]),
++        "_jetifier": attr.label(
++            executable = True,
++            default = Label("@jetifier//:jetifier_standalone"),
++            cfg = "exec",
++        ),
++    },
++    implementation = _jetify_impl,
++)
++
++def jetify_aar_import(name, aar, _aar_import = None, visibility = None, **kwargs):
++    jetify(
++        name = "jetified_" + name,
++        srcs = [aar],
++        visibility = visibility,
++    )
++
++    if not _aar_import:
++        _aar_import = native.aar_import
++
++    _aar_import(
++        name = name,
++        aar = ":jetified_" + name,
++        visibility = visibility,
++        **kwargs
++    )
++
++def jetify_jvm_import(name, jar, visibility = None, **kwargs):
++    jetify(
++        name = "jetified_" + name,
++        srcs = [jar],
++        visibility = visibility,
++    )
++
++    jvm_import(
++        name = name,
++        jars = [":jetified_" + name],
++        visibility = visibility,
++        **kwargs
++    )
++
++def jetify_maven_coord(group, artifact, version):
++    """
++    Looks up support -> androidx artifact mapping, returns None if no mapping found.
++    """
++    if (group, artifact) not in jetifier_maven_map:
++        return None
++
++    return jetifier_maven_map[(group, artifact)].get(version, None)
++
++def jetify_artifact_dependencies(deps):
++    """Takes in list of maven coordinates and returns a list of jetified maven coordinates"""
++    ret = []
++    for coord_str in deps:
++        artifact = parse.parse_maven_coordinate(coord_str)
++        jetify_coord_tuple = jetify_maven_coord(
++            artifact["group"],
++            artifact["artifact"],
++            artifact["version"],
++        )
++        if jetify_coord_tuple:
++            artifact["group"] = jetify_coord_tuple[0]
++            artifact["artifact"] = jetify_coord_tuple[1]
++            artifact["version"] = jetify_coord_tuple[2]
++            ret.append("{}:{}{}{}:{}".format(
++                artifact["group"],
++                artifact["artifact"],
++                (":" + artifact["packaging"]) if artifact.get("packaging") else "",
++                (":" + artifact["classifier"]) if artifact.get("classifier") else "",
++                artifact["version"],
++            ))
++        else:
++            ret.append(coord_str)
++    return ret
+diff -ruN original/private/rules/jetifier_maven_map.bzl modified/private/rules/jetifier_maven_map.bzl
+--- original/private/rules/jetifier_maven_map.bzl	2026-01-21 22:32:17
++++ modified/private/rules/jetifier_maven_map.bzl	2026-01-21 22:33:05
+@@ -0,0 +1,137 @@
++# Manually crafted from https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-master-dev/jetifier/jetifier/core/src/main/resources/default.config
++# Take the "pomRules" section and transform it with inlined values from versions.latestReleased.
++# Comment out the com.android.databinding and androidx.databinding entries since they are special-cased due to gradle integration.
++
++# Original (example):
++#     {"from": { "groupId": "com.android.support", "artifactId": "animated-vector-drawable", "version": "{oldSlVersion}" },
++#      "to": { "groupId": "androidx.vectordrawable", "artifactId": "vectordrawable-animated", "version": "{newSlVersion}" }},
++
++# Transformed (generic):
++#     ("from.groupId", "from.artifactId"): {"from.version": ("to.groupId", "to.artifactId", "to.version")}
++
++jetifier_maven_map = {
++    ("com.android.support", "animated-vector-drawable"): {"28.0.0": ("androidx.vectordrawable", "vectordrawable-animated", "1.0.0")},
++    ("com.android.support", "appcompat-v7"): {"28.0.0": ("androidx.appcompat", "appcompat", "1.0.0")},
++    ("com.android.support", "cardview-v7"): {"28.0.0": ("androidx.cardview", "cardview", "1.0.0")},
++    ("com.android.support", "customtabs"): {"28.0.0": ("androidx.browser", "browser", "1.0.0")},
++    ("com.android.support", "design"): {"28.0.0": ("com.google.android.material", "material", "1.0.0")},
++    ("com.android.support", "exifinterface"): {"28.0.0": ("androidx.exifinterface", "exifinterface", "1.0.0")},
++    ("com.android.support", "gridlayout-v7"): {"28.0.0": ("androidx.gridlayout", "gridlayout", "1.0.0")},
++    ("com.android.support", "leanback-v17"): {"28.0.0": ("androidx.leanback", "leanback", "1.0.0")},
++    ("com.android.support", "mediarouter-v7"): {"28.0.0-alpha5": ("androidx.mediarouter", "mediarouter", "1.0.0-alpha5")},
++    ("com.android.support", "multidex"): {"1.0.3": ("androidx.multidex", "multidex", "2.0.0")},
++    ("com.android.support", "multidex-instrumentation"): {"1.0.3": ("androidx.multidex", "multidex-instrumentation", "2.0.0")},
++    ("com.android.support", "palette-v7"): {"28.0.0": ("androidx.palette", "palette", "1.0.0")},
++    ("com.android.support", "percent"): {"28.0.0": ("androidx.percentlayout", "percentlayout", "1.0.0")},
++    ("com.android.support", "preference-leanback-v17"): {"28.0.0": ("androidx.leanback", "leanback-preference", "1.0.0")},
++    ("com.android.support", "preference-v14"): {"28.0.0": ("androidx.legacy", "legacy-preference-v14", "1.0.0")},
++    ("com.android.support", "preference-v7"): {"28.0.0": ("androidx.preference", "preference", "1.0.0")},
++    ("com.android.support", "recommendation"): {"28.0.0": ("androidx.recommendation", "recommendation", "1.0.0")},
++    ("com.android.support", "recyclerview-v7"): {"28.0.0": ("androidx.recyclerview", "recyclerview", "1.0.0")},
++    ("com.android.support", "support-annotations"): {"28.0.0": ("androidx.annotation", "annotation", "1.0.0")},
++    ("com.android.support", "support-compat"): {"28.0.0": ("androidx.core", "core", "1.0.0")},
++    ("com.android.support", "support-content"): {"28.0.0": ("androidx.contentpager", "contentpager", "1.0.0")},
++    ("com.android.support", "support-core-ui"): {"28.0.0": ("androidx.legacy", "legacy-support-core-ui", "1.0.0")},
++    ("com.android.support", "support-core-utils"): {"28.0.0": ("androidx.legacy", "legacy-support-core-utils", "1.0.0")},
++    ("com.android.support", "support-dynamic-animation"): {"28.0.0": ("androidx.dynamicanimation", "dynamicanimation", "1.0.0")},
++    ("com.android.support", "support-emoji"): {"28.0.0": ("androidx.emoji", "emoji", "1.0.0")},
++    ("com.android.support", "support-emoji-appcompat"): {"28.0.0": ("androidx.emoji", "emoji-appcompat", "1.0.0")},
++    ("com.android.support", "support-emoji-bundled"): {"28.0.0": ("androidx.emoji", "emoji-bundled", "1.0.0")},
++    ("com.android.support", "support-fragment"): {"28.0.0": ("androidx.fragment", "fragment", "1.0.0")},
++    ("com.android.support", "support-media-compat"): {"28.0.0": ("androidx.media", "media", "1.0.0")},
++    ("com.android.support", "support-tv-provider"): {"28.0.0": ("androidx.tvprovider", "tvprovider", "1.0.0")},
++    ("com.android.support", "support-v13"): {"28.0.0": ("androidx.legacy", "legacy-support-v13", "1.0.0")},
++    ("com.android.support", "support-v4"): {"28.0.0": ("androidx.legacy", "legacy-support-v4", "1.0.0")},
++    ("com.android.support", "support-vector-drawable"): {"28.0.0": ("androidx.vectordrawable", "vectordrawable", "1.0.0")},
++    ("com.android.support", "textclassifier"): {"28.0.0": ("androidx.textclassifier", "textclassifier", "1.0.0")},
++    ("com.android.support", "transition"): {"28.0.0": ("androidx.transition", "transition", "1.0.0")},
++    ("com.android.support", "wear"): {"28.0.0": ("androidx.wear", "wear", "1.0.0")},
++    ("com.android.support", "asynclayoutinflater"): {"28.0.0": ("androidx.asynclayoutinflater", "asynclayoutinflater", "1.0.0")},
++    ("com.android.support", "collections"): {"28.0.0": ("androidx.collection", "collection", "1.0.0")},
++    ("com.android.support", "coordinatorlayout"): {"28.0.0": ("androidx.coordinatorlayout", "coordinatorlayout", "1.0.0")},
++    ("com.android.support", "cursoradapter"): {"28.0.0": ("androidx.cursoradapter", "cursoradapter", "1.0.0")},
++    ("com.android.support", "customview"): {"28.0.0": ("androidx.customview", "customview", "1.0.0")},
++    ("com.android.support", "documentfile"): {"28.0.0": ("androidx.documentfile", "documentfile", "1.0.0")},
++    ("com.android.support", "drawerlayout"): {"28.0.0": ("androidx.drawerlayout", "drawerlayout", "1.0.0")},
++    ("com.android.support", "interpolator"): {"28.0.0": ("androidx.interpolator", "interpolator", "1.0.0")},
++    ("com.android.support", "loader"): {"28.0.0": ("androidx.loader", "loader", "1.0.0")},
++    ("com.android.support", "localbroadcastmanager"): {"28.0.0": ("androidx.localbroadcastmanager", "localbroadcastmanager", "1.0.0")},
++    ("com.android.support", "print"): {"28.0.0": ("androidx.print", "print", "1.0.0")},
++    ("com.android.support", "slidingpanelayout"): {"28.0.0": ("androidx.slidingpanelayout", "slidingpanelayout", "1.0.0")},
++    ("com.android.support", "swiperefreshlayout"): {"28.0.0": ("androidx.swiperefreshlayout", "swiperefreshlayout", "1.0.0")},
++    ("com.android.support", "viewpager"): {"28.0.0": ("androidx.viewpager", "viewpager", "1.0.0")},
++    # Databinding is not replaced on purpose due to direct usage by gradle.
++    # Unknown if this is a problem in Bazel.
++    # ("com.android.databinding", "adapters"): {"undefined" : ("androidx.databinding", "databinding-adapters", "undefined")},
++    # ("com.android.databinding", "baseLibrary"): {"undefined" : ("androidx.databinding", "databinding-common", "undefined")},
++    # ("com.android.databinding", "compiler"): {"undefined" : ("androidx.databinding", "databinding-compiler", "undefined")},
++    # ("com.android.databinding", "compilerCommon"): {"undefined" : ("androidx.databinding", "databinding-compiler-common", "undefined")},
++    # ("com.android.databinding", "library"): {"undefined" : ("androidx.databinding", "databinding-runtime", "undefined")},
++    ("com.android.support", "versionedparcelable"): {"28.0.0": ("androidx.versionedparcelable", "versionedparcelable", "1.0.0")},
++    ("android.arch.work", "work-runtime"): {"1.0.0": ("androidx.work", "work-runtime", "2.0.0")},
++    ("android.arch.work", "work-runtime-ktx"): {"1.0.0": ("androidx.work", "work-runtime-ktx", "2.0.0")},
++    ("android.arch.work", "work-rxjava2"): {"1.0.0": ("androidx.work", "work-rxjava2", "2.0.0")},
++    ("android.arch.work", "work-testing"): {"1.0.0": ("androidx.work", "work-testing", "2.0.0")},
++    ("android.arch.navigation", "navigation-common"): {"1.0.0": ("androidx.navigation", "navigation-common", "2.0.0")},
++    ("android.arch.navigation", "navigation-common-ktx"): {"1.0.0": ("androidx.navigation", "navigation-common-ktx", "2.0.0")},
++    ("android.arch.navigation", "navigation-dynamic-features-fragment"): {"1.0.0": ("androidx.navigation", "navigation-dynamic-features-fragment", "2.0.0")},
++    ("android.arch.navigation", "navigation-dynamic-features-runtime"): {"1.0.0": ("androidx.navigation", "navigation-dynamic-features-runtime", "2.0.0")},
++    ("android.arch.navigation", "navigation-fragment"): {"1.0.0": ("androidx.navigation", "navigation-fragment", "2.0.0")},
++    ("android.arch.navigation", "navigation-fragment-ktx"): {"1.0.0": ("androidx.navigation", "navigation-fragment-ktx", "2.0.0")},
++    ("android.arch.navigation", "navigation-runtime"): {"1.0.0": ("androidx.navigation", "navigation-runtime", "2.0.0")},
++    ("android.arch.navigation", "navigation-runtime-ktx"): {"1.0.0": ("androidx.navigation", "navigation-runtime-ktx", "2.0.0")},
++    ("android.arch.navigation", "navigation-ui"): {"1.0.0": ("androidx.navigation", "navigation-ui", "2.0.0")},
++    ("android.arch.navigation", "navigation-ui-ktx"): {"1.0.0": ("androidx.navigation", "navigation-ui-ktx", "2.0.0")},
++    ("android.arch.core", "common"): {"1.1.1": ("androidx.arch.core", "core-common", "2.0.0")},
++    ("android.arch.core", "core"): {"1.0.0-alpha3": ("androidx.arch.core", "core", "2.0.0")},
++    ("android.arch.core", "core-testing"): {"1.1.1": ("androidx.arch.core", "core-testing", "2.0.0")},
++    ("android.arch.core", "runtime"): {"1.1.1": ("androidx.arch.core", "core-runtime", "2.0.0")},
++    ("android.arch.lifecycle", "common"): {"1.1.1": ("androidx.lifecycle", "lifecycle-common", "2.0.0")},
++    ("android.arch.lifecycle", "common-java8"): {"1.1.1": ("androidx.lifecycle", "lifecycle-common-java8", "2.0.0")},
++    ("android.arch.lifecycle", "compiler"): {"1.1.1": ("androidx.lifecycle", "lifecycle-compiler", "2.0.0")},
++    ("android.arch.lifecycle", "extensions"): {"1.1.1": ("androidx.lifecycle", "lifecycle-extensions", "2.0.0")},
++    ("android.arch.lifecycle", "reactivestreams"): {"1.1.1": ("androidx.lifecycle", "lifecycle-reactivestreams", "2.0.0")},
++    ("android.arch.lifecycle", "runtime"): {"1.1.1": ("androidx.lifecycle", "lifecycle-runtime", "2.0.0")},
++    ("android.arch.lifecycle", "viewmodel"): {"1.1.1": ("androidx.lifecycle", "lifecycle-viewmodel", "2.0.0")},
++    ("android.arch.lifecycle", "livedata"): {"1.1.1": ("androidx.lifecycle", "lifecycle-livedata", "2.0.0")},
++    ("android.arch.lifecycle", "livedata-core"): {"1.1.1": ("androidx.lifecycle", "lifecycle-livedata-core", "2.0.0")},
++    ("android.arch.paging", "common"): {"1.0.0": ("androidx.paging", "paging-common", "2.0.0")},
++    ("android.arch.paging", "runtime"): {"1.0.0": ("androidx.paging", "paging-runtime", "2.0.0")},
++    ("android.arch.paging", "rxjava2"): {"1.0.0-alpha1": ("androidx.paging", "paging-rxjava2", "2.0.0")},
++    ("android.arch.persistence", "db"): {"1.1.0": ("androidx.sqlite", "sqlite", "2.0.0")},
++    ("android.arch.persistence", "db-framework"): {"1.1.0": ("androidx.sqlite", "sqlite-framework", "2.0.0")},
++    ("android.arch.persistence.room", "common"): {"1.1.0": ("androidx.room", "room-common", "2.0.0")},
++    ("android.arch.persistence.room", "compiler"): {"1.1.0": ("androidx.room", "room-compiler", "2.0.0")},
++    ("android.arch.persistence.room", "migration"): {"1.1.0": ("androidx.room", "room-migration", "2.0.0")},
++    ("android.arch.persistence.room", "runtime"): {"1.1.0": ("androidx.room", "room-runtime", "2.0.0")},
++    ("android.arch.persistence.room", "rxjava2"): {"1.1.0": ("androidx.room", "room-rxjava2", "2.0.0")},
++    ("android.arch.persistence.room", "testing"): {"1.1.0": ("androidx.room", "room-testing", "2.0.0")},
++    ("android.arch.persistence.room", "guava"): {"1.1.0": ("androidx.room", "room-guava", "2.0.0")},
++    ("com.android.support.constraint", "constraint-layout"): {"1.1.0": ("androidx.constraintlayout", "constraintlayout", "1.1.3")},
++    ("com.android.support.constraint", "constraint-layout-solver"): {"1.1.0": ("androidx.constraintlayout", "constraintlayout-solver", "1.1.3")},
++    ("com.android.support.test", "orchestrator"): {"1.0.2": ("androidx.test", "orchestrator", "1.1.0-alpha3")},
++    ("com.android.support.test", "rules"): {"1.0.2": ("androidx.test", "rules", "1.1.0-alpha3")},
++    ("com.android.support.test", "runner"): {"1.0.2": ("androidx.test", "runner", "1.1.0-alpha3")},
++    ("com.android.support.test", "monitor"): {"1.0.2": ("androidx.test", "monitor", "1.1.0-alpha3")},
++    ("com.android.support.test.espresso", "espresso-accessibility"): {"3.0.2": ("androidx.test.espresso", "espresso-accessibility", "3.1.0-alpha3")},
++    ("com.android.support.test.espresso", "espresso-contrib"): {"3.0.2": ("androidx.test.espresso", "espresso-contrib", "3.1.0-alpha3")},
++    ("com.android.support.test.espresso", "espresso-core"): {"3.0.2": ("androidx.test.espresso", "espresso-core", "3.1.0-alpha3")},
++    ("com.android.support.test.espresso", "espresso-idling-resource"): {"3.0.2": ("androidx.test.espresso", "espresso-idling-resource", "3.1.0-alpha3")},
++    ("com.android.support.test.espresso", "espresso-intents"): {"3.0.2": ("androidx.test.espresso", "espresso-intents", "3.1.0-alpha3")},
++    ("com.android.support.test.espresso", "espresso-remote"): {"3.0.2": ("androidx.test.espresso", "espresso-remote", "3.1.0-alpha3")},
++    ("com.android.support.test.espresso", "espresso-web"): {"3.0.2": ("androidx.test.espresso", "espresso-web", "3.1.0-alpha3")},
++    ("com.android.support.test.espresso.idling", "idling-concurrent"): {"3.0.2": ("androidx.test.espresso.idling", "idling-concurrent", "3.1.0-alpha3")},
++    ("com.android.support.test.espresso.idling", "idling-net"): {"3.0.2": ("androidx.test.espresso.idling", "idling-net", "3.1.0-alpha3")},
++    ("com.android.support.test.janktesthelper", "janktesthelper"): {"1.0.1": ("androidx.test.jank", "janktesthelper", "1.0.1-alpha3")},
++    ("com.android.support.test.services", "test-services"): {"1.0.2": ("androidx.test", "test-services", "1.1.0-alpha3")},
++    ("com.android.support.test.uiautomator", "uiautomator"): {"2.1.3": ("androidx.test.uiautomator", "uiautomator", "2.2.0-alpha3")},
++    ("com.android.support.test.uiautomator", "uiautomator-v18"): {"2.1.3": ("androidx.test.uiautomator", "uiautomator", "2.2.0-alpha3")},
++    ("com.android.support", "car"): {"28.0.0-alpha5": ("androidx.car", "car", "1.0.0-alpha5")},
++    ("com.android.support", "slices-core"): {"28.0.0": ("androidx.slice", "slice-core", "1.0.0")},
++    ("com.android.support", "slices-builders"): {"28.0.0": ("androidx.slice", "slice-builders", "1.0.0")},
++    ("com.android.support", "slices-view"): {"28.0.0": ("androidx.slice", "slice-view", "1.0.0")},
++    ("com.android.support", "heifwriter"): {"28.0.0": ("androidx.heifwriter", "heifwriter", "1.0.0")},
++    ("com.android.support", "recyclerview-selection"): {"28.0.0": ("androidx.recyclerview", "recyclerview-selection", "1.0.0")},
++    ("com.android.support", "webkit"): {"28.0.0": ("androidx.webkit", "webkit", "1.0.0")},
++    ("com.android.support", "biometric"): {"28.0.0-alpha03": ("androidx.biometric", "biometric", "1.0.0-alpha03")},
++}
+diff -ruN original/private/rules/maven_install.bzl modified/private/rules/maven_install.bzl
+--- original/private/rules/maven_install.bzl	2026-01-21 22:32:17
++++ modified/private/rules/maven_install.bzl	2026-01-21 22:33:53
+@@ -1,5 +1,6 @@
+ load("//:specs.bzl", "parse", _json = "json")
+ load("//private:constants.bzl", "DEFAULT_REPOSITORY_NAME")
++load("//private:dependency_tree_parser.bzl", "JETIFY_INCLUDE_LIST_JETIFY_ALL")
+ load("//private/rules:coursier.bzl", "DEFAULT_AAR_IMPORT_LABEL", "coursier_fetch", "pinned_coursier_fetch")
+ load("//private/rules:generate_pin_repository.bzl", "generate_pin_repository")
+ 
+@@ -20,6 +21,8 @@
+         strict_visibility = False,
+         strict_visibility_value = ["//visibility:private"],
+         resolve_timeout = 600,
++        jetify = False,
++        jetify_include_list = JETIFY_INCLUDE_LIST_JETIFY_ALL,
+         additional_netrc_lines = [],
+         use_credentials_from_home_netrc_file = False,
+         fail_if_repin_required = True,
+@@ -64,6 +67,8 @@
+       strict_visibility_value: Allows changing transitive dependencies strict visibility scope from private
+         to specified scopes list.
+       resolve_timeout: The execution timeout of resolving and fetching artifacts.
++      jetify: Runs the AndroidX [Jetifier](https://developer.android.com/studio/command-line/jetifier) tool on artifacts specified in jetify_include_list. If jetify_include_list is not specified, run Jetifier on all artifacts.
++      jetify_include_list: List of artifacts that need to be jetified in `groupId:artifactId` format. By default all artifacts are jetified if `jetify` is set to True.
+       additional_netrc_lines: Additional lines prepended to the netrc file used by `http_file` (with `maven_install_json` only).
+       use_credentials_from_home_netrc_file: Whether to pass machine login credentials from the ~/.netrc file to coursier.
+       fail_if_repin_required: Whether to fail the build if the required maven artifacts have been changed but not repinned. Requires the `maven_install_json` to have been set.
+@@ -135,6 +140,8 @@
+             strict_visibility_value = strict_visibility_value,
+             maven_install_json = maven_install_json,
+             resolve_timeout = resolve_timeout,
++            jetify = jetify,
++            jetify_include_list = jetify_include_list,
+             use_credentials_from_home_netrc_file = use_credentials_from_home_netrc_file,
+             use_starlark_android_rules = use_starlark_android_rules,
+             aar_import_bzl_label = aar_import_bzl_label,
+@@ -164,6 +171,8 @@
+             override_targets = override_targets,
+             strict_visibility = strict_visibility,
+             strict_visibility_value = strict_visibility_value,
++            jetify = jetify,
++            jetify_include_list = jetify_include_list,
+             additional_netrc_lines = additional_netrc_lines,
+             fail_if_repin_required = fail_if_repin_required,
+             duplicate_version_warning = duplicate_version_warning,
