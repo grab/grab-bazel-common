@@ -1,23 +1,35 @@
 workspace(name = "grab_bazel_common")
 
 load("@grab_bazel_common//rules:repositories.bzl", "bazel_common_dependencies")
-
 bazel_common_dependencies()
 
-load("@grab_bazel_common//rules:setup.bzl", "bazel_common_setup")
+# rules_android necessary setup
+# has to be in WORKSPACE to avoid compatibility_proxy issue (eager load issue)
+load("@rules_android//:prereqs.bzl", "rules_android_prereqs")
+rules_android_prereqs()
+load("@bazel_features//:deps.bzl", "bazel_features_deps")
+bazel_features_deps()
+load("@rules_cc//cc:extensions.bzl", "compatibility_proxy_repo")
+compatibility_proxy_repo()
+load("@rules_java//java:rules_java_deps.bzl", "rules_java_dependencies")
+rules_java_dependencies()
+load("@com_google_protobuf//bazel/private:proto_bazel_features.bzl", "proto_bazel_features")
+proto_bazel_features(name = "proto_bazel_features")
+load("@rules_java//java:repositories.bzl", "rules_java_toolchains")
+rules_java_toolchains()
+load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
+rules_jvm_external_deps()
+load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
+rules_jvm_external_setup()
 
+load("@grab_bazel_common//rules:setup.bzl", "bazel_common_setup")
 bazel_common_setup(
     buildifier_version = "6.3.3",
     pinned_maven_install = True,
 )
 
 load("@grab_bazel_common//rules:maven.bzl", "pin_bazel_common_dependencies")
-
 pin_bazel_common_dependencies()
-
-android_sdk_repository(
-    name = "androidsdk",
-)
 
 load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
 load("@rules_jvm_external//:defs.bzl", "maven_install")

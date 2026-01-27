@@ -4,6 +4,15 @@ load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 def http_archive(name, **kwargs):
     maybe(_http_archive, name = name, **kwargs)
 
+def _android():
+    rules_android_tag = "0.7.1"
+    http_archive(
+        name = "rules_android",
+        sha256 = "7c45b6aaa837fb6f2f23ad11387638cb00fa9f839a04ec564caac70a543a9cd5",
+        strip_prefix = "rules_android-%s" % rules_android_tag,
+        url = "https://github.com/bazelbuild/rules_android/releases/download/v%s/rules_android-v%s.tar.gz" % (rules_android_tag, rules_android_tag),
+    )
+
 def _maven():
     RULES_JVM_EXTERNAL_TAG = "5.3"
     RULES_JVM_EXTERNAL_SHA = "d31e369b854322ca5098ea12c69d7175ded971435e55c18dd9dd5f29cc5249ac"
@@ -80,6 +89,7 @@ def _proto():
 
 def bazel_common_dependencies():
     #_proto
+    _android()
     _maven()
     _kotlin()
     _detekt()
