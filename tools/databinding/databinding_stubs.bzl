@@ -20,6 +20,8 @@ Outputs:
     %{name}_mapper.srcjar: Stub DatabindingMapperImpl class
 """
 
+load("@rules_android//providers:providers.bzl", "DataBindingV2Info", "StarlarkAndroidResourcesInfo")
+
 def _to_path(f):
     return f.path
 
@@ -64,8 +66,10 @@ def _databinding_stubs_impl(ctx):
             for class_info in _list_or_depset_to_list(target[DataBindingV2Info].class_infos):
                 if _is_direct(class_info.owner.package, class_info.owner.name, tags):
                     class_infos[class_info.path] = class_info
-        if (AndroidResourcesInfo in target and not non_transitive_r_class):
-            r_txts.append(target[AndroidResourcesInfo].compiletime_r_txt)
+        if (StarlarkAndroidResourcesInfo in target and not non_transitive_r_class):
+            for node in target[StarlarkAndroidResourcesInfo].direct_resources_nodes.to_list():
+                if node.r_txt:
+                    r_txts.append(node.r_txt)
 
     # Filter duplicates
     class_infos = list(class_infos.values())
