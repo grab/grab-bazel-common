@@ -1,7 +1,7 @@
-diff -ruN original/private/dependency_tree_parser.bzl modified/private/dependency_tree_parser.bzl
---- original/private/dependency_tree_parser.bzl	2026-01-21 22:32:17
-+++ modified/private/dependency_tree_parser.bzl	2026-01-21 22:45:44
-@@ -32,6 +32,8 @@
+diff -ruN rje_original/private/dependency_tree_parser.bzl rje_patched/private/dependency_tree_parser.bzl
+--- rje_original/private/dependency_tree_parser.bzl	2025-11-04 19:56:22
++++ rje_patched/private/dependency_tree_parser.bzl	2026-01-28 00:22:56
+@@ -32,11 +32,17 @@
  load("//private/lib:coordinates.bzl", "to_purl", "unpack_coordinates")
  load("//private/lib:urls.bzl", "scheme_and_host")
  
@@ -10,7 +10,16 @@ diff -ruN original/private/dependency_tree_parser.bzl modified/private/dependenc
  def _genrule_copy_artifact_from_http_file(artifact, visibilities):
      http_file_repository = to_repository_name(artifact["coordinates"])
  
-@@ -96,7 +98,9 @@
+     file = artifact.get("out", artifact["file"])
+ 
++    # Handle BOM artifacts that don't have actual files
++    if file == None:
++        return ""
++
+     genrule = [
+         "copy_file(",
+         "     name = \"%s_extension\"," % http_file_repository,
+@@ -96,7 +102,9 @@
          testonly_artifacts,
          exclusions,
          default_visibilities,
@@ -21,7 +30,7 @@ diff -ruN original/private/dependency_tree_parser.bzl modified/private/dependenc
      to_return = []
      simple_coord = strip_packaging_and_classifier_and_version(artifact["coordinates"])
      target_label = escape(simple_coord)
-@@ -104,7 +108,7 @@
+@@ -104,7 +112,7 @@
  
      # 1. Generate the rule class.
      #
@@ -30,7 +39,7 @@ diff -ruN original/private/dependency_tree_parser.bzl modified/private/dependenc
      #
      packaging = artifact_path.split(".").pop()
      if packaging == "jar":
-@@ -121,6 +125,11 @@
+@@ -121,6 +129,11 @@
      else:
          fail("Unsupported packaging type: " + packaging)
  
@@ -42,7 +51,7 @@ diff -ruN original/private/dependency_tree_parser.bzl modified/private/dependenc
      target_import_string = [import_rule + "("]
  
      # 2. Generate the target label.
-@@ -148,6 +157,11 @@
+@@ -148,6 +161,11 @@
          target_import_string.append("\taar = \"%s\"," % artifact_path)
          if srcjar_paths != None and target_label in srcjar_paths:
              target_import_string.append("\tsrcjar = \"%s\"," % srcjar_paths[target_label])
@@ -54,7 +63,7 @@ diff -ruN original/private/dependency_tree_parser.bzl modified/private/dependenc
      elif packaging in ["so", "dylib", "dll"]:
          is_dylib = True
          jar_versionless_target_labels.append(target_label)
-@@ -467,6 +481,14 @@
+@@ -467,6 +485,14 @@
                      if repository_ctx.attr.maven_install_json:
                          all_imports.append(_genrule_copy_artifact_from_http_file(artifact, default_visibilities))
  
@@ -69,16 +78,52 @@ diff -ruN original/private/dependency_tree_parser.bzl modified/private/dependenc
      # Iterate through the list of artifacts, and generate the target declaration strings.
      for artifact in dependencies:
          artifact_path = artifact["file"]
-@@ -529,6 +551,8 @@
-                 exclusions,
-                 default_visibilities,
-                 raw_artifact,
-+                jetify_all,
-+                jetify_include_dict,
-             ))
+@@ -512,24 +538,27 @@
+             if repository_ctx.attr.maven_install_json:
+                 # Provide the downloaded artifact as a file target.
+                 all_imports.append(_genrule_copy_artifact_from_http_file(artifact, default_visibilities))
+-            raw_artifact = dict(artifact)
+-            raw_artifact["coordinates"] = "original_" + artifact["coordinates"]
+-            raw_artifact["maven_coordinates"] = artifact["coordinates"]
+-            raw_artifact["out"] = "original_" + artifact["file"]
++            if artifact["file"] != None:
++                raw_artifact = dict(artifact)
++                raw_artifact["coordinates"] = "original_" + artifact["coordinates"]
++                raw_artifact["maven_coordinates"] = artifact["coordinates"]
++                raw_artifact["out"] = "original_" + artifact["file"]
+ 
+-            all_imports.extend(_generate_target(
+-                repository_ctx,
+-                jar_versionless_target_labels,
+-                explicit_artifacts,
+-                srcjar_paths,
+-                labels_to_override,
+-                repository_urls,
+-                neverlink_artifacts,
+-                testonly_artifacts,
+-                exclusions,
+-                default_visibilities,
+-                raw_artifact,
+-            ))
++                all_imports.extend(_generate_target(
++                    repository_ctx,
++                    jar_versionless_target_labels,
++                    explicit_artifacts,
++                    srcjar_paths,
++                    labels_to_override,
++                    repository_urls,
++                    neverlink_artifacts,
++                    testonly_artifacts,
++                    exclusions,
++                    default_visibilities,
++                    raw_artifact,
++                    jetify_all,
++                    jetify_include_dict,
++                ))
  
          elif artifact_path != None and packaging != "pom":
-@@ -545,6 +569,8 @@
+             seen_imports[target_label] = True
+@@ -545,6 +574,8 @@
                  exclusions,
                  default_visibilities,
                  artifact,
@@ -87,9 +132,9 @@ diff -ruN original/private/dependency_tree_parser.bzl modified/private/dependenc
              ))
          else:  # artifact_path == None or packaging == "pom":
              # Special case for certain artifacts that only come with a POM file.
-diff -ruN original/private/rules/coursier.bzl modified/private/rules/coursier.bzl
---- original/private/rules/coursier.bzl	2026-01-21 22:32:17
-+++ modified/private/rules/coursier.bzl	2026-01-21 22:46:36
+diff -ruN rje_original/private/rules/coursier.bzl rje_patched/private/rules/coursier.bzl
+--- rje_original/private/rules/coursier.bzl	2025-11-04 19:56:22
++++ rje_patched/private/rules/coursier.bzl	2026-01-28 00:22:43
 @@ -20,7 +20,7 @@
      "is_maven_local_path",
      "to_repository_name",
@@ -161,9 +206,9 @@ diff -ruN original/private/rules/coursier.bzl modified/private/rules/coursier.bz
          "resolve_timeout": attr.int(default = 600),
          "use_starlark_android_rules": attr.bool(default = False, doc = "Whether to use the native or Starlark version of the Android rules."),
          "aar_import_bzl_label": attr.string(default = DEFAULT_AAR_IMPORT_LABEL, doc = "The label (as a string) to use to import aar_import from"),
-diff -ruN original/private/rules/jetifier.bzl modified/private/rules/jetifier.bzl
---- original/private/rules/jetifier.bzl	2026-01-21 22:32:17
-+++ modified/private/rules/jetifier.bzl	2026-01-21 22:32:52
+diff -ruN rje_original/private/rules/jetifier.bzl rje_patched/private/rules/jetifier.bzl
+--- rje_original/private/rules/jetifier.bzl	2025-11-04 19:56:22
++++ rje_patched/private/rules/jetifier.bzl	2026-01-28 00:22:43
 @@ -1,10 +1,103 @@
 -# Some rulesets (eg. `contrib_rules_jvm`) have "frozen" their `rules_jvm_external`
 -# dependencies to avoid needing consumers of those rulesets from needing to run
@@ -276,9 +321,9 @@ diff -ruN original/private/rules/jetifier.bzl modified/private/rules/jetifier.bz
 +        else:
 +            ret.append(coord_str)
 +    return ret
-diff -ruN original/private/rules/jetifier_maven_map.bzl modified/private/rules/jetifier_maven_map.bzl
---- original/private/rules/jetifier_maven_map.bzl	2026-01-21 22:32:17
-+++ modified/private/rules/jetifier_maven_map.bzl	2026-01-21 22:33:05
+diff -ruN rje_original/private/rules/jetifier_maven_map.bzl rje_patched/private/rules/jetifier_maven_map.bzl
+--- rje_original/private/rules/jetifier_maven_map.bzl	1970-01-01 07:00:00
++++ rje_patched/private/rules/jetifier_maven_map.bzl	2026-01-28 00:22:43
 @@ -0,0 +1,137 @@
 +# Manually crafted from https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-master-dev/jetifier/jetifier/core/src/main/resources/default.config
 +# Take the "pomRules" section and transform it with inlined values from versions.latestReleased.
@@ -417,9 +462,9 @@ diff -ruN original/private/rules/jetifier_maven_map.bzl modified/private/rules/j
 +    ("com.android.support", "webkit"): {"28.0.0": ("androidx.webkit", "webkit", "1.0.0")},
 +    ("com.android.support", "biometric"): {"28.0.0-alpha03": ("androidx.biometric", "biometric", "1.0.0-alpha03")},
 +}
-diff -ruN original/private/rules/maven_install.bzl modified/private/rules/maven_install.bzl
---- original/private/rules/maven_install.bzl	2026-01-21 22:32:17
-+++ modified/private/rules/maven_install.bzl	2026-01-21 22:33:53
+diff -ruN rje_original/private/rules/maven_install.bzl rje_patched/private/rules/maven_install.bzl
+--- rje_original/private/rules/maven_install.bzl	2025-11-04 19:56:22
++++ rje_patched/private/rules/maven_install.bzl	2026-01-28 00:22:43
 @@ -1,5 +1,6 @@
  load("//:specs.bzl", "parse", _json = "json")
  load("//private:constants.bzl", "DEFAULT_REPOSITORY_NAME")

@@ -4,8 +4,8 @@ load("@grab_bazel_common//rules/android/lint:providers.bzl", "AndroidLintInfo")
 def _lint_inspector(ctx):
     target = ctx.attr.target
 
-    lint_checks = ctx.attr.lint_target[AndroidLintInfo].inspect_info.lint_checks
-    aars_dirs = ctx.attr.lint_target[AndroidLintInfo].inspect_info.aars_dirs
+    lint_checks = ctx.attr.lint_target[AndroidLintInfo].inspect_info.lint_checks or []
+    aars_dirs = ctx.attr.lint_target[AndroidLintInfo].inspect_info.aars_dirs or []
 
     executable = ctx.actions.declare_file("lint/%s_inspect.sh" % target.label.name)
     lint_rules = ctx.actions.declare_file("lint/%s_lint_rules.json" % target.label.name)
