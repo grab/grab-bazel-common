@@ -634,8 +634,8 @@ def _lint_aspect_impl(target, ctx):
                 updated_baseline = None,
             )
             android_lint_inspect_info = AndroidLintInspectInfo(
-                lint_checks = [],
-                aars_dirs = [],
+                lint_checks = None,
+                aars_dirs = None,
             )
 
         return AndroidLintInfo(

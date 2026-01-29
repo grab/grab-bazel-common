@@ -1,12 +1,15 @@
 workspace(name = "grab_bazel_common")
 
 load("@grab_bazel_common//rules:repositories.bzl", "bazel_common_dependencies")
+
 bazel_common_dependencies()
 
 load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
+
 rules_jvm_external_deps()
 
 load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
+
 rules_jvm_external_setup()
 
 load("@grab_bazel_common//rules:setup.bzl", "bazel_common_setup")
