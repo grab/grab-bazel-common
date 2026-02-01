@@ -55,6 +55,7 @@ def _maven():
     )
 
     DAGGER_TAG = "2.46.1"
+
     DAGGER_SHA = "bbd75275faa3186ebaa08e6779dc5410741a940146d43ef532306eb2682c13f7"
 
     http_archive(
