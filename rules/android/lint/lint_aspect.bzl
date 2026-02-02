@@ -7,6 +7,12 @@ load(
     "AndroidLintSourcesInfo",
     "LINT_ENABLED",
 )
+load(
+    "@rules_android//providers:providers.bzl",
+    "AndroidSdkInfo",
+    "AndroidLibraryResourceClassJarProvider",
+    "AndroidIdeInfo",
+)
 
 _LINT_ASPECTS_ATTR = ["deps", "runtime_deps", "exports", "associates"]  # Define attributes that aspect will propagate to
 
@@ -83,7 +89,7 @@ def _collect_sources(target, ctx, library):
     to collect sources instead of relying on combining results in an aspect.
     """
     classpath = _lint_sources_classpath(target, ctx)
-    merged_manifest = [target[AndroidManifestInfo].manifest] if AndroidManifestInfo in target and not library else []
+    merged_manifest = [target[AndroidIdeInfo].manifest] if AndroidIdeInfo in target and not library else []
     sources = [
         struct(
             srcs = dep[AndroidLintSourcesInfo].srcs,
@@ -658,7 +664,7 @@ lint_aspect = aspect(
         ),
         "_android_sdk": attr.label(default = "@androidsdk//:sdk"),  # Use toolchains later
         "_javabase": attr.label(
-            default = "@bazel_tools//tools/jdk:current_java_runtime",
+            default = "@rules_java//toolchains:current_java_runtime",
         ),
     },
     provides = [
