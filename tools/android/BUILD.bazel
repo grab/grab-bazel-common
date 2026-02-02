@@ -1,8 +1,6 @@
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
-
-alias(
+java_import(
     name = "android_tools",
-    actual = "@bazel_tools//src/tools/android/java/com/google/devtools/build/android:all_android_tools",
+    jars = ["@android_tools//:all_android_tools_deploy.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -18,7 +16,7 @@ java_plugin(
 
 java_import(
     name = "android_sdk",
-    jars = ["@bazel_tools//tools/android:android_jar"],
+    jars = ["@androidsdk//:platforms/android-36/android.jar"],
     neverlink = 1,
     visibility = ["//visibility:public"],
 )

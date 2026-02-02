@@ -4,7 +4,7 @@ load(
     _kt_jvm_library = "kt_jvm_library",
 )
 
-_ANDROID_SDK_JAR = "@io_bazel_rules_kotlin//third_party:android_sdk"
+_ANDROID_SDK_JAR = "//tools/android:android_sdk"
 
 def _kt_android_artifact(
         name,
