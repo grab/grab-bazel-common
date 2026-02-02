@@ -66,9 +66,9 @@ def _maven():
     )
 
 def _kotlin():
-    RULES_KOTLIN_VERSION = "1.9.6"
+    RULES_KOTLIN_VERSION = "2.1.2"
 
-    RULES_KOTLIN_SHA = "3b772976fec7bdcda1d84b9d39b176589424c047eb2175bed09aac630e50af43"
+    RULES_KOTLIN_SHA = "6ea1c530261756546d0225a0b6e580eaf2f49084e28679a6c17f8ad1ccecca5d"
 
     http_archive(
         name = "io_bazel_rules_kotlin",

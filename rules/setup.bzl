@@ -43,8 +43,8 @@ def _android(patched_android_tools):
 def _kotlin():
     kotlin_repositories(
         compiler_release = kotlinc_version(
-            release = "1.9.25",
-            sha256 = "6ab72d6144e71cbbc380b770c2ad380972548c63ab6ed4c79f11c88f2967332e",
+            release = "2.1.0",
+            sha256 = "b6698d5728ad8f9edcdd01617d638073191d8a03139cc538a391b4e3759ad297",
         ),
         ksp_compiler_release = ksp_version(
             release = "1.9.25-1.0.20",
