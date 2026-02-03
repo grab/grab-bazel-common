@@ -39,6 +39,8 @@ def _android():
         sha256 = "7c45b6aaa837fb6f2f23ad11387638cb00fa9f839a04ec564caac70a543a9cd5",
         strip_prefix = "rules_android-%s" % rules_android_tag,
         url = "https://github.com/bazelbuild/rules_android/releases/download/v%s/rules_android-v%s.tar.gz" % (rules_android_tag, rules_android_tag),
+        patches = ["@grab_bazel_common//patches/rules_android:guava_version.patch"],
+        patch_args = ["-p1"],
     )
 
 def _maven():
