@@ -1,0 +1,1 @@
+exports_files(["guava_version.patch"])
