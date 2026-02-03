@@ -1,0 +1,12 @@
+--- a/defs.bzl
++++ b/defs.bzl
+@@ -57,5 +57,8 @@
+         repositories = [
+             "https://maven.google.com",
+             "https://repo1.maven.org/maven2",
+         ],
++        override_targets = {
++            "com.google.guava:guava": "@rules_android_maven//:com_google_guava_guava",
++        },
+         use_starlark_android_rules = True,
+     )
