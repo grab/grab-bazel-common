@@ -47,8 +47,8 @@ def _kotlin():
             sha256 = "b6698d5728ad8f9edcdd01617d638073191d8a03139cc538a391b4e3759ad297",
         ),
         ksp_compiler_release = ksp_version(
-            release = "1.9.25-1.0.20",
-            sha256 = "3a2d24623409ac5904c87a7e130f5b39ce9fd67ca8b44e4fe5b784a6ec102b81",
+            release = "2.1.0-1.0.28",
+            sha256 = "fc27b08cadc061a4a989af01cbeccb613feef1995f4aad68f2be0f886a3ee251",
         ),
     )
     native.register_toolchains("//:kotlin_toolchain")

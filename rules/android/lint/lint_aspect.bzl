@@ -89,7 +89,14 @@ def _collect_sources(target, ctx, library):
     to collect sources instead of relying on combining results in an aspect.
     """
     classpath = _lint_sources_classpath(target, ctx)
-    merged_manifest = [target[AndroidIdeInfo].manifest] if AndroidIdeInfo in target and not library else []
+    merged_manifest = (
+        [target[AndroidIdeInfo].generated_manifest] 
+        if AndroidIdeInfo in target 
+            and not library 
+            and target[AndroidIdeInfo].generated_manifest != None 
+        else []
+    )
+
     sources = [
         struct(
             srcs = dep[AndroidLintSourcesInfo].srcs,
