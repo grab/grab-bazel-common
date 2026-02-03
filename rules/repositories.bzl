@@ -4,34 +4,6 @@ load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 def http_archive(name, **kwargs):
     maybe(_http_archive, name = name, **kwargs)
 
-def _rules_jvm_deps():
-    rules_java_tag = "7.6.5"
-    http_archive(
-        name = "rules_java",
-        urls = [
-            "https://github.com/bazelbuild/rules_java/releases/download/%s/rules_java-%s.tar.gz" % (rules_java_tag, rules_java_tag),
-        ],
-        sha256 = "8afd053dd2a7b85a4f033584f30a7f1666c5492c56c76e04eec4428bdb2a86cf",
-    )
-
-    rules_license_tag = "1.0.0"
-    http_archive(
-        name = "rules_license",
-        urls = [
-            "https://mirror.bazel.build/github.com/bazelbuild/rules_license/releases/download/%s/rules_license-%s.tar.gz" % (rules_license_tag, rules_license_tag),
-            "https://github.com/bazelbuild/rules_license/releases/download/%s/rules_license-%s.tar.gz" % (rules_license_tag, rules_license_tag),
-        ],
-        sha256 = "26d4021f6898e23b82ef953078389dd49ac2b5618ac564ade4ef87cced147b38",
-    )
-
-def _java():
-    version_tag = "9.2.0"
-    http_archive(
-        name = "rules_java",
-        sha256 = "2f822fbc33b99de5bbeaceada4be2bd3bb5c8da80e2f7462a9d300c8fc312f11",
-        url = "https://github.com/bazelbuild/rules_java/releases/download/%s/rules_java-%s.tar.gz" % (version_tag, version_tag),
-    )
-
 def _android():
     rules_android_tag = "0.7.1"
     http_archive(
@@ -68,9 +40,9 @@ def _maven():
     )
 
 def _kotlin():
-    RULES_KOTLIN_VERSION = "1.9.6"
+    RULES_KOTLIN_VERSION = "2.1.2"
 
-    RULES_KOTLIN_SHA = "3b772976fec7bdcda1d84b9d39b176589424c047eb2175bed09aac630e50af43"
+    RULES_KOTLIN_SHA = "6ea1c530261756546d0225a0b6e580eaf2f49084e28679a6c17f8ad1ccecca5d"
 
     http_archive(
         name = "io_bazel_rules_kotlin",
@@ -132,8 +104,6 @@ def _jetifier():
 
 def bazel_common_dependencies():
     #_proto
-    _rules_jvm_deps()
-    _java()
     _android()
     _maven()
     _kotlin()
