@@ -1,1 +1,6 @@
-exports_files(["macos_cp_reflink.patch", "guava_version.patch"])
+exports_files([
+    "macos_cp_reflink.patch", 
+    "guava_version.patch",
+    "databinding_output_dash"
+    ]
+)
