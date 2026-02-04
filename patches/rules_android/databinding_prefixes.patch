@@ -1,0 +1,29 @@
+--- a/src/tools/java/com/google/devtools/build/android/BUILD
++++ b/src/tools/java/com/google/devtools/build/android/BUILD
+@@ -39,7 +39,22 @@ run_singlejar(
+     include_prefixes = [
+         "android/databinding/",
+-        "org/antlr/",
+-        "org/apache/commons/",
+-        "org/mozilla",
++        "androidx/databinding/",
++        "api-versions.xml",
++        "com/android/tools/build/",
++        "com/beust/jcommander/",
++        "com/google/auto/common/",
++        "com/google/common/",
++        "com/google/gson/",
++        "com/squareup/javapoet/",
++        "com/sun/",
++        "default.generated.config",
++        "javax/",
++        "kotlin/",
++        "org/antlr/v4/",
++        "org/apache/commons/",
++        "org/glassfish/",
++        "org/jvnet/",
++        "org/mozilla/",
++        "org/objectweb/asm",
+     ],
+ )
+ 
