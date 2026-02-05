@@ -14,6 +14,8 @@ def _android():
         patches = [
             "@grab_bazel_common//patches/rules_android:macos_cp_reflink.patch",
             "@grab_bazel_common//patches/rules_android:guava_version.patch",
+            "@grab_bazel_common//patches/rules_android:databinding_annotation_template.patch",
+            "@grab_bazel_common//patches/rules_android:databinding_androidx_flag.patch",
         ],
         patch_args = ["-p1"],
     )
