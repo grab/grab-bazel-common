@@ -7,6 +7,9 @@ load("@grab_bazel_common//rules:deps_init.bzl", "bazel_common_deps_init")
 
 bazel_common_deps_init()
 
+load("@grab_bazel_common//rules:setup_android.bzl", "rules_android_setup")
+rules_android_setup()
+
 load("@grab_bazel_common//rules:setup.bzl", "bazel_common_setup")
 bazel_common_setup(
     buildifier_version = "6.3.3",

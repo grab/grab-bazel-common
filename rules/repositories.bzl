@@ -12,8 +12,12 @@ def _android():
         strip_prefix = "rules_android-%s" % rules_android_tag,
         url = "https://github.com/bazelbuild/rules_android/releases/download/v%s/rules_android-v%s.tar.gz" % (rules_android_tag, rules_android_tag),
         patches = [
+            "@grab_bazel_common//patches/rules_android:guava_version.patch", 
             "@grab_bazel_common//patches/rules_android:macos_cp_reflink.patch",
-            "@grab_bazel_common//patches/rules_android:guava_version.patch",
+            "@grab_bazel_common//patches/rules_android:use_androidx.patch",
+            "@grab_bazel_common//patches/rules_android:androidx_annotation_template.patch",
+            "@grab_bazel_common//patches/rules_android:databinding_deps.patch",
+            "@grab_bazel_common//patches/rules_android:databinding_output_name.patch",
         ],
         patch_args = ["-p1"],
     )
