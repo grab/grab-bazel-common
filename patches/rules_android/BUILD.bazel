@@ -1,1 +1,9 @@
-exports_files(["macos_cp_reflink.patch", "guava_version.patch"])
+exports_files([
+    "guava_version.patch", 
+    "macos_cp_reflink.patch", 
+    "use_androidx.patch", 
+    "androidx_annotation_template.patch",
+    "databinding_deps.patch",
+    "databinding_output_name.patch",
+    ]
+)
