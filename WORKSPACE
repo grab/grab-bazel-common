@@ -22,9 +22,6 @@ rules_jvm_external_deps()
 load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
 rules_jvm_external_setup()
 
-load("@grab_bazel_common//rules:setup_android.bzl", "rules_android_setup")
-rules_android_setup()
-
 load("@grab_bazel_common//rules:setup.bzl", "bazel_common_setup")
 bazel_common_setup(
     buildifier_version = "6.3.3",

@@ -4,7 +4,7 @@ load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 def http_archive(name, **kwargs):
     maybe(_http_archive, name = name, **kwargs)
 
-def _android():
+def android():
     rules_android_tag = "0.7.1"
     http_archive(
         name = "rules_android",
@@ -12,17 +12,19 @@ def _android():
         strip_prefix = "rules_android-%s" % rules_android_tag,
         url = "https://github.com/bazelbuild/rules_android/releases/download/v%s/rules_android-v%s.tar.gz" % (rules_android_tag, rules_android_tag),
         patches = [
-            "@grab_bazel_common//patches/rules_android:guava_version.patch", 
+            "@grab_bazel_common//patches/rules_android:guava_version.patch",
             "@grab_bazel_common//patches/rules_android:macos_cp_reflink.patch",
             "@grab_bazel_common//patches/rules_android:use_androidx.patch",
             "@grab_bazel_common//patches/rules_android:androidx_annotation_template.patch",
             "@grab_bazel_common//patches/rules_android:databinding_deps.patch",
             "@grab_bazel_common//patches/rules_android:databinding_output_name.patch",
+            #"@grab_bazel_common//patches/rules_android:databinding_absolute_paths.patch",
+            "@grab_bazel_common//patches/rules_android:android_resource_processor_bazel_paths.patch",
         ],
         patch_args = ["-p1"],
     )
 
-def _maven():
+def maven_load():
     RULES_JVM_EXTERNAL_TAG = "6.9"
     RULES_JVM_EXTERNAL_SHA = "3c41eae4226a7dfdce7b213bc541557b8475c92da71e2233ec7c306630243a65"
 
@@ -35,15 +37,38 @@ def _maven():
         patch_args = ["-p1"],
     )
 
-    DAGGER_TAG = "2.46.1"
+    DAGGER_TAG = "2.59.1"
 
-    DAGGER_SHA = "bbd75275faa3186ebaa08e6779dc5410741a940146d43ef532306eb2682c13f7"
+    DAGGER_SHA = "1faec1f454936fc9739a2bdf3c909528a031a8561113c3a4b350ee48c6746150"
 
     http_archive(
         name = "bazel_common_dagger",
         sha256 = DAGGER_SHA,
         strip_prefix = "dagger-dagger-%s" % DAGGER_TAG,
         url = "https://github.com/google/dagger/archive/dagger-%s.zip" % DAGGER_TAG,
+    )
+
+def _java(): 
+    http_archive(
+        name = "bazel_features",
+        sha256 = "a660027f5a87f13224ab54b8dc6e191693c554f2692fcca46e8e29ee7dabc43b",
+        strip_prefix = "bazel_features-1.30.0",
+        url = "https://github.com/bazel-contrib/bazel_features/releases/download/v1.30.0/bazel_features-v1.30.0.tar.gz",
+    )
+
+    http_archive(
+        name = "rules_java",
+        urls = [
+            "https://github.com/bazelbuild/rules_java/releases/download/9.5.0/rules_java-9.5.0.tar.gz",
+        ],
+        sha256 = "440edfa8098d00b166a5a73d215f3214a6506db01e1ec45afee356b6679c5593",
+    )
+
+    http_archive(
+        name = "rules_cc",
+        urls = ["https://github.com/bazelbuild/rules_cc/releases/download/0.2.14/rules_cc-0.2.14.tar.gz"],
+        sha256 = "a2fdfde2ab9b2176bd6a33afca14458039023edb1dd2e73e6823810809df4027",
+        strip_prefix = "rules_cc-0.2.14",
     )
 
 def _kotlin():
@@ -106,13 +131,14 @@ def _jetifier():
         sha256 = JETIFIER_SOURCE_SHA,
         strip_prefix = "rules_jvm_external-5.3/third_party/jetifier",
         urls = ["https://github.com/bazelbuild/rules_jvm_external/archive/refs/tags/5.3.tar.gz"],
-        build_file = "@grab_bazel_common//patches/jetifier:BUILD.bazel",
+        build_file = "@grab_bazel_common//patches/jetifier:BUILD.jetifier",
     )
 
 def bazel_common_dependencies():
     #_proto
-    _android()
-    _maven()
+    android()
+    maven_load()
+    _java()
     _kotlin()
     _detekt()
     _jetifier()

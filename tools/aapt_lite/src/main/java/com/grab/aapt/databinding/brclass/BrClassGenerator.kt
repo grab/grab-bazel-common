@@ -40,7 +40,7 @@ interface BrClassGenerator : Generator {
 @Module
 interface BrClassModule {
     @Binds
-    fun DefaultBrClassGenerator.provide(): BrClassGenerator
+    fun provide(impl: DefaultBrClassGenerator): BrClassGenerator
 }
 
 @AaptScope

@@ -45,7 +45,7 @@ interface LayoutBindingsParser {
 @Module
 interface BindingsParserModule {
     @Binds
-    fun DefaultLayoutBindingsParser.layoutBindingsParser(): LayoutBindingsParser
+    fun layoutBindingsParser(impl: DefaultLayoutBindingsParser): LayoutBindingsParser
 }
 
 /**

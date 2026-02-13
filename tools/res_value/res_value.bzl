@@ -25,7 +25,7 @@ def res_value(
         strings: string values
     """
 
-    resources = "src/main/res/values/gen_strings_%s.xml" % name
+    resources = "%s/res/values/gen_strings.xml" % name
     statements = _res_statement(strings)
     xml = _generate_xml(statements)
 

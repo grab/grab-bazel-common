@@ -52,11 +52,11 @@ const val DEPS = "deps"
 interface LayoutStoreModule {
     @Named(LOCAL)
     @Binds
-    fun LocalModuleLayoutTypeStore.localStore(): LayoutTypeStore
+    fun localStore(impl: LocalModuleLayoutTypeStore): LayoutTypeStore
 
     @Named(DEPS)
     @Binds
-    fun DependenciesLayoutTypeStore.depsStore(): LayoutTypeStore
+    fun depsStore(impl: DependenciesLayoutTypeStore): LayoutTypeStore
 }
 
 /**
