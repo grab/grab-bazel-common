@@ -30,8 +30,12 @@ load("@grab_bazel_common//rules/test:setup.bzl", "bazel_common_test_maven")
 # Proto
 # load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
+# Rules_android setup
+load("@rules_android//:defs.bzl", "rules_android_workspace")
+load("@rules_android//rules:rules.bzl", "android_sdk_repository")
+
 # Setup android databinding compilation and optionally use patched android tools jar
-def _android(patched_android_tools):
+def android_patched_tools(patched_android_tools):
     native.bind(
         name = "databinding_annotation_processor",
         actual = "@grab_bazel_common//tools/android:compiler_annotation_processor",
@@ -52,6 +56,15 @@ def _kotlin():
     )
     native.register_toolchains("//:kotlin_toolchain")
 
+def _rules_android_setup():
+    rules_android_workspace()
+
+    native.register_toolchains(
+        "@rules_android//toolchains/android:android_default_toolchain",
+        "@rules_android//toolchains/android_sdk:android_sdk_tools",
+    )
+
+
 def bazel_common_setup(
         patched_android_tools = True,
         buildifier_version = BUILDIFIER_DEFAULT_VERSION,
@@ -59,6 +72,7 @@ def bazel_common_setup(
         additional_coursier_options = ["--parallel", "12"]):
     #rules_proto_dependencies()
     #rules_proto_toolchains()
+    _rules_android_setup()
 
     android_sdk_repository(name = "androidsdk")
     rules_jvm_external_deps()
@@ -113,7 +127,7 @@ def bazel_common_setup(
         additional_coursier_options = additional_coursier_options,
     )
 
-    _android(patched_android_tools)
+    #_android(patched_android_tools)
     _kotlin()
 
     rules_detekt_dependencies()

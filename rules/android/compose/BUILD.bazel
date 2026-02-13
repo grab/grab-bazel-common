@@ -7,9 +7,6 @@ kt_compiler_plugin(
         "experimentalStrongSkipping": "true",
     },
     target_embedded_compiler = True,
-    deps = [
-        "@maven//:androidx_compose_compiler_compiler",
-    ],
 )
 
 kotlin_library(

@@ -1,0 +1,50 @@
+diff --git a/src/tools/java/com/google/devtools/build/android/AndroidResourceProcessor.java b/src/tools/java/com/google/devtools/build/android/AndroidResourceProcessor.java
+index b0f0d4b..40dd11c 100644
+--- a/src/tools/java/com/google/devtools/build/android/AndroidResourceProcessor.java
++++ b/src/tools/java/com/google/devtools/build/android/AndroidResourceProcessor.java
+@@ -40,6 +40,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
+ import java.io.Closeable;
+ import java.io.IOException;
+ import java.io.PrintStream;
++import java.nio.file.FileAlreadyExistsException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.util.ArrayList;
+@@ -280,9 +281,16 @@ public class AndroidResourceProcessor {
+ 
+     if (dataBindingInfoOut == null) {
+       return inputResourcesDir;
+-    } else if (!Files.isDirectory(inputResourcesDir)) {
++    } else if (!isBazelExecutionPath(inputResourcesDir) && !Files.isDirectory(inputResourcesDir)) {
+       // No resources: no data binding needed. Create a dummy file to satisfy declared outputs.
+-      Files.createFile(dataBindingInfoOut);
++      // Check if file already exists to avoid FileAlreadyExistsException in parallel builds
++      if (!Files.exists(dataBindingInfoOut)) {
++        try {
++          Files.createFile(dataBindingInfoOut);
++        } catch (FileAlreadyExistsException e) {
++          // Another parallel process created it, that's fine
++        }
++      }
+       return inputResourcesDir;
+     }
+ 
+@@ -320,6 +328,18 @@ public class AndroidResourceProcessor {
+     return processedResourceDir;
+   }
+ 
++  /**
++   * Checks if a path is a Bazel execution path.
++   * Bazel execution paths are relative paths from the execution root (e.g., bazel-out/...)
++   * that are made absolute by prepending "/" for validation purposes.
++   */
++  private static boolean isBazelExecutionPath(Path path) {
++    String pathStr = path.toString();
++    return pathStr.startsWith("/bazel-out/") ||
++           pathStr.contains("/bazel-out/") ||
++           pathStr.startsWith("bazel-out/");
++  }
++
+   public ResourceSymbols loadResourceSymbolTable(
+       Iterable<? extends ResourceSymbols.SymbolFileProvider> libraries,
+       String appPackageName,
