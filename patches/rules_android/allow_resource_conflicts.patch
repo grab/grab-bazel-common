@@ -1,0 +1,12 @@
+diff --git a/rules/acls/allow_resource_conflicts.bzl b/rules/acls/allow_resource_conflicts.bzl
+index 1234567..abcdefg 100644
+--- a/rules/acls/allow_resource_conflicts.bzl
++++ b/rules/acls/allow_resource_conflicts.bzl
+@@ -19,4 +19,6 @@
+ load("//rules:visibility.bzl", "PROJECT_VISIBILITY")
+
+ visibility(PROJECT_VISIBILITY)
+-ALLOW_RESOURCE_CONFLICTS = []
++ALLOW_RESOURCE_CONFLICTS = [
++    "//:__subpackages__",
++]
