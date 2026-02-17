@@ -55,6 +55,7 @@ def android_binary(
         res_values = res_values,
     )
     resource_files = merged_resources.res
+    res_value_files = merged_resources.res_values_resources
     manifest = merged_resources.manifest
 
     # Kotlin compilation with kt_android_library
@@ -90,7 +91,7 @@ def android_binary(
         plugins = attrs.get("plugins", default = None),
     )
 
-    lint_enabled = lint_options.get("enabled", False) and (len(attrs.get("srcs", default = [])) > 0 or len(resource_files) > 0)
+    lint_enabled = lint_options.get("enabled", False) and (len(attrs.get("srcs", default = [])) > 0 or len(resource_files) > 0 or len(res_value_files) > 0)
     tags = []
     android_binary_deps.extend([kotlin_target])
 
@@ -100,7 +101,7 @@ def android_binary(
         lint_sources(
             name = lint_sources_target,
             srcs = attrs.get("srcs", default = []),
-            resources = [file for file in resource_files if file.endswith(".xml")],
+            resources = [file for file in (resource_files + res_value_files) if file.endswith(".xml")],
             manifest = manifest,
             baseline = lint_baseline,
             lint_config = lint_options.get("config", None),
@@ -144,6 +145,7 @@ def android_binary(
 
     native.android_binary(
         name = name,
+        resource_files = res_value_files,
         custom_package = custom_package,
         enable_data_binding = enable_data_binding,
         deps = android_binary_deps,
