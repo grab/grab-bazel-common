@@ -55,7 +55,7 @@ def android_library(
         resource_sets = attrs.get("resource_sets", default = {}),
         res_values = res_values,
     )
-    resource_files = merged_resources.res
+    resource_files = merged_resources.res + merged_resources.res_values_resources
     manifest = merged_resources.manifest
 
     lint_enabled = lint_options.get("enabled", False) and (len(srcs) > 0 or len(resource_files) > 0)
