@@ -1,6 +1,5 @@
 # Dagger
 load("@bazel_common_dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
-load("@grab_bazel_common//android/tools:defs.bzl", "android_tools")
 load(
     "@grab_bazel_common//toolchains:toolchains.bzl",
     "register_common_toolchains",
@@ -30,15 +29,6 @@ load("@grab_bazel_common//rules/test:setup.bzl", "bazel_common_test_maven")
 load("@rules_android//:defs.bzl", "rules_android_workspace")
 load("@rules_android//rules:rules.bzl", "android_sdk_repository")
 
-# Setup android databinding compilation and optionally use patched android tools jar
-def android_patched_tools(patched_android_tools):
-    native.bind(
-        name = "databinding_annotation_processor",
-        actual = "@grab_bazel_common//tools/android:compiler_annotation_processor",
-    )
-    if patched_android_tools:
-        android_tools()
-
 def _kotlin():
     kotlin_repositories(
         compiler_release = kotlinc_version(
@@ -62,7 +52,6 @@ def _rules_android_setup():
 
 
 def bazel_common_setup(
-        patched_android_tools = True,
         buildifier_version = BUILDIFIER_DEFAULT_VERSION,
         pinned_maven_install = True):
     #rules_proto_dependencies()
@@ -100,9 +89,9 @@ def bazel_common_setup(
             "xmlpull:xmlpull:1.1.3.1",
             "net.sf.kxml:kxml2:2.3.0",
             "com.squareup.moshi:moshi:1.11.0",
-            "org.jetbrains.kotlin:kotlin-stdlib:1.8.10",
-            "org.jetbrains.kotlin:kotlin-parcelize-compiler:1.8.10",
-            "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.8.10",
+            "org.jetbrains.kotlin:kotlin-stdlib:2.1.0",
+            "org.jetbrains.kotlin:kotlin-parcelize-compiler:2.1.0",
+            "org.jetbrains.kotlin:kotlin-parcelize-runtime:2.1.0",
             "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4",
             "com.github.tschuchortdev:kotlin-compile-testing:1.5.0",
             "com.google.android.material:material:1.2.1",
@@ -120,7 +109,6 @@ def bazel_common_setup(
         fetch_sources = True,
     )
 
-    #_android(patched_android_tools)
     _kotlin()
 
     rules_detekt_dependencies()

@@ -28,8 +28,16 @@ index b0f0d4b..40dd11c 100644
 +      }
        return inputResourcesDir;
      }
- 
-@@ -320,6 +328,18 @@ public class AndroidResourceProcessor {
+
+@@ -306,7 +314,7 @@ public class AndroidResourceProcessor {
+     ProcessXmlOptionsWrapper options = new ProcessXmlOptionsWrapper();
+     options.setAppId(packagePath);
+-    options.setResInput(inputResourcesDir.toFile());
++    options.setResInput(inputResourcesDir.toFile().getAbsoluteFile());
+     options.setResOutput(processedResourceDir.toFile());
+     options.setLayoutInfoOutput(dataBindingInfoOut.toFile());
+     options.setUseAndroidX(useDataBindingAndroidX);
+@@ -320,6 +329,18 @@ public class AndroidResourceProcessor {
      return processedResourceDir;
    }
  

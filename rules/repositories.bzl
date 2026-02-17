@@ -4,7 +4,7 @@ load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 def http_archive(name, **kwargs):
     maybe(_http_archive, name = name, **kwargs)
 
-def android():
+def _android():
     rules_android_tag = "0.7.1"
     http_archive(
         name = "rules_android",
@@ -17,14 +17,13 @@ def android():
             "@grab_bazel_common//patches/rules_android:use_androidx.patch",
             "@grab_bazel_common//patches/rules_android:androidx_annotation_template.patch",
             "@grab_bazel_common//patches/rules_android:databinding_deps.patch",
-            "@grab_bazel_common//patches/rules_android:databinding_output_name.patch",
-            #"@grab_bazel_common//patches/rules_android:databinding_absolute_paths.patch",
             "@grab_bazel_common//patches/rules_android:android_resource_processor_bazel_paths.patch",
+            "@grab_bazel_common//patches/rules_android:allow_resource_conflicts.patch",
         ],
         patch_args = ["-p1"],
     )
 
-def maven_load():
+def _maven():
     RULES_JVM_EXTERNAL_TAG = "6.9"
     RULES_JVM_EXTERNAL_SHA = "3c41eae4226a7dfdce7b213bc541557b8475c92da71e2233ec7c306630243a65"
 
@@ -136,8 +135,8 @@ def _jetifier():
 
 def bazel_common_dependencies():
     #_proto
-    android()
-    maven_load()
+    _android()
+    _maven()
     _java()
     _kotlin()
     _detekt()

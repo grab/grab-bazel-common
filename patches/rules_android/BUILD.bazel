@@ -4,6 +4,7 @@ exports_files([
     "use_androidx.patch", 
     "androidx_annotation_template.patch",
     "databinding_deps.patch",
-    "databinding_output_name.patch",
+    "android_resource_processor_bazel_paths.patch",
+    "allow_resource_conflicts.patch",
     ]
 )
