@@ -116,7 +116,8 @@ def build_resources(
             has_assets = len(assets) != 0
 
             return struct(
-                res = resources + generated_resources,
+                res = resources,
+                res_values_resources = generated_resources,
                 assets = assets if has_assets else None,
                 asset_dir = asset_dir if has_assets else None,
                 manifest = resource_dict.get("manifest", manifest),
@@ -164,14 +165,16 @@ def build_resources(
                 merged_resources = merged_resources + merged_assets,
             )
             return struct(
-                res = merged_resources + generated_resources,
+                res = merged_resources,
+                res_values_resources = generated_resources,
                 assets = merged_assets if len(merged_assets) != 0 else None,
                 asset_dir = asset_dir if len(merged_assets) != 0 else None,
                 manifest = merged_manifest,
             )
     else:
         return struct(
-            res = resource_files + generated_resources,
+            res = resource_files,
+            res_values_resources = generated_resources,
             assets = None,
             asset_dir = None,
             manifest = manifest,
