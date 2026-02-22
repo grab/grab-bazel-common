@@ -50,10 +50,10 @@ interface RClassGenerator : Generator {
 @Module
 interface RClassModule {
     @Binds
-    fun DefaultRClassGenerator.rClassGenerator(): RClassGenerator
+    fun rClassGenerator(impl: DefaultRClassGenerator): RClassGenerator
 
     @Binds
-    fun DefaultRTxtParser.rTxtParser(): RTxtParser
+    fun rTxtParser(impl: DefaultRTxtParser): RTxtParser
 }
 
 @AaptScope
