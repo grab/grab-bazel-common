@@ -16,6 +16,8 @@ def _android():
             "@grab_bazel_common//patches/rules_android:guava_version.patch",
             "@grab_bazel_common//patches/rules_android:databinding_annotation_template.patch",
             "@grab_bazel_common//patches/rules_android:databinding_androidx_flag.patch",
+            "@grab_bazel_common//patches/rules_android:databinding_prefixes.patch",
+            "@grab_bazel_common//patches/rules_android:databinding_processor_absolute_path.patch",
         ],
         patch_args = ["-p1"],
     )

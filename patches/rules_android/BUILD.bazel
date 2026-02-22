@@ -1,5 +1,9 @@
 exports_files([
     "macos_cp_reflink.patch", 
     "guava_version.patch",
+    "databinding_androidx_flag.patch",
+    "databinding_annotation_template.patch",
+    "databinding_prefixes.patch",
+    "databinding_processor_absolute_path.patch",
     ]
 )
