@@ -45,7 +45,7 @@ interface BindingClassJsonParser {
 @Module
 interface BindingClassJsonParserModule {
     @Binds
-    fun CachingBindingClassJsonParser.cachingParser(): BindingClassJsonParser
+    fun cachingParser(impl: CachingBindingClassJsonParser): BindingClassJsonParser
 }
 
 @AaptScope

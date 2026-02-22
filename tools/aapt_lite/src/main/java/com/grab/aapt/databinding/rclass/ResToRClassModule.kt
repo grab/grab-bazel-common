@@ -41,33 +41,33 @@ interface ResourceParserModule {
     @Binds
     @IntoMap
     @ParserKey(ParserType.STYLE_PARSER)
-    fun StyleParser.styleParser(): ResourceFileParser
+    fun styleParser(impl: StyleParser): ResourceFileParser
 
     @Binds
     @IntoMap
     @ParserKey(ParserType.STYLEABLE_PARSER)
-    fun DeclareStyleableParser.declareStyleableParser(): ResourceFileParser
+    fun declareStyleableParser(impl: DeclareStyleableParser): ResourceFileParser
 
     @Binds
     @IntoMap
     @ParserKey(ParserType.ARRAY_PARSER)
-    fun ArrayParser.arrayParser(): ResourceFileParser
+    fun arrayParser(impl: ArrayParser): ResourceFileParser
 
     @Binds
     @IntoMap
     @ParserKey(ParserType.ID_PARSER)
-    fun IDParser.idParser(): ResourceFileParser
+    fun idParser(impl: IDParser): ResourceFileParser
 
     @Binds
     @IntoMap
     @ParserKey(ParserType.DEFAULT_PARSER)
-    fun DefaultXmlParser.defaultXmlParser(): ResourceFileParser
+    fun defaultXmlParser(impl: DefaultXmlParser): ResourceFileParser
 
     @Binds
     @AaptScope
-    fun DefaultResToRParser.defaultResToRParser(): ResToRParser
+    fun defaultResToRParser(impl: DefaultResToRParser): ResToRParser
 
     @Binds
     @AaptScope
-    fun DefaultResToRClassGenerator.resToRClassGenerator(): ResToRClassGenerator
+    fun resToRClassGenerator(impl: DefaultResToRClassGenerator): ResToRClassGenerator
 }
