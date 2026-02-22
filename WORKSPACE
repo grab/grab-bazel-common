@@ -3,12 +3,9 @@ workspace(name = "grab_bazel_common")
 load("@grab_bazel_common//rules:repositories.bzl", "bazel_common_dependencies")
 bazel_common_dependencies()
 
-# rules_android necessary setup
-# has to be in WORKSPACE to avoid compatibility_proxy issue (eager load issue)
-load("@rules_android//:prereqs.bzl", "rules_android_prereqs")
-rules_android_prereqs()
-load("@bazel_features//:deps.bzl", "bazel_features_deps")
-bazel_features_deps()
+load("@grab_bazel_common//rules:prereqs.bzl", "bazel_common_prereqs")
+bazel_common_prereqs()
+
 load("@rules_cc//cc:extensions.bzl", "compatibility_proxy_repo")
 compatibility_proxy_repo()
 load("@rules_java//java:rules_java_deps.bzl", "rules_java_dependencies")
@@ -17,6 +14,7 @@ load("@com_google_protobuf//bazel/private:proto_bazel_features.bzl", "proto_baze
 proto_bazel_features(name = "proto_bazel_features")
 load("@rules_java//java:repositories.bzl", "rules_java_toolchains")
 rules_java_toolchains()
+
 load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
 rules_jvm_external_deps()
 load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
