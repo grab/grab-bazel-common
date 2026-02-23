@@ -4,6 +4,24 @@ load("@grab_bazel_common//rules:repositories.bzl", "bazel_common_dependencies")
 
 bazel_common_dependencies()
 
+# Initialize rules_java 8.x dependencies (required for rules_java 8.13.0+)
+load("@rules_java//java:rules_java_deps.bzl", "rules_java_dependencies")
+
+rules_java_dependencies()
+
+load("@bazel_features//:deps.bzl", "bazel_features_deps")
+
+bazel_features_deps()
+
+load("@com_google_protobuf//bazel/private:proto_bazel_features.bzl", "proto_bazel_features")
+
+proto_bazel_features(name = "proto_bazel_features")
+
+# Register Java toolchains
+load("@rules_java//java:repositories.bzl", "rules_java_toolchains")
+
+rules_java_toolchains()
+
 load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
 
 rules_jvm_external_deps()

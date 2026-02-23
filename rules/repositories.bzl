@@ -5,13 +5,12 @@ def http_archive(name, **kwargs):
     maybe(_http_archive, name = name, **kwargs)
 
 def _rules_jvm_deps():
-    rules_java_tag = "7.6.5"
     http_archive(
         name = "rules_java",
         urls = [
-            "https://github.com/bazelbuild/rules_java/releases/download/%s/rules_java-%s.tar.gz" % (rules_java_tag, rules_java_tag),
+            "https://github.com/bazelbuild/rules_java/releases/download/8.13.0/rules_java-8.13.0.tar.gz",
         ],
-        sha256 = "8afd053dd2a7b85a4f033584f30a7f1666c5492c56c76e04eec4428bdb2a86cf",
+        sha256 = "b6c6d92ca9dbb77de31fb6c6a794d20427072663ce41c2b047902ffcc123e3ef",
     )
 
     rules_license_tag = "1.0.0"
@@ -25,8 +24,8 @@ def _rules_jvm_deps():
     )
 
 def _maven():
-    RULES_JVM_EXTERNAL_TAG = "6.9"
-    RULES_JVM_EXTERNAL_SHA = "3c41eae4226a7dfdce7b213bc541557b8475c92da71e2233ec7c306630243a65"
+    RULES_JVM_EXTERNAL_TAG = "6.10"
+    RULES_JVM_EXTERNAL_SHA = "e5f83b8f2678d2b26441e5eafefb1b061826608417b8d24e5e8e15e585eab1ba"
 
     http_archive(
         name = "rules_jvm_external",

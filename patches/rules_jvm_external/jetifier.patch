@@ -133,9 +133,9 @@ diff -ruN rje_original/private/dependency_tree_parser.bzl rje_patched/private/de
          else:  # artifact_path == None or packaging == "pom":
              # Special case for certain artifacts that only come with a POM file.
 diff -ruN rje_original/private/rules/coursier.bzl rje_patched/private/rules/coursier.bzl
---- rje_original/private/rules/coursier.bzl	2025-11-04 19:56:22
-+++ rje_patched/private/rules/coursier.bzl	2026-01-28 00:22:43
-@@ -20,7 +20,7 @@
+--- rje_original/private/rules/coursier.bzl	2026-02-23 00:00:00
++++ rje_patched/private/rules/coursier.bzl	2026-02-23 00:00:00
+@@ -21,7 +21,7 @@
      "is_maven_local_path",
      "to_repository_name",
  )
@@ -144,23 +144,18 @@ diff -ruN rje_original/private/rules/coursier.bzl rje_patched/private/rules/cour
  load("//private:java_utilities.bzl", "build_java_argsfile_content")
  load("//private:proxy.bzl", "get_java_proxy_args")
  load(
-@@ -30,6 +30,7 @@
-     "COURSIER_CLI_SHA256",
- )
+@@ -34,3 +34,4 @@
  load("//private/lib:urls.bzl", "remove_auth_from_url")
 +load("//private/rules:jetifier.bzl", "jetify_artifact_dependencies", "jetify_maven_coord")
  load("//private/rules:v1_lock_file.bzl", "v1_lock_file")
- load("//private/rules:v2_lock_file.bzl", "v2_lock_file")
- 
-@@ -43,6 +44,7 @@
- load("@rules_java//java:defs.bzl", "java_binary", "java_library", "java_plugin")
- load("@rules_jvm_external//private/rules:pin_dependencies.bzl", "pin_dependencies")
+ load("//private/rules:v3_lock_file.bzl", "v2_lock_file", "v3_lock_file")
+@@ -49,4 +50,5 @@
  load("@rules_jvm_external//private/rules:jvm_import.bzl", "jvm_import")
 +load("@rules_jvm_external//private/rules:jetifier.bzl", "jetify_aar_import", "jetify_jvm_import")
  load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
  {aar_import_statement}
  
-@@ -1105,6 +1107,14 @@
+@@ -1256,6 +1258,14 @@
  
      files_to_inspect = []
  
@@ -175,7 +170,7 @@ diff -ruN rje_original/private/rules/coursier.bzl rje_patched/private/rules/cour
      # Also, replace '//' with '/', otherwise parsing of the file path for the
      # coursier cache will fail if variables like HOME or COURSIER_CACHE have a
      # trailing slash.
-@@ -1125,6 +1135,12 @@
+@@ -1276,6 +1286,12 @@
          coord_split = artifact["coord"].split(":")
          coord_unversioned = "{}:{}".format(coord_split[0], coord_split[1])
  
@@ -188,8 +183,7 @@ diff -ruN rje_original/private/rules/coursier.bzl rje_patched/private/rules/cour
          # Normalize paths in place here.
          artifact.update({"file": _normalize_to_unix_path(artifact["file"])})
  
-@@ -1460,6 +1476,8 @@
-             default = False,
+@@ -1619,5 +1635,7 @@
          ),
          "strict_visibility_value": attr.label_list(default = ["//visibility:private"]),
 +        "jetify": attr.bool(doc = "Runs the AndroidX [Jetifier](https://developer.android.com/studio/command-line/jetifier) tool on artifacts specified in jetify_include_list. If jetify_include_list is not specified, run Jetifier on all artifacts.", default = False),
@@ -197,8 +191,7 @@ diff -ruN rje_original/private/rules/coursier.bzl rje_patched/private/rules/cour
          "additional_netrc_lines": attr.string_list(doc = "Additional lines prepended to the netrc file used by `http_file` (with `maven_install_json` only).", default = []),
          "use_credentials_from_home_netrc_file": attr.bool(default = False, doc = "Whether to include coursier credentials gathered from the user home ~/.netrc file"),
          "fail_if_repin_required": attr.bool(doc = "Whether to fail the build if the maven_artifact inputs have changed but the lock file has not been repinned.", default = False),
-@@ -1530,6 +1548,8 @@
-             default = False,
+@@ -1691,5 +1709,7 @@
          ),
          "strict_visibility_value": attr.label_list(default = ["//visibility:private"]),
 +        "jetify": attr.bool(doc = "Runs the AndroidX [Jetifier](https://developer.android.com/studio/command-line/jetifier) tool on artifacts specified in jetify_include_list. If jetify_include_list is not specified, run Jetifier on all artifacts.", default = False),
