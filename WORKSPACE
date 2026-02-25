@@ -4,13 +4,9 @@ load("@grab_bazel_common//rules:repositories.bzl", "bazel_common_dependencies")
 
 bazel_common_dependencies()
 
-load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
+load("@grab_bazel_common//rules:deps_init.bzl", "bazel_common_deps_init")
 
-rules_jvm_external_deps()
-
-load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
-
-rules_jvm_external_setup()
+bazel_common_deps_init()
 
 load("@grab_bazel_common//rules:setup.bzl", "bazel_common_setup")
 

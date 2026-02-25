@@ -19,6 +19,10 @@ load("@rules_detekt//detekt:toolchains.bzl", "rules_detekt_toolchains")
 
 # Rules Jvm External
 load("@rules_jvm_external//:defs.bzl", "maven_install")
+load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
+
+# Rules Java
+load("@rules_java//java:repositories.bzl", "rules_java_toolchains")
 
 # Test Maven
 load("@grab_bazel_common//rules/test:setup.bzl", "bazel_common_test_maven")
@@ -51,9 +55,13 @@ def _kotlin():
 def bazel_common_setup(
         patched_android_tools = True,
         buildifier_version = BUILDIFIER_DEFAULT_VERSION,
-        pinned_maven_install = True):
+        pinned_maven_install = True,
+        additional_coursier_options = ["--parallel", "12"]):
     #rules_proto_dependencies()
     #rules_proto_toolchains()
+
+    rules_java_toolchains()
+    rules_jvm_external_deps()
 
     register_common_toolchains(
         buildifier = _buildifier_version(
@@ -103,6 +111,7 @@ def bazel_common_setup(
         resolve_timeout = 3500,
         maven_install_json = maven_install_json,
         fetch_sources = True,
+        additional_coursier_options = additional_coursier_options,
     )
 
     _android(patched_android_tools)
@@ -112,4 +121,4 @@ def bazel_common_setup(
 
     rules_detekt_toolchains()
 
-    bazel_common_test_maven(pinned_maven_install = pinned_maven_install)
+    bazel_common_test_maven(pinned_maven_install = pinned_maven_install, additional_coursier_options = additional_coursier_options)
