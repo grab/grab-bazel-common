@@ -1,6 +1,6 @@
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
-def bazel_common_test_maven(pinned_maven_install = True):
+def bazel_common_test_maven(pinned_maven_install = True, additional_coursier_options = ["--parallel", "12"]):
     repo_name = "bazel_common_test_maven"
     maven_install_json = "@grab_bazel_common//:%s_install.json" % repo_name if pinned_maven_install else None
 
@@ -17,4 +17,5 @@ def bazel_common_test_maven(pinned_maven_install = True):
         strict_visibility = True,
         maven_install_json = maven_install_json,
         fetch_sources = True,
+        additional_coursier_options = additional_coursier_options,
     )

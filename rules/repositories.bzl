@@ -8,9 +8,9 @@ def _rules_jvm_deps():
     http_archive(
         name = "rules_java",
         urls = [
-            "https://github.com/bazelbuild/rules_java/releases/download/8.13.0/rules_java-8.13.0.tar.gz",
+            "https://github.com/bazelbuild/rules_java/releases/download/7.6.1/rules_java-7.6.1.tar.gz",
         ],
-        sha256 = "b6c6d92ca9dbb77de31fb6c6a794d20427072663ce41c2b047902ffcc123e3ef",
+        sha256 = "f8ae9ed3887df02f40de9f4f7ac3873e6dd7a471f9cddf63952538b94b59aeb3",
     )
 
     rules_license_tag = "1.0.0"
@@ -69,35 +69,6 @@ def _detekt():
         url = "https://github.com/mohammadkahelghi-grabtaxi/bazel_rules_detekt/releases/download/v{v}/bazel_rules_detekt-v{v}.tar.gz".format(v = rules_detekt_version),
     )
 
-def _proto():
-    http_archive(
-        name = "com_google_protobuf",
-        sha256 = "cf754718b0aa945b00550ed7962ddc167167bd922b842199eeb6505e6f344852",
-        strip_prefix = "protobuf-%s" % "3.11.3",
-        urls = [
-            "https://mirror.bazel.build/github.com/protocolbuffers/protobuf/archive/v%s.tar.gz" % "3.11.3",
-            "https://github.com/protocolbuffers/protobuf/archive/v%s.tar.gz" % "3.11.3",
-        ],
-    )
-
-    http_archive(
-        name = "bazel_skylib",
-        sha256 = "1c531376ac7e5a180e0237938a2536de0c54d93f5c278634818e0efc952dd56c",
-        urls = ["https://github.com/bazelbuild/bazel-skylib/releases/download/%s/bazel-skylib-%s.tar.gz" % (
-            "1.0.3",
-            "1.0.3",
-        )],
-    )
-
-    http_archive(
-        name = "rules_proto",
-        sha256 = "e017528fd1c91c5a33f15493e3a398181a9e821a804eb7ff5acdd1d2d6c2b18d",
-        strip_prefix = "rules_proto-4.0.0-3.20.0",
-        urls = [
-            "https://github.com/bazelbuild/rules_proto/archive/refs/tags/4.0.0-3.20.0.tar.gz",
-        ],
-    )
-
 def _jetifier():
     JETIFIER_SOURCE_SHA = "8ac1c5c2a8681c398883bb2cabc18f913337f165059f24e8c55714e05757761e"
 
@@ -109,9 +80,18 @@ def _jetifier():
         build_file = "@grab_bazel_common//patches/jetifier:BUILD.bazel",
     )
 
+def _rules_java_transitive_deps():
+    """Declare transitive deps of rules_java needed before rules_java_dependencies() runs."""
+    http_archive(
+        name = "bazel_features",
+        sha256 = "2cd9e57d4c38675d321731d65c15258f3a66438ad531ae09cb8bb14217dc8572",
+        strip_prefix = "bazel_features-1.11.0",
+        urls = ["https://github.com/bazel-contrib/bazel_features/releases/download/v1.11.0/bazel_features-v1.11.0.tar.gz"],
+    )
+
 def bazel_common_dependencies():
-    #_proto
     _rules_jvm_deps()
+    _rules_java_transitive_deps()
     _maven()
     _kotlin()
     _detekt()
