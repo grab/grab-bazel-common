@@ -86,7 +86,7 @@ diff -ruN rje_original/private/dependency_tree_parser.bzl rje_patched/private/de
 -            raw_artifact["coordinates"] = "original_" + artifact["coordinates"]
 -            raw_artifact["maven_coordinates"] = artifact["coordinates"]
 -            raw_artifact["out"] = "original_" + artifact["file"]
-+            if artifact["file"] != None:
++            if artifact["file"] != None and packaging != "pom":
 +                raw_artifact = dict(artifact)
 +                raw_artifact["coordinates"] = "original_" + artifact["coordinates"]
 +                raw_artifact["maven_coordinates"] = artifact["coordinates"]
