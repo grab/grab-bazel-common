@@ -33,9 +33,9 @@ def _maven():
         patch_args = ["-p1"],
     )
 
-    DAGGER_TAG = "2.46.1"
+    DAGGER_TAG = "2.59.1"
 
-    DAGGER_SHA = "bbd75275faa3186ebaa08e6779dc5410741a940146d43ef532306eb2682c13f7"
+    DAGGER_SHA = "1faec1f454936fc9739a2bdf3c909528a031a8561113c3a4b350ee48c6746150"
 
     http_archive(
         name = "bazel_common_dagger",
