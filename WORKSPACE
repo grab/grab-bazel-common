@@ -12,7 +12,6 @@ bazel_common_deps_init()
 
 # Step 3: Set up transitive deps required by Bazel 8
 # These must be called in strict sequence due to repo creation dependencies.
-
 load("@rules_cc//cc:extensions.bzl", "compatibility_proxy_repo")
 
 compatibility_proxy_repo()

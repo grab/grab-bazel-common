@@ -53,6 +53,16 @@ def _maven():
     )
 
 def _java():
+    rules_license_tag = "1.0.0"
+    http_archive(
+        name = "rules_license",
+        urls = [
+            "https://mirror.bazel.build/github.com/bazelbuild/rules_license/releases/download/%s/rules_license-%s.tar.gz" % (rules_license_tag, rules_license_tag),
+            "https://github.com/bazelbuild/rules_license/releases/download/%s/rules_license-%s.tar.gz" % (rules_license_tag, rules_license_tag),
+        ],
+        sha256 = "26d4021f6898e23b82ef953078389dd49ac2b5618ac564ade4ef87cced147b38",
+    )
+
     http_archive(
         name = "bazel_features",
         sha256 = "a660027f5a87f13224ab54b8dc6e191693c554f2692fcca46e8e29ee7dabc43b",
