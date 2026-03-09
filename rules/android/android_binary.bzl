@@ -145,7 +145,7 @@ def android_binary(
 
     native.android_binary(
         name = name,
-        resource_files = res_value_files,
+        resource_files = resource_files + res_value_files,
         custom_package = custom_package,
         enable_data_binding = enable_data_binding,
         deps = android_binary_deps,
@@ -158,7 +158,7 @@ def android_binary(
         manifest = manifest,
         multidex = attrs.get("multidex", default = None),
         manifest_values = attrs.get("manifest_values", default = None),
-        min_sdk_version = min_sdk_version_value,
+        #min_sdk_version = min_sdk_version_value,
         resource_configuration_filters = attrs.get("resource_configuration_filters", default = None),
         tags = tags,
         visibility = attrs.get("visibility", default = None),

@@ -6,5 +6,10 @@ exports_files([
     "databinding_deps.patch",
     "android_resource_processor_bazel_paths.patch",
     "allow_resource_conflicts.patch",
+    "skip_library_resource_linking.patch",
+    "fix_resource_priority_ordering.patch",
+    "fix_aar_import_databinding_info.patch",
+    "fix_databinding_providers.patch",
+    "fix_databinding_data_binding.patch",
     ]
 )

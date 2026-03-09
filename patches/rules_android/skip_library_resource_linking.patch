@@ -1,0 +1,155 @@
+diff -ruN a/rules/aar_import/attrs.bzl b/rules/aar_import/attrs.bzl
+--- a/rules/aar_import/attrs.bzl	2026-03-08 20:14:13.216209729 +0700
++++ b/rules/aar_import/attrs.bzl	2026-03-08 20:15:32.108219843 +0700
+@@ -73,6 +73,9 @@
+         _manifest_merge_order = attr.label(
+             default = "//rules/flags:manifest_merge_order",
+         ),
++        _link_library_resources = attr.label(
++            default = "//rules/flags:link_library_resources",
++        ),
+         _cpu_constraints = attr.label_keyed_string_dict(
+             default = {
+                 # The keys are labels to constraint_value targets representing the CPU for Android
+diff -ruN a/rules/android_library/attrs.bzl b/rules/android_library/attrs.bzl
+--- a/rules/android_library/attrs.bzl	2026-03-08 20:14:13.216209729 +0700
++++ b/rules/android_library/attrs.bzl	2026-03-08 20:15:31.340978806 +0700
+@@ -240,6 +240,9 @@
+         _manifest_merge_order = attr.label(
+             default = "//rules/flags:manifest_merge_order",
+         ),
++        _link_library_resources = attr.label(
++            default = "//rules/flags:link_library_resources",
++        ),
+         _aidl_lib = attr.label(
+             default = Label("//rules:aidl_lib"),
+         ),
+diff -ruN a/rules/flags/additional_flags.bzl b/rules/flags/additional_flags.bzl
+--- a/rules/flags/additional_flags.bzl	2026-03-08 20:14:13.212363910 +0700
++++ b/rules/flags/additional_flags.bzl	2026-03-08 20:14:45.847006995 +0700
+@@ -13,7 +13,7 @@
+ # limitations under the License.
+ """Additional flag definitions."""
+ 
+-load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
++load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "string_flag")
+ 
+ def additional_flags():
+ 
+@@ -28,4 +28,15 @@
+             "dependency",
+         ],
+         visibility = ["//visibility:public"],
++    )
++
++    # When False, android_library and aar_import skip the aapt2 validate_and_link
++    # step. Only the final android_binary performs resource linking via
++    # _resources.package(). This avoids resource name collisions between library
++    # modules that can cause databinding "view must have a tag" crashes, and
++    # speeds up builds.
++    bool_flag(
++        name = "link_library_resources",
++        build_setting_default = True,
++        visibility = ["//visibility:public"],
+     )
+\ No newline at end of file
+diff -ruN a/rules/resources.bzl b/rules/resources.bzl
+--- a/rules/resources.bzl	2026-03-08 20:14:13.216209729 +0700
++++ b/rules/resources.bzl	2026-03-08 20:15:59.102362681 +0700
+@@ -1575,35 +1575,53 @@
+         )
+         resources_ctx[_MERGED_MANIFEST] = processed_manifest
+ 
+-        apk = ctx.actions.declare_file(ctx.label.name + "_files/library.ap_")
+-        r_java = ctx.actions.declare_file(ctx.label.name + ".srcjar")
+-        r_txt = ctx.actions.declare_file(ctx.label.name + "_symbols/R.txt")
+-        _busybox.validate_and_link(
+-            ctx,
+-            out_r_src_jar = r_java,
+-            out_r_txt = r_txt,
+-            out_file = apk,
+-            compiled_resources = compiled_resources,
+-            transitive_compiled_resources = depset(
+-                transitive = transitive_compiled_resources,
+-                order = "preorder",
+-            ),
+-            java_package = java_package,
+-            manifest = processed_manifest,
+-            feature_flags = feature_flags,
+-            android_jar = android_jar,
+-            aapt = aapt,
+-            busybox = busybox,
+-            host_javabase = host_javabase,
+-            resource_apks = resource_apks,
++        _should_link = (
++            not hasattr(ctx.attr, "_link_library_resources") or
++            ctx.attr._link_library_resources[BuildSettingInfo].value
+         )
+-        resources_ctx[_RESOURCES_APK] = apk
+ 
+-        java_info = JavaInfo(
+-            output_jar = out_class_jar,
+-            compile_jar = out_class_jar,
+-            source_jar = r_java,
+-        )
++        if _should_link:
++            apk = ctx.actions.declare_file(ctx.label.name + "_files/library.ap_")
++            r_java = ctx.actions.declare_file(ctx.label.name + ".srcjar")
++            r_txt = ctx.actions.declare_file(ctx.label.name + "_symbols/R.txt")
++            _busybox.validate_and_link(
++                ctx,
++                out_r_src_jar = r_java,
++                out_r_txt = r_txt,
++                out_file = apk,
++                compiled_resources = compiled_resources,
++                transitive_compiled_resources = depset(
++                    transitive = transitive_compiled_resources,
++                    order = "preorder",
++                ),
++                java_package = java_package,
++                manifest = processed_manifest,
++                feature_flags = feature_flags,
++                android_jar = android_jar,
++                aapt = aapt,
++                busybox = busybox,
++                host_javabase = host_javabase,
++                resource_apks = resource_apks,
++            )
++            resources_ctx[_RESOURCES_APK] = apk
++
++            java_info = JavaInfo(
++                output_jar = out_class_jar,
++                compile_jar = out_class_jar,
++                source_jar = r_java,
++            )
++        else:
++            # Skip validate_and_link for library modules. Write empty
++            # placeholder files for predeclared rule outputs.
++            r_java = ctx.actions.declare_file(ctx.label.name + ".srcjar")
++            r_txt = ctx.actions.declare_file(ctx.label.name + "_symbols/R.txt")
++            ctx.actions.write(r_java, "")
++            ctx.actions.write(r_txt, "")
++
++            java_info = JavaInfo(
++                output_jar = out_class_jar,
++                compile_jar = out_class_jar,
++            )
+ 
+         packages_to_r_txts_depset.setdefault(java_package, []).append(depset([out_aapt2_r_txt]))
+ 
+@@ -1612,12 +1630,13 @@
+ 
+         # In a normal build, the outputs of _busybox.validate_and_link are unused. However we need
+         # this action to run to support resource visibility checks.
+-        resources_ctx[_VALIDATION_RESULTS].append(r_txt)
++        if _should_link:
++            resources_ctx[_VALIDATION_RESULTS].append(r_txt)
+ 
+         # Needed for AAR generation. The Starlark resource processing pipeline uses the aapt2_r_txt file,
+         # which is why we can't use the StarlarkAndroidResourcesInfo provider when generating the aar.
+         resources_ctx[_STARLARK_PROCESSED_MANIFEST] = processed_manifest
+-        resources_ctx[_STARLARK_R_TXT] = r_txt
++        resources_ctx[_STARLARK_R_TXT] = out_aapt2_r_txt
+         resources_ctx[_STARLARK_PROCESSED_RESOURCES] = processed_resources
+ 
+     # TODO(b/117338320): Transitive lists defined here are incorrect; direct should come

@@ -177,6 +177,7 @@ def kt_db_android_library(
         srcs = binding_adapter_sources,
         custom_package = custom_package,
         enable_data_binding = True,
+        exports_manifest = 1 if manifest else 0,
         resource_files = resource_files,
         assets = assets,
         assets_dir = assets_dir,

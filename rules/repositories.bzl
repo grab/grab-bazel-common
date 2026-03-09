@@ -19,6 +19,11 @@ def _android():
             "@grab_bazel_common//patches/rules_android:databinding_deps.patch",
             "@grab_bazel_common//patches/rules_android:android_resource_processor_bazel_paths.patch",
             "@grab_bazel_common//patches/rules_android:allow_resource_conflicts.patch",
+            "@grab_bazel_common//patches/rules_android:skip_library_resource_linking.patch",
+            "@grab_bazel_common//patches/rules_android:fix_resource_priority_ordering.patch",
+            "@grab_bazel_common//patches/rules_android:fix_aar_import_databinding_info.patch",
+            "@grab_bazel_common//patches/rules_android:fix_databinding_providers.patch",
+            "@grab_bazel_common//patches/rules_android:fix_databinding_data_binding.patch",
         ],
         patch_args = ["-p1"],
     )
@@ -71,9 +76,9 @@ def _java():
     )
 
 def _kotlin():
-    RULES_KOTLIN_VERSION = "2.1.2"
+    RULES_KOTLIN_VERSION = "2.1.10"
 
-    RULES_KOTLIN_SHA = "6ea1c530261756546d0225a0b6e580eaf2f49084e28679a6c17f8ad1ccecca5d"
+    RULES_KOTLIN_SHA = "afa951024e022f7ec565295fcf4cb74738ef7b2ff968820f1465488c06ecf0a0"
 
     http_archive(
         name = "io_bazel_rules_kotlin",

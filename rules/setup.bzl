@@ -40,7 +40,7 @@ def _kotlin():
             sha256 = "fc27b08cadc061a4a989af01cbeccb613feef1995f4aad68f2be0f886a3ee251",
         ),
     )
-    native.register_toolchains("//:kotlin_toolchain")
+    native.register_toolchains("@//:kotlin_toolchain")
 
 def _rules_android_setup():
     rules_android_workspace()
