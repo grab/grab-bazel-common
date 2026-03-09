@@ -4,7 +4,7 @@ load(
     _kt_jvm_library = "kt_jvm_library",
 )
 
-_ANDROID_SDK_JAR = "//tools/android:android_sdk"
+_ANDROID_SDK_JAR = "@grab_bazel_common//tools/android:android_sdk"
 
 def _kt_android_artifact(
         name,
@@ -12,6 +12,7 @@ def _kt_android_artifact(
         deps = [],
         resources = [],
         resource_strip_prefix = "",
+        exports_manifest = None,
         plugins = [],
         associates = [],
         kotlinc_opts = None,
@@ -36,6 +37,7 @@ def _kt_android_artifact(
         name = base_name,
         visibility = ["//visibility:private"],
         exports = base_deps,
+        exports_manifest = 1 if kwargs.get("manifest") else 0,
         deps = deps if enable_data_binding else [],
         enable_data_binding = enable_data_binding,
         tags = [tag for tag in tags if tag != LINT_ENABLED],

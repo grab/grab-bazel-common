@@ -1,5 +1,10 @@
 load("@grab_bazel_common//rules:defs.bzl", "kotlin_library", "kt_compiler_plugin")
 
+java_import(
+    name = "compose-compiler-plugin-jar",
+    jars = ["@com_github_jetbrains_kotlin_git//:lib/compose-compiler-plugin_jar"],
+)
+
 kt_compiler_plugin(
     name = "compose-compiler-plugin",
     id = "androidx.compose.compiler.plugins.kotlin",
@@ -7,6 +12,7 @@ kt_compiler_plugin(
         "experimentalStrongSkipping": "true",
     },
     target_embedded_compiler = True,
+    deps = [":compose-compiler-plugin-jar"],
 )
 
 kotlin_library(

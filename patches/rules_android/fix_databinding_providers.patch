@@ -1,0 +1,13 @@
+diff --git a/providers/providers.bzl b/providers/providers.bzl
+index 0cececd..7d4d196 100644
+--- a/providers/providers.bzl
++++ b/providers/providers.bzl
+@@ -314,6 +314,8 @@ DataBindingV2Info = provider(
+         class_infos = "",
+         setter_stores = "",
++        transitive_setter_stores = "Depset of setter_store files propagated transitively through both deps and exports. Only consumed at APPLICATION level.",
+         transitive_br_files = "",
+         java_packages = "List of the Java packages of this rule and any rules that this rule exports.",
++        db_package_files = "Depset of files containing Java packages from AARs with data binding.",
+     ),
+ )

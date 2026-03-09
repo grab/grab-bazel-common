@@ -1,0 +1,267 @@
+--- a/rules/resources.bzl	2026-03-08 21:23:56.539806213 +0700
++++ b/rules/resources.bzl	2026-03-08 21:49:21.012467847 +0700
+@@ -613,7 +613,9 @@
+     packages_to_r_txts_depset = dict()
+     transitive_resource_apks = []
+ 
+-    for dep in utils.collect_providers(StarlarkAndroidResourcesInfo, deps):
++    # Reverse iteration order: aapt2 uses last-wins for resource conflicts,
++    # so first-declared dep should appear last to get highest priority.
++    for dep in reversed(utils.collect_providers(StarlarkAndroidResourcesInfo, deps)):
+         direct_resources_nodes.append(dep.direct_resources_nodes)
+         transitive_resources_nodes.append(dep.transitive_resources_nodes)
+         transitive_assets.append(dep.transitive_assets)
+@@ -635,7 +637,7 @@
+     else:
+         mergee_manifests = depset([
+             node_info.manifest
+-            for node_info in depset(transitive = direct_resources_nodes + transitive_resources_nodes, order = "preorder").to_list()
++            for node_info in depset(transitive = direct_resources_nodes + transitive_resources_nodes, order = "postorder").to_list()
+             if node_info.exports_manifest
+         ])
+ 
+@@ -644,7 +646,7 @@
+         all_res_apks = depset(
+             resource_apks,
+             transitive = transitive_resource_apks,
+-            order = "preorder",
++            order = "postorder",
+         ).to_list()
+         if all_res_apks:
+             fail(
+@@ -750,11 +752,11 @@
+         assets = assets,
+         assets_dir = assets_dir,
+         resource_files = processed_resources,
+-        resource_apks = depset(resource_apks, transitive = transitive_resource_apks, order = "preorder"),
++        resource_apks = depset(resource_apks, transitive = transitive_resource_apks, order = "postorder"),
+         direct_resources_nodes =
+-            depset(transitive = direct_resources_nodes, order = "preorder"),
++            depset(transitive = direct_resources_nodes, order = "postorder"),
+         transitive_resources_nodes =
+-            depset(transitive = transitive_resources_nodes, order = "preorder"),
++            depset(transitive = transitive_resources_nodes, order = "postorder"),
+         transitive_assets = transitive_assets,
+         transitive_compiled_assets = transitive_compiled_assets,
+         transitive_resource_files = transitive_resource_files,
+@@ -1319,7 +1321,9 @@
+     packages_to_r_txts_depset = dict()
+     transitive_resource_apks = []
+ 
+-    for dep in utils.collect_providers(StarlarkAndroidResourcesInfo, deps):
++    # Reverse iteration order: aapt2 uses last-wins for resource conflicts,
++    # so first-declared dep should appear last to get highest priority.
++    for dep in reversed(utils.collect_providers(StarlarkAndroidResourcesInfo, deps)):
+         direct_resources_nodes.append(dep.direct_resources_nodes)
+         transitive_resources_nodes.append(dep.transitive_resources_nodes)
+         transitive_assets.append(dep.transitive_assets)
+@@ -1343,7 +1347,7 @@
+     exports_transitive_resources_files = []
+     exports_transitive_manifests = []
+     exports_transitive_r_txts = []
+-    for dep in utils.collect_providers(StarlarkAndroidResourcesInfo, exports):
++    for dep in reversed(utils.collect_providers(StarlarkAndroidResourcesInfo, exports)):
+         exports_direct_resources_nodes.append(dep.direct_resources_nodes)
+         exports_transitive_resources_nodes.append(dep.transitive_resources_nodes)
+         exports_transitive_assets.append(dep.transitive_assets)
+@@ -1402,11 +1406,11 @@
+                 assets = assets,
+                 assets_dir = assets_dir,
+                 resource_files = resource_files,
+-                resource_apks = depset(resource_apks, transitive = transitive_resource_apks, order = "preorder"),
++                resource_apks = depset(resource_apks, transitive = transitive_resource_apks, order = "postorder"),
+                 direct_resources_nodes =
+-                    depset(transitive = direct_resources_nodes, order = "preorder"),
++                    depset(transitive = direct_resources_nodes, order = "postorder"),
+                 transitive_resources_nodes =
+-                    depset(transitive = transitive_resources_nodes, order = "preorder"),
++                    depset(transitive = transitive_resources_nodes, order = "postorder"),
+                 transitive_assets = transitive_assets,
+                 transitive_compiled_assets = transitive_compiled_assets,
+                 transitive_resource_files = transitive_resources_files,
+@@ -1473,11 +1477,11 @@
+             symbols = parsed_assets,
+             direct_resources_nodes = depset(
+                 transitive = direct_resources_nodes,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_resources_nodes = depset(
+                 transitive = transitive_resources_nodes,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_assets = transitive_assets,
+             transitive_assets_symbols = transitive_assets_symbols,
+@@ -1556,18 +1560,18 @@
+             manifest = manifest,
+             compiled_resources = compiled_resources,
+             direct_resources_nodes =
+-                depset(transitive = direct_resources_nodes, order = "preorder"),
++                depset(transitive = direct_resources_nodes, order = "postorder"),
+             transitive_resources_nodes = depset(
+                 transitive = transitive_resources_nodes,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             direct_compiled_resources = depset(
+                 transitive = direct_compiled_resources,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_compiled_resources = depset(
+                 transitive = transitive_compiled_resources,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             android_jar = android_jar,
+             busybox = busybox,
+@@ -1592,7 +1596,7 @@
+                 compiled_resources = compiled_resources,
+                 transitive_compiled_resources = depset(
+                     transitive = transitive_compiled_resources,
+-                    order = "preorder",
++                    order = "postorder",
+                 ),
+                 java_package = java_package,
+                 manifest = processed_manifest,
+@@ -1664,56 +1668,58 @@
+         resources_ctx[_PROVIDERS].append(StarlarkAndroidResourcesInfo(
+             direct_resources_nodes = depset(
+                 transitive = exports_direct_resources_nodes,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_resources_nodes = depset(
+                 transitive = exports_transitive_resources_nodes,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_assets = depset(
+                 transitive = exports_transitive_assets,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_assets_symbols = depset(
+                 transitive = exports_transitive_assets_symbols,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_compiled_assets = depset(
+                 transitive = exports_transitive_compiled_assets,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_resource_files = depset(
+                 transitive = exports_transitive_resources_files,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             direct_compiled_resources = depset(
+                 transitive = exports_direct_compiled_resources,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_compiled_resources = depset(
+                 transitive = exports_transitive_compiled_resources,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_manifests = depset(
+                 [processed_manifest] if processed_manifest else [],
+                 transitive = exports_transitive_manifests,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_r_txts = depset(
+                 [out_aapt2_r_txt] if out_aapt2_r_txt else [],
+                 transitive = exports_transitive_r_txts,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             packages_to_r_txts = packages_to_r_txts,
+             transitive_resource_apks = depset(
+                 resource_apks,
+                 transitive = transitive_resource_apks,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             package = java_package,
+         ))
+     else:
+-        # Depsets are ordered below to match the order in the legacy native rules.
++        # Depsets use postorder so each library's own resources (direct elements)
++        # appear after deps' resources. Combined with aapt2's last-wins semantics,
++        # this ensures a library's resources override its deps' resources.
+         resources_ctx[_PROVIDERS].append(StarlarkAndroidResourcesInfo(
+             direct_resources_nodes = depset(
+                 [ResourcesNodeInfo(
+@@ -1730,57 +1736,57 @@
+                     exports_manifest = exports_manifest,
+                 )] if defines_resources else [],
+                 transitive = direct_resources_nodes + exports_direct_resources_nodes,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_resources_nodes = depset(
+                 transitive = transitive_resources_nodes + exports_transitive_resources_nodes,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_assets = depset(
+                 assets,
+                 transitive = transitive_assets + exports_transitive_assets,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_assets_symbols = depset(
+                 [parsed_assets] if parsed_assets else [],
+                 transitive = transitive_assets_symbols + exports_transitive_assets_symbols,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_compiled_assets = depset(
+                 [compiled_assets] if compiled_assets else [],
+                 transitive = transitive_compiled_assets + exports_transitive_compiled_assets,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_resource_files = depset(
+                 processed_resources,
+                 transitive = transitive_resources_files + exports_transitive_resources_files,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             direct_compiled_resources = depset(
+                 [compiled_resources] if compiled_resources else [],
+                 transitive = direct_compiled_resources + exports_direct_compiled_resources,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_compiled_resources = depset(
+                 [compiled_resources] if compiled_resources else [],
+                 transitive = transitive_compiled_resources + exports_transitive_compiled_resources,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_manifests = depset(
+                 [processed_manifest] if processed_manifest else [],
+                 transitive = transitive_manifests + exports_transitive_manifests,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             transitive_r_txts = depset(
+                 [out_aapt2_r_txt] if out_aapt2_r_txt else [],
+                 transitive = transitive_r_txts + exports_transitive_r_txts,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             packages_to_r_txts = packages_to_r_txts,
+             transitive_resource_apks = depset(
+                 resource_apks,
+                 transitive = transitive_resource_apks,
+-                order = "preorder",
++                order = "postorder",
+             ),
+             package = java_package,
+         ))
