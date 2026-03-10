@@ -24,6 +24,7 @@ def _android():
             "@grab_bazel_common//patches/rules_android:fix_aar_import_databinding_info.patch",
             "@grab_bazel_common//patches/rules_android:fix_databinding_providers.patch",
             "@grab_bazel_common//patches/rules_android:fix_databinding_data_binding.patch",
+            "@grab_bazel_common//patches/rules_android:busybox_jvm_flags.patch",
         ],
         patch_args = ["-p1"],
     )
