@@ -79,21 +79,7 @@
                  transitive_assets = transitive_assets,
                  transitive_compiled_assets = transitive_compiled_assets,
                  transitive_resource_files = transitive_resources_files,
-@@ -1473,11 +1477,11 @@
-             symbols = parsed_assets,
-             direct_resources_nodes = depset(
-                 transitive = direct_resources_nodes,
--                order = "preorder",
-+                order = "postorder",
-             ),
-             transitive_resources_nodes = depset(
-                 transitive = transitive_resources_nodes,
--                order = "preorder",
-+                order = "postorder",
-             ),
-             transitive_assets = transitive_assets,
-             transitive_assets_symbols = transitive_assets_symbols,
-@@ -1556,18 +1560,18 @@
+@@ -1565,18 +1569,18 @@
              manifest = manifest,
              compiled_resources = compiled_resources,
              direct_resources_nodes =
@@ -116,16 +102,7 @@
              ),
              android_jar = android_jar,
              busybox = busybox,
-@@ -1592,7 +1596,7 @@
-                 compiled_resources = compiled_resources,
-                 transitive_compiled_resources = depset(
-                     transitive = transitive_compiled_resources,
--                    order = "preorder",
-+                    order = "postorder",
-                 ),
-                 java_package = java_package,
-                 manifest = processed_manifest,
-@@ -1664,56 +1668,58 @@
+@@ -1687,56 +1691,58 @@
          resources_ctx[_PROVIDERS].append(StarlarkAndroidResourcesInfo(
              direct_resources_nodes = depset(
                  transitive = exports_direct_resources_nodes,
@@ -196,7 +173,7 @@
          resources_ctx[_PROVIDERS].append(StarlarkAndroidResourcesInfo(
              direct_resources_nodes = depset(
                  [ResourcesNodeInfo(
-@@ -1730,57 +1736,57 @@
+@@ -1753,57 +1759,57 @@
                      exports_manifest = exports_manifest,
                  )] if defines_resources else [],
                  transitive = direct_resources_nodes + exports_direct_resources_nodes,

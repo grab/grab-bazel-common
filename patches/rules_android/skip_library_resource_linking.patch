@@ -36,17 +36,18 @@ diff -ruN a/rules/flags/additional_flags.bzl b/rules/flags/additional_flags.bzl
  
  def additional_flags():
  
-@@ -28,4 +28,15 @@
+@@ -28,4 +28,16 @@
              "dependency",
          ],
          visibility = ["//visibility:public"],
 +    )
 +
 +    # When False, android_library and aar_import skip the aapt2 validate_and_link
-+    # step. Only the final android_binary performs resource linking via
-+    # _resources.package(). This avoids resource name collisions between library
-+    # modules that can cause databinding "view must have a tag" crashes, and
-+    # speeds up builds.
++    # step and the merge_assets step. Only the final android_binary performs
++    # resource linking via _resources.package(). This avoids resource name
++    # collisions between library modules that can cause databinding "view must
++    # have a tag" crashes, reduces memory usage by not producing intermediate
++    # library.ap_ and merged assets.zip files, and speeds up builds.
 +    bool_flag(
 +        name = "link_library_resources",
 +        build_setting_default = True,
@@ -56,7 +57,65 @@ diff -ruN a/rules/flags/additional_flags.bzl b/rules/flags/additional_flags.bzl
 diff -ruN a/rules/resources.bzl b/rules/resources.bzl
 --- a/rules/resources.bzl	2026-03-08 20:14:13.216209729 +0700
 +++ b/rules/resources.bzl	2026-03-08 20:15:59.102362681 +0700
-@@ -1575,35 +1575,53 @@
+@@ -1468,27 +1468,36 @@
+             busybox = busybox,
+             host_javabase = host_javabase,
+         )
+-        merged_assets = ctx.actions.declare_file(ctx.label.name + "_files/assets.zip")
+-        _busybox.merge_assets(
+-            ctx,
+-            out_assets_zip = merged_assets,
+-            assets = assets,
+-            assets_dir = assets_dir,
+-            symbols = parsed_assets,
+-            direct_resources_nodes = depset(
+-                transitive = direct_resources_nodes,
+-                order = "preorder",
+-            ),
+-            transitive_resources_nodes = depset(
+-                transitive = transitive_resources_nodes,
+-                order = "preorder",
+-            ),
+-            transitive_assets = transitive_assets,
+-            transitive_assets_symbols = transitive_assets_symbols,
+-            busybox = busybox,
+-            host_javabase = host_javabase,
+-        )
+-        resources_ctx[_VALIDATION_RESULTS].append(merged_assets)
++
++        _should_link = (
++            not hasattr(ctx.attr, "_link_library_resources") or
++            ctx.attr._link_library_resources[BuildSettingInfo].value
++        )
++
++        merged_assets = ctx.actions.declare_file(ctx.label.name + "_files/assets.zip")
++        if _should_link:
++            _busybox.merge_assets(
++                ctx,
++                out_assets_zip = merged_assets,
++                assets = assets,
++                assets_dir = assets_dir,
++                symbols = parsed_assets,
++                direct_resources_nodes = depset(
++                    transitive = direct_resources_nodes,
++                    order = "postorder",
++                ),
++                transitive_resources_nodes = depset(
++                    transitive = transitive_resources_nodes,
++                    order = "postorder",
++                ),
++                transitive_assets = transitive_assets,
++                transitive_assets_symbols = transitive_assets_symbols,
++                busybox = busybox,
++                host_javabase = host_javabase,
++            )
++            resources_ctx[_VALIDATION_RESULTS].append(merged_assets)
++        else:
++            ctx.actions.write(merged_assets, "")
+ 
+         if assets:
+             compiled_assets = ctx.actions.declare_file(ctx.label.name + "_symbols/assets.zip")
+@@ -1575,35 +1587,48 @@
          )
          resources_ctx[_MERGED_MANIFEST] = processed_manifest
  
@@ -81,12 +140,9 @@ diff -ruN a/rules/resources.bzl b/rules/resources.bzl
 -            busybox = busybox,
 -            host_javabase = host_javabase,
 -            resource_apks = resource_apks,
-+        _should_link = (
-+            not hasattr(ctx.attr, "_link_library_resources") or
-+            ctx.attr._link_library_resources[BuildSettingInfo].value
-         )
+-        )
 -        resources_ctx[_RESOURCES_APK] = apk
- 
+-
 -        java_info = JavaInfo(
 -            output_jar = out_class_jar,
 -            compile_jar = out_class_jar,
@@ -104,7 +160,7 @@ diff -ruN a/rules/resources.bzl b/rules/resources.bzl
 +                compiled_resources = compiled_resources,
 +                transitive_compiled_resources = depset(
 +                    transitive = transitive_compiled_resources,
-+                    order = "preorder",
++                    order = "postorder",
 +                ),
 +                java_package = java_package,
 +                manifest = processed_manifest,
@@ -137,7 +193,7 @@ diff -ruN a/rules/resources.bzl b/rules/resources.bzl
  
          packages_to_r_txts_depset.setdefault(java_package, []).append(depset([out_aapt2_r_txt]))
  
-@@ -1612,12 +1630,13 @@
+@@ -1612,12 +1637,13 @@
  
          # In a normal build, the outputs of _busybox.validate_and_link are unused. However we need
          # this action to run to support resource visibility checks.
