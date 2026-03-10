@@ -73,6 +73,7 @@ index 20bf4c5..a3120f4 100644
      for info in deps:
          java_packages.extend(info.java_packages)
 +    java_packages.extend(extra_packages)
++    java_packages = list({p: True for p in java_packages}.keys())
  
      javac_opts = []
 @@ -167,4 +193,71 @@ def _get_javac_opts(
