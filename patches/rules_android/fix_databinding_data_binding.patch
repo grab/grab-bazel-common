@@ -148,7 +148,7 @@ index 20bf4c5..a3120f4 100644
 +
  def _merge_lists(lists):
      merged = []
-@@ -230,6 +324,18 @@ def _process(
+@@ -230,8 +324,20 @@ def _process(
          db_info[_PROVIDERS] = [
              DataBindingV2Info(
 +                db_package_files = depset(
@@ -167,6 +167,9 @@ index 20bf4c5..a3120f4 100644
 +                ),
                  transitive_br_files = depset(transitive =
                                                   [info.transitive_br_files for info in deps] +
+                                                  [info.transitive_br_files for info in exports]),
+-                java_packages = _merge_lists([info.java_packages for info in exports]),
++                java_packages = list({p: True for p in _merge_lists([info.java_packages for info in exports])}.keys()),
 @@ -279,9 +385,19 @@ def _process(
          )
  
@@ -210,7 +213,8 @@ index 20bf4c5..a3120f4 100644
                  direct = [br_out] if br_out else [],
 @@ -317,4 +443,8 @@ def _process(
              ),
-             java_packages = [java_package] + _merge_lists([info.java_packages for info in exports]),
+-            java_packages = [java_package] + _merge_lists([info.java_packages for info in exports]),
++            java_packages = list({p: True for p in ([java_package] + _merge_lists([info.java_packages for info in exports]))}.keys()),
 +            db_package_files = depset(
 +                transitive = [getattr(info, "db_package_files", depset()) for info in deps] +
 +                             [getattr(info, "db_package_files", depset()) for info in exports],
