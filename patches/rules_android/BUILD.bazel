@@ -11,5 +11,6 @@ exports_files([
     "fix_aar_import_databinding_info.patch",
     "fix_databinding_providers.patch",
     "fix_databinding_data_binding.patch",
+    "busybox_jvm_flags.patch",
     ]
 )
