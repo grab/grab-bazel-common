@@ -63,7 +63,7 @@ index 20bf4c5..a3120f4 100644
 +                )
                  _utils.copy_file(ctx, artifact, dep_lib_artifact)
              dep_lib_artifacts.append(dep_lib_artifact)
-@@ -140,8 +164,10 @@ def _get_javac_opts(
+@@ -140,8 +164,11 @@ def _get_javac_opts(
          class_info_path,
          layout_info_path,
 -        deps):
@@ -73,10 +73,10 @@ index 20bf4c5..a3120f4 100644
      for info in deps:
          java_packages.extend(info.java_packages)
 +    java_packages.extend(extra_packages)
-+    java_packages = list({p: True for p in java_packages}.keys())
++    java_packages = list({p: True for p in java_packages}.keys())  # deduplicate
  
      javac_opts = []
-@@ -167,4 +193,71 @@ def _get_javac_opts(
+@@ -167,4 +194,71 @@ def _get_javac_opts(
      return javac_opts
  
 +# Shell script to generate the synthetic AAR DataBinderMapperImpl.
@@ -148,7 +148,7 @@ index 20bf4c5..a3120f4 100644
 +
  def _merge_lists(lists):
      merged = []
-@@ -230,6 +323,18 @@ def _process(
+@@ -230,6 +324,18 @@ def _process(
          db_info[_PROVIDERS] = [
              DataBindingV2Info(
 +                db_package_files = depset(
@@ -167,7 +167,7 @@ index 20bf4c5..a3120f4 100644
 +                ),
                  transitive_br_files = depset(transitive =
                                                   [info.transitive_br_files for info in deps] +
-@@ -279,9 +384,19 @@ def _process(
+@@ -279,9 +385,19 @@ def _process(
          )
  
 -    dep_lib_artifacts = _setup_dependent_lib_artifacts(ctx, output_dir, deps)
@@ -188,13 +188,13 @@ index 20bf4c5..a3120f4 100644
 +
      db_info[_JAVAC_OPTS] = _get_javac_opts(
          ctx,
-@@ -299,4 +414,5 @@ def _process(
+@@ -299,4 +415,5 @@ def _process(
          layout_info.path if layout_info else _NO_RESOURCES_PATH,
          deps,
 +        extra_packages,
      )
  
-@@ -311,4 +427,13 @@ def _process(
+@@ -311,4 +428,13 @@ def _process(
                  transitive = [info.class_infos for info in exports],
              ),
 +            transitive_setter_stores = depset(
@@ -208,7 +208,7 @@ index 20bf4c5..a3120f4 100644
 +            ),
              transitive_br_files = depset(
                  direct = [br_out] if br_out else [],
-@@ -317,4 +442,8 @@ def _process(
+@@ -317,4 +443,8 @@ def _process(
              ),
              java_packages = [java_package] + _merge_lists([info.java_packages for info in exports]),
 +            db_package_files = depset(
