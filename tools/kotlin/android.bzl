@@ -38,7 +38,7 @@ def _kt_android_artifact(
         visibility = ["//visibility:private"],
         exports = base_deps,
         exports_manifest = 1 if kwargs.get("manifest") else 0,
-        deps = deps if enable_data_binding else [],
+        deps = deps,
         enable_data_binding = enable_data_binding,
         tags = [tag for tag in tags if tag != LINT_ENABLED],
         exec_properties = exec_properties,
@@ -73,9 +73,11 @@ def kt_android_library(name, exports = [], visibility = None, exec_properties = 
 
     # TODO(bazelbuild/rules_kotlin/issues/556): replace with starlark
     # buildifier: disable=native-android
+    artifact_targets = _kt_android_artifact(name, exec_properties = exec_properties, **kwargs)
     native.android_library(
         name = name,
-        exports = exports + _kt_android_artifact(name, exec_properties = exec_properties, **kwargs),
+        exports = exports + artifact_targets,
+        deps = exports + artifact_targets,
         visibility = visibility,
         tags = [tag for tag in kwargs.get("tags", default = []) if tag != LINT_ENABLED],
         testonly = kwargs.get("testonly", default = 0),

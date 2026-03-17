@@ -1,0 +1,12 @@
+diff --git a/rules/aar_import/impl.bzl b/rules/aar_import/impl.bzl
+--- a/rules/aar_import/impl.bzl
++++ b/rules/aar_import/impl.bzl
+@@ -409,7 +409,7 @@
+         neverlink = False,
+         deps = r_java_info + java_infos,  # TODO(djwhang): Exports are not deps.
+         exports =
+-            (r_java_info if _acls.in_aar_import_exports_r_java(str(ctx.label)) else []) +
++            r_java_info +
+             java_infos,  # TODO(djwhang): Deps are not exports.
+         # TODO(djwhang): AarImportTest is not expecting jdeps, enable or remove it completely
+         # jdeps = jdeps_artifact,

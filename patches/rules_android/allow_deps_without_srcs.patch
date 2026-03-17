@@ -1,0 +1,15 @@
+diff --git a/rules/android_library/impl.bzl b/rules/android_library/impl.bzl
+--- a/rules/android_library/impl.bzl
++++ b/rules/android_library/impl.bzl
+@@ -93,8 +93,8 @@
+ def _check_deps_without_java_srcs(ctx):
+     if not ctx.attr.deps or _has_srcs(ctx):
+         return False
+     gfn = getattr(ctx.attr, "generator_function", "")
+-    if _uses_deprecated_implicit_export(ctx):
+-        log.error(_USES_DEPRECATED_IMPLICIT_EXPORT_ERROR % ctx.label)
++    if _uses_deprecated_implicit_export(ctx):
++        return True
+     if _uses_resources_and_deps_without_srcs(ctx):
+         if (acls.in_android_library_resources_without_srcs_generator_functions(gfn) or
+             acls.in_android_library_resources_without_srcs(str(ctx.label))):

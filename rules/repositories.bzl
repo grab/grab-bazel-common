@@ -25,6 +25,11 @@ def _android():
             "@grab_bazel_common//patches/rules_android:fix_databinding_providers.patch",
             "@grab_bazel_common//patches/rules_android:fix_databinding_data_binding.patch",
             "@grab_bazel_common//patches/rules_android:busybox_jvm_flags.patch",
+            "@grab_bazel_common//patches/rules_android:fix_binary_r_class_generation.patch",
+            "@grab_bazel_common//patches/rules_android:wire_strict_deps_flag.patch",
+            "@grab_bazel_common//patches/rules_android:disable_aar_import_deps_checker.patch",
+            "@grab_bazel_common//patches/rules_android:allow_deps_without_srcs.patch",
+            "@grab_bazel_common//patches/rules_android:aar_import_export_r_java.patch",
         ],
         patch_args = ["-p1"],
     )

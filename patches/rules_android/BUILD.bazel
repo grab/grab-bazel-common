@@ -12,5 +12,10 @@ exports_files([
     "fix_databinding_providers.patch",
     "fix_databinding_data_binding.patch",
     "busybox_jvm_flags.patch",
+    "fix_binary_r_class_generation.patch",
+    "wire_strict_deps_flag.patch",
+    "disable_aar_import_deps_checker.patch",
+    "allow_deps_without_srcs.patch",
+    "aar_import_export_r_java.patch",
     ]
 )
