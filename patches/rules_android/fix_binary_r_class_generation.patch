@@ -1,0 +1,38 @@
+diff --git a/rules/busybox.bzl b/rules/busybox.bzl
+--- a/rules/busybox.bzl
++++ b/rules/busybox.bzl
+@@ -1057,19 +1057,32 @@
+     if use_r_package:
+         args.add("--useRPackage")
+
+-    # TODO(b/154003916): support transitive "--library transitive_r_txt_path,transitive_manifest_path" flags
++    # resources_nodes contains pairs of (r_txt, manifest) for each library dep.
++    # These files are passed as --library flags but were not declared as action
++    # inputs. Without them in inputs, StarlarkRClassGenerator cannot access the
++    # files in the Bazel sandbox and merges all resource IDs into the primary
++    # package's R class, causing ClassTooLargeException for R$id on large apps.
++    resources_node_files = [
++        f
++        for node in resources_nodes.to_list()
++        for f in (([node.r_txt] if node.r_txt else []) +
++                  ([node.manifest] if node.manifest else []))
++    ]
+     args.add("--classJarOutput", out_class_jar)
+     args.add("--targetLabel", str(ctx.label))
+
+     _set_warning_level(ctx, args)
+
+     _java_run(
+         ctx = ctx,
+         host_javabase = host_javabase,
+         executable = busybox,
+         tools = [busybox],
+         arguments = [args],
+-        inputs = depset([r_txt, manifest], transitive = transitive_r_txts + transitive_manifests),
++        inputs = depset(
++            [r_txt, manifest] + resources_node_files,
++            transitive = transitive_r_txts + transitive_manifests,
++        ),
+         outputs = [out_class_jar],
+         mnemonic = "StarlarkRClassGenerator",
+         progress_message = "Generating R classes",

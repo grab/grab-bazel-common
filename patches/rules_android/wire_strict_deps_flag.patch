@@ -1,0 +1,25 @@
+diff --git a/rules/android_library/impl.bzl b/rules/android_library/impl.bzl
+--- a/rules/android_library/impl.bzl
++++ b/rules/android_library/impl.bzl
+@@ -296,7 +296,7 @@
+         ),
+         enable_deps_without_srcs = exceptions_ctx.enable_deps_without_srcs,
+         neverlink = ctx.attr.neverlink,
+-        strict_deps = "DEFAULT",
++        strict_deps = ctx.fragments.java.strict_java_deps,
+         java_toolchain = _common.get_java_toolchain(ctx),
+     )
+
+diff --git a/rules/android_binary/impl.bzl b/rules/android_binary/impl.bzl
+--- a/rules/android_binary/impl.bzl
++++ b/rules/android_binary/impl.bzl
+@@ -228,7 +228,7 @@
+         annotation_processor_additional_outputs =
+             db_ctx.java_annotation_processor_additional_outputs,
+         annotation_processor_additional_inputs =
+             db_ctx.java_annotation_processor_additional_inputs,
+-        strict_deps = "DEFAULT",
++        strict_deps = ctx.fragments.java.strict_java_deps,
+         java_toolchain = common.get_java_toolchain(ctx),
+     )
+     if getattr(java_common, "add_constraints", None):

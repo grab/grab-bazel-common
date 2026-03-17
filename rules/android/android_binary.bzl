@@ -85,7 +85,7 @@ def android_binary(
         assets_dir = merged_resources.asset_dir,
         custom_package = custom_package,
         manifest = manifest,
-        resource_files = resource_files,
+        resource_files = resource_files + res_value_files,
         visibility = attrs.get("visibility", default = None),
         deps = kotlin_library_deps,
         plugins = attrs.get("plugins", default = None),
