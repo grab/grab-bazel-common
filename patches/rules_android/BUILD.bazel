@@ -17,5 +17,14 @@ exports_files([
     "disable_aar_import_deps_checker.patch",
     "allow_deps_without_srcs.patch",
     "aar_import_export_r_java.patch",
+    "connect_native_android_flags.patch",
+    "native_databinding_package_info.patch",
+    "databinding_non_transitive_r.patch",
+    "databinding_non_transitive_r_impl.patch",
+    "package_aware_rtxt_tool.patch",
+    "package_aware_rtxt_merge_action.patch",
+    "busybox_package_aware_rtxt.patch",
+    "provider_package_aware_rtxt.patch",
+    "binary_r_class_too_large_fix.patch",
     ]
 )

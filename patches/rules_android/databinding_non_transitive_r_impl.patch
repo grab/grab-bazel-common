@@ -1,0 +1,29 @@
+--- a/rules/android_library/impl.bzl	2026-03-18 22:51:55.475425761 +0700
++++ b/rules/android_library/impl.bzl	2026-03-19 00:24:35.053659043 +0700
+@@ -237,6 +237,17 @@
+ def _process_data_binding(ctx, java_package, resources_ctx, **unused_sub_ctxs):
+     if ctx.attr.enable_data_binding and not acls.in_databinding_allowed(str(ctx.label)):
+         fail("This target is not allowed to use databinding and enable_data_binding is True.")
++
++    # Collect package-aware R.txt files from resources context and deps
++    # for non-transitive R class databinding support. These are produced
++    # by the merge_compiled busybox action (zero extra actions).
++    local_pkg_r_txt = resources_ctx.package_aware_r_txt if resources_ctx.defines_resources else None
++    dep_pkg_r_txts = []
++    if ctx.attr.enable_data_binding and local_pkg_r_txt:
++        for dep in utils.collect_providers(StarlarkAndroidResourcesInfo, ctx.attr.deps):
++            if hasattr(dep, "transitive_package_aware_r_txts") and dep.transitive_package_aware_r_txts:
++                dep_pkg_r_txts.extend(dep.transitive_package_aware_r_txts.to_list())
++
+     return ProviderInfo(
+         name = "db_ctx",
+         value = _data_binding.process(
+@@ -252,6 +263,8 @@
+                 get_android_toolchain(ctx).data_binding_annotation_processor,
+             data_binding_annotation_template =
+                 utils.only(get_android_toolchain(ctx).data_binding_annotation_template.files.to_list()),
++            local_package_aware_r_txt = local_pkg_r_txt,
++            dep_package_aware_r_txts = dep_pkg_r_txts,
+         ),
+     )
+ 

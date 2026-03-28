@@ -1,0 +1,14 @@
+--- a/rules/aar_import/impl.bzl
++++ b/rules/aar_import/impl.bzl
+@@ -517,6 +517,11 @@
+     aar = _utils.only(ctx.files.aar)
+     unzip_tool = _get_android_toolchain(ctx).unzip_tool.files_to_run
+     package = _java.resolve_package_from_label(ctx.label, ctx.attr.package)
++
++    if hasattr(ctx.fragments.android, "android_databinding_package_info"):
++        _db_pkg_info = ctx.fragments.android.android_databinding_package_info
++        if _db_pkg_info and ctx.label.name in _db_pkg_info:
++            package = _db_pkg_info[ctx.label.name]
+ 
+     # Extract the AndroidManifest.xml from the AAR.
+     android_manifest = create_aar_artifact(ctx, ANDROID_MANIFEST)

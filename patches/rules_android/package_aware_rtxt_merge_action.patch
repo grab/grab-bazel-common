@@ -1,0 +1,54 @@
+--- a/src/tools/java/com/google/devtools/build/android/AndroidCompiledResourceMergingAction.java	2026-03-19 14:05:30.950621802 +0700
++++ b/src/tools/java/com/google/devtools/build/android/AndroidCompiledResourceMergingAction.java	2026-03-19 14:09:00.882649895 +0700
+@@ -139,6 +139,15 @@
+         description =
+             "Path to where an R.txt file declaring potentially-used resources should be written.")
+     public Path rTxtOut;
++
++    @Parameter(
++        names = "--packageAwareRTxt",
++        converter = CompatPathConverter.class,
++        description =
++            "Path to where a package-aware R.txt file should be written. "
++                + "This format has the package name on the first line, followed by "
++                + "'type name' lines, suitable for databinding non-transitive R class support.")
++    public Path packageAwareRTxt;
+   }
+ 
+   public static void main(String[] args) throws Exception {
+@@ -189,6 +198,11 @@
+       PlaceholderRTxtWriter rTxtWriter =
+           options.rTxtOut != null ? PlaceholderRTxtWriter.create(options.rTxtOut) : null;
+ 
++      PlaceholderRTxtWriter packageAwareRTxtWriter =
++          options.packageAwareRTxt != null
++              ? PlaceholderRTxtWriter.create(options.packageAwareRTxt, true, packageForR)
++              : null;
++
+       AndroidResourceMerger.mergeCompiledData(
+           options.primaryData,
+           options.primaryManifest,
+@@ -198,6 +212,23 @@
+           rTxtWriter,
+           options.throwOnResourceConflict,
+           executorService);
++
++      if (packageAwareRTxtWriter != null) {
++        // Re-merge with only primary data to produce non-transitive package-aware R.txt.
++        AndroidResourceMerger.mergeCompiledData(
++            options.primaryData,
++            options.primaryManifest,
++            ImmutableList.of(),
++            ImmutableList.of(),
++            AndroidResourceClassWriter.createWith(
++                options.targetLabel,
++                aaptConfigOptions.androidJar,
++                tmp.resolve("pkg_aware_generated"),
++                packageForR),
++            packageAwareRTxtWriter,
++            options.throwOnResourceConflict,
++            executorService);
++      }
+       logger.fine(String.format("Merging finished at %sms", timer.elapsed(TimeUnit.MILLISECONDS)));
+ 
+       AndroidResourceOutputs.createClassJar(
