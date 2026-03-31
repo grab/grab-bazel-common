@@ -39,6 +39,7 @@ def _android():
             "@grab_bazel_common//patches/rules_android:databinding_non_transitive_r.patch",
             "@grab_bazel_common//patches/rules_android:databinding_non_transitive_r_impl.patch",
             "@grab_bazel_common//patches/rules_android:binary_r_class_too_large_fix.patch",
+            "@grab_bazel_common//patches/rules_android:fix_databinding_copydir_symlink.patch",
         ],
         patch_args = ["-p1"],
     )

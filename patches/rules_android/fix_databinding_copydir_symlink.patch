@@ -1,0 +1,85 @@
+diff --git a/rules/data_binding.bzl b/rules/data_binding.bzl
+--- a/rules/data_binding.bzl
++++ b/rules/data_binding.bzl
+@@ -103,6 +103,8 @@
+ def _setup_dependent_lib_artifacts(ctx, output_dir, deps, artifact_type = "LIBRARY"):
+     # DataBinding requires files in very specific locations.
+-    # The following expand_template (copy actions) are moving the files
+-    # to the correct location for the DataBinding annotation processor.
+-    dep_lib_artifacts = []
++    # Collect all artifacts and batch them into a single tree artifact,
++    # replacing thousands of individual CopyDir/CopyFile shell actions
++    # with one action per databinding-enabled target.
++    inputs = []
++    rel_paths = []
++    seen_paths = {}
+     for info in deps:
+@@ -122,3 +124,2 @@
+                          extra_stores)
+-        seen_paths = {}
+         for artifact in all_artifacts:
+@@ -131,27 +132,40 @@
+             if path.startswith("../"):
+                 path = path[3:]
+
+-            # Deduplicate artifacts that appear in both setter_stores
+-            # and transitive_setter_stores.
++            # Deduplicate artifacts across all deps.
+             if path in seen_paths:
+                 continue
+             seen_paths[path] = True
++            inputs.append(artifact)
++            rel_paths.append(path)
+
+-            # Copy file/directory to a location required by the DataBinding
+-            # annotation processor.
+-            # TODO(djwhang): Look into SymlinkAction.
+-            if artifact.is_directory:
+-                # Tree artifacts (e.g. data-binding dirs from aar_import)
+-                # must be declared as directories to satisfy Bazel output
+-                # validation. Using declare_file for a directory path fails.
+-                dep_lib_artifact = ctx.actions.declare_directory(
+-                    output_dir + "dependent-lib-artifacts/" + path,
+-                )
+-                _utils.copy_dir(ctx, artifact, dep_lib_artifact)
+-            else:
+-                dep_lib_artifact = ctx.actions.declare_file(
+-                    output_dir + "dependent-lib-artifacts/" + path,
+-                )
+-                _utils.copy_file(ctx, artifact, dep_lib_artifact)
+-            dep_lib_artifacts.append(dep_lib_artifact)
++    if not inputs:
++        return []
+
+-    return dep_lib_artifacts
++    # Batch all dependent-lib-artifacts into a single tree artifact.
++    dep_lib_dir = ctx.actions.declare_directory(
++        output_dir + "dependent-lib-artifacts",
++    )
++    args = ctx.actions.args()
++    args.add(dep_lib_dir.path)
++    for i in range(len(inputs)):
++        args.add(rel_paths[i])
++        args.add(inputs[i])
++    ctx.actions.run_shell(
++        inputs = inputs,
++        outputs = [dep_lib_dir],
++        arguments = [args],
++        command = """\
++OUT="$1"; shift
++while [ $# -ge 2 ]; do
++  REL="$1"; SRC="$2"; shift 2
++  DST="$OUT/$REL"
++  mkdir -p "$(dirname "$DST")"
++  if [ -d "$SRC" ]; then
++    mkdir -p "$DST" && cp -r "$SRC/." "$DST/"
++  else
++    cp "$SRC" "$DST"
++  fi
++done
++""",
++        mnemonic = "SetupDepLibArtifacts",
++        progress_message = "Setting up databinding dependent-lib-artifacts for %s" % ctx.label,
++    )
++    return [dep_lib_dir]
+
