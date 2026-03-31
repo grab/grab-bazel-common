@@ -1,11 +1,11 @@
 diff --git a/rules/data_binding.bzl b/rules/data_binding.bzl
 --- a/rules/data_binding.bzl
 +++ b/rules/data_binding.bzl
-@@ -103,6 +103,8 @@
+@@ -102,22 +102,24 @@
  def _setup_dependent_lib_artifacts(ctx, output_dir, deps, artifact_type = "LIBRARY"):
      # DataBinding requires files in very specific locations.
 -    # The following expand_template (copy actions) are moving the files
--    # to the correct location for the DataBinding annotation processor.
+-    # to the correct locations.
 -    dep_lib_artifacts = []
 +    # Collect all artifacts and batch them into a single tree artifact,
 +    # replacing thousands of individual CopyDir/CopyFile shell actions
@@ -14,11 +14,23 @@ diff --git a/rules/data_binding.bzl b/rules/data_binding.bzl
 +    rel_paths = []
 +    seen_paths = {}
      for info in deps:
-@@ -122,3 +124,2 @@
+         # Yes, DataBinding requires depsets iterations.
+         # For APPLICATION targets, also include transitive_setter_stores
+         # to ensure all AAR data-binding mappers get registered in the
+         # final MergedDataBinderMapper. At LIBRARY level we only use
+         # direct setter_stores to avoid strict-deps violations.
+         extra_stores = (
+             _utils.list_or_depset_to_list(
+                 getattr(info, "transitive_setter_stores", depset()),
+             ) if artifact_type == "APPLICATION" else []
+         )
+         all_artifacts = (info.transitive_br_files.to_list() +
+                          _utils.list_or_depset_to_list(info.setter_stores) +
+                          _utils.list_or_depset_to_list(info.class_infos) +
                           extra_stores)
 -        seen_paths = {}
          for artifact in all_artifacts:
-@@ -131,27 +132,40 @@
+@@ -130,29 +132,45 @@
              if path.startswith("../"):
                  path = path[3:]
 
@@ -48,10 +60,10 @@ diff --git a/rules/data_binding.bzl b/rules/data_binding.bzl
 -                )
 -                _utils.copy_file(ctx, artifact, dep_lib_artifact)
 -            dep_lib_artifacts.append(dep_lib_artifact)
+-    return dep_lib_artifacts
 +    if not inputs:
 +        return []
-
--    return dep_lib_artifacts
++
 +    # Batch all dependent-lib-artifacts into a single tree artifact.
 +    dep_lib_dir = ctx.actions.declare_directory(
 +        output_dir + "dependent-lib-artifacts",
@@ -60,7 +72,7 @@ diff --git a/rules/data_binding.bzl b/rules/data_binding.bzl
 +    args.add(dep_lib_dir.path)
 +    for i in range(len(inputs)):
 +        args.add(rel_paths[i])
-+        args.add(inputs[i])
++        args.add(inputs[i].path)
 +    ctx.actions.run_shell(
 +        inputs = inputs,
 +        outputs = [dep_lib_dir],
@@ -83,3 +95,4 @@ diff --git a/rules/data_binding.bzl b/rules/data_binding.bzl
 +    )
 +    return [dep_lib_dir]
 
+ def _get_javac_opts(
