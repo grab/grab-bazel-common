@@ -36,12 +36,12 @@ load("@rules_android//rules:rules.bzl", "android_sdk_repository")
 def _kotlin():
     kotlin_repositories(
         compiler_release = kotlinc_version(
-            release = "2.1.0",
-            sha256 = "b6698d5728ad8f9edcdd01617d638073191d8a03139cc538a391b4e3759ad297",
+            release = "2.1.20",
+            sha256 = "a118197b0de55ffab2bc8d5cd03a5e39033cfb53383d6931bc761dec0784891a",
         ),
         ksp_compiler_release = ksp_version(
-            release = "2.1.0-1.0.28",
-            sha256 = "fc27b08cadc061a4a989af01cbeccb613feef1995f4aad68f2be0f886a3ee251",
+            release = "2.1.20-1.0.32",
+            sha256 = "9f74659d447d3df29cabe0c8ee068810af313a584c1bbdde821f9894127f26e0",
         ),
     )
     native.register_toolchains("@//:kotlin_toolchain")
@@ -95,9 +95,9 @@ def bazel_common_setup(
             "xmlpull:xmlpull:1.1.3.1",
             "net.sf.kxml:kxml2:2.3.0",
             "com.squareup.moshi:moshi:1.11.0",
-            "org.jetbrains.kotlin:kotlin-stdlib:2.1.0",
-            "org.jetbrains.kotlin:kotlin-parcelize-compiler:2.1.0",
-            "org.jetbrains.kotlin:kotlin-parcelize-runtime:2.1.0",
+            "org.jetbrains.kotlin:kotlin-stdlib:2.1.20",
+            "org.jetbrains.kotlin:kotlin-parcelize-compiler:2.1.20",
+            "org.jetbrains.kotlin:kotlin-parcelize-runtime:2.1.20",
             "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4",
             "com.github.tschuchortdev:kotlin-compile-testing:1.5.0",
             "com.google.android.material:material:1.2.1",
