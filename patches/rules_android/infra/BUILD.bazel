@@ -1,0 +1,9 @@
+exports_files([
+    "allow_deps_without_srcs.patch",
+    "allow_resource_conflicts.patch",
+    "busybox_jvm_flags.patch",
+    "disable_aar_import_deps_checker.patch",
+    "guava_version.patch",
+    "macos_cp_reflink.patch",
+    "wire_strict_deps_flag.patch",
+])

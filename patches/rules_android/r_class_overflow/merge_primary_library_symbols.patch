@@ -1,0 +1,20 @@
+diff -ruN a/src/tools/java/com/google/devtools/build/android/AndroidResourceProcessor.java b/src/tools/java/com/google/devtools/build/android/AndroidResourceProcessor.java
+--- a/src/tools/java/com/google/devtools/build/android/AndroidResourceProcessor.java
++++ b/src/tools/java/com/google/devtools/build/android/AndroidResourceProcessor.java
+@@ -338,7 +338,15 @@
+         libMap.put(entry.getKey(), entry.getValue().get());
+       }
+       if (primaryRTxt != null && Files.exists(primaryRTxt)) {
+-        return ResourceSymbols.load(primaryRTxt, executorService).get();
++        // Merge primary with all library symbols so the primary package's R
++        // class contains all transitive resource IDs at compile time. This
++        // replaces the former external MergeRTxts shell action that created
++        // O(N^2) intermediate files on disk. Merge is first-wins by field
++        // name, so the primary's IDs (from aapt2 link in the binary case)
++        // are preserved; library placeholder IDs only fill in missing fields.
++        ResourceSymbols primary = ResourceSymbols.load(primaryRTxt, executorService).get();
++        return ResourceSymbols.merge(
++            ImmutableList.<ResourceSymbols>builder().add(primary).addAll(libMap.values()).build());
+       }
+       return ResourceSymbols.merge(libMap.values());
+     } catch (InterruptedException | ExecutionException e) {

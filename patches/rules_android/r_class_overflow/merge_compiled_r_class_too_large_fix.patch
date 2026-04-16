@@ -1,0 +1,116 @@
+--- a/src/tools/java/com/google/devtools/build/android/resources/RClassGenerator.java
++++ b/src/tools/java/com/google/devtools/build/android/resources/RClassGenerator.java
+@@ -189,9 +189,18 @@
+   private void writeInnerClass(
+       Collection<FieldInitializer> initializers,
+       Path packageDir,
+       String fullyQualifiedOuterClass,
+       String innerClass)
+       throws IOException {
++    // If the inner class has too many fields, ASM's ClassWriter.toByteArray()
++    // will throw ClassTooLargeException (64K constant pool limit).  Proactively
++    // split into chunk classes with an inheritance chain.  Each field needs ~4-5
++    // constant pool entries; 8000 fields ~ 36K entries, safely under 64K.
++    if (initializers.size() > 8000) {
++      writeInnerClassChunked(initializers, packageDir, fullyQualifiedOuterClass, innerClass);
++      return;
++    }
++
+     ClassWriter innerClassWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+     String fullyQualifiedInnerClass =
+         writeInnerClassHeader(fullyQualifiedOuterClass, innerClass, innerClassWriter);
+@@ -214,6 +223,94 @@
+     Files.write(innerFile, innerClassWriter.toByteArray(), CREATE_NEW);
+   }
+ 
++  /**
++   * Writes an oversized inner class by splitting fields across chunk classes:
++   *   R_id_0              (extends Object, holds first 8000 fields)
++   *   R_id_1 extends R_id_0  (next 8000 fields)
++   *   ...
++   *   R$id extends R_id_N    (empty, inherits all fields)
++   * Code referencing R.id.field still works -- R$id inherits every field.
++   */
++  private void writeInnerClassChunked(
++      Collection<FieldInitializer> initializers,
++      Path packageDir,
++      String fullyQualifiedOuterClass,
++      String innerClass)
++      throws IOException {
++    java.util.logging.Logger.getLogger(RClassGenerator.class.getName())
++        .info("R$" + innerClass + " has " + initializers.size()
++            + " fields, splitting into chunks to avoid 64K constant pool limit");
++
++    List<FieldInitializer> allFields = new ArrayList<>(initializers);
++    int maxFieldsPerChunk = 8000;
++
++    // Derive the package path for chunk class names.
++    int lastSlash = fullyQualifiedOuterClass.lastIndexOf('/');
++    String chunkBase = (lastSlash >= 0 ? fullyQualifiedOuterClass.substring(0, lastSlash + 1) : "")
++        + "R_" + innerClass;
++
++    String prevSuperClass = SUPER_CLASS;
++    int chunkIndex = 0;
++
++    for (int i = 0; i < allFields.size(); i += maxFieldsPerChunk) {
++      int end = Math.min(i + maxFieldsPerChunk, allFields.size());
++      List<FieldInitializer> chunk = allFields.subList(i, end);
++      String chunkClassName = chunkBase + "_" + chunkIndex;
++
++      ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
++      cw.visit(JAVA_VERSION, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER,
++          chunkClassName, null, prevSuperClass, null);
++      cw.visitSource(SdkConstants.FN_RESOURCE_CLASS, null);
++
++      // Constructor calling the correct super class.
++      MethodVisitor ctor = cw.visitMethod(
++          Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
++      ctor.visitCode();
++      ctor.visitVarInsn(Opcodes.ALOAD, 0);
++      ctor.visitMethodInsn(Opcodes.INVOKESPECIAL, prevSuperClass, "<init>", "()V", false);
++      ctor.visitInsn(Opcodes.RETURN);
++      ctor.visitMaxs(0, 0);
++      ctor.visitEnd();
++
++      List<FieldInitializer> deferred = new ArrayList<>();
++      for (FieldInitializer init : chunk) {
++        if (init.writeFieldDefinition(cw, finalFields, annotateTransitiveFields, rPackageId)) {
++          deferred.add(init);
++        }
++      }
++      if (!deferred.isEmpty()) {
++        writeStaticClassInit(cw, chunkClassName, deferred);
++      }
++
++      cw.visitEnd();
++      Path chunkFile = packageDir.resolve("R_" + innerClass + "_" + chunkIndex + ".class");
++      Files.write(chunkFile, cw.toByteArray(), CREATE_NEW);
++
++      prevSuperClass = chunkClassName;
++      chunkIndex++;
++    }
++
++    // Write R$innerClass extending the last chunk -- empty, inherits all fields.
++    String fqInnerClass = fullyQualifiedOuterClass + "$" + innerClass;
++    ClassWriter iw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
++    iw.visit(JAVA_VERSION, Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_SUPER,
++        fqInnerClass, null, prevSuperClass, null);
++    iw.visitSource(SdkConstants.FN_RESOURCE_CLASS, null);
++    MethodVisitor ctor = iw.visitMethod(
++        Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
++    ctor.visitCode();
++    ctor.visitVarInsn(Opcodes.ALOAD, 0);
++    ctor.visitMethodInsn(Opcodes.INVOKESPECIAL, prevSuperClass, "<init>", "()V", false);
++    ctor.visitInsn(Opcodes.RETURN);
++    ctor.visitMaxs(0, 0);
++    ctor.visitEnd();
++    iw.visitInnerClass(fqInnerClass, fullyQualifiedOuterClass, innerClass,
++        Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC);
++    iw.visitEnd();
++    Path innerFile = packageDir.resolve("R$" + innerClass + ".class");
++    Files.write(innerFile, iw.toByteArray(), CREATE_NEW);
++  }
++
+   private String writeInnerClassHeader(
+       String fullyQualifiedOuterClass, String innerClass, ClassWriter innerClassWriter) {
+     String fullyQualifiedInnerClass = fullyQualifiedOuterClass + "$" + innerClass;

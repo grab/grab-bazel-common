@@ -1,0 +1,17 @@
+--- a/rules/dex_desugar_aspect.bzl
++++ b/rules/dex_desugar_aspect.bzl
+@@ -185,10 +185,10 @@
+         if JavaInfo in target:
+             jars.extend(target[JavaInfo].runtime_output_jars)
+ 
+-        # TODO(b/124540821): Disable R.jar desugaring (with a flag).
+-        if AndroidIdeInfo in target and target[AndroidIdeInfo].resource_jar:
+-            jars.append(target[AndroidIdeInfo].resource_jar.class_jar)
+-
++        # R classes contain only public static (final) int fields -- no Java 8+
++        # constructs that need desugaring.  Skipping avoids the significant
++        # overhead of desugaring every library's R class JAR, especially when
++        # link_library_resources=False produces large transitive R JARs.
+         jars.extend(extra_toolchain_jars)
+         return jars
+ 

@@ -1,9 +1,11 @@
 diff --git a/rules/busybox.bzl b/rules/busybox.bzl
 --- a/rules/busybox.bzl
 +++ b/rules/busybox.bzl
-@@ -1057,19 +1057,32 @@
+@@ -1059,21 +1059,34 @@
      if use_r_package:
          args.add("--useRPackage")
+     if primary_only:
+         args.add("--primaryOnly")
 
 -    # TODO(b/154003916): support transitive "--library transitive_r_txt_path,transitive_manifest_path" flags
 +    # resources_nodes contains pairs of (r_txt, manifest) for each library dep.

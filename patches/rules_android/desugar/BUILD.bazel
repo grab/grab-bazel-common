@@ -1,0 +1,6 @@
+exports_files([
+    "skip_binary_r_jar_desugaring_attrs.patch",
+    "skip_binary_r_jar_desugaring_flags.patch",
+    "skip_binary_r_jar_desugaring_impl.patch",
+    "skip_r_jar_desugaring.patch",
+])

@@ -1,0 +1,29 @@
+--- a/src/tools/java/com/google/devtools/build/android/resources/ResourceSymbols.java
++++ b/src/tools/java/com/google/devtools/build/android/resources/ResourceSymbols.java
+@@ -232,21 +232,13 @@
+     // Track packages that fail ASM due to 64K limit
+     java.util.List<String> oversizedPackages = new java.util.ArrayList<>();
+ 
+-    // AAR libraries that reference transitive R fields at runtime need
+-    // full (transitive) symbols. All others use filtered (own only) — fast.
++    // Minimal set: AAR packages compiled with nonTransitiveRClasses=false
++    // whose pre-compiled bytecode references transitive R fields at runtime.
++    // Keep this set as small as possible to avoid R class bloat.
++    // Add a prefix here ONLY when a runtime NoSuchFieldError confirms need.
+     java.util.Set<String> transitiveRPackages = new java.util.HashSet<>(java.util.Arrays.asList(
+         "com.google.android.material",
+-        "com.google.android.gms",
+-        "com.google.firebase",
+-        "com.google.android.play",
+-        "androidx.appcompat",
+-        "androidx.core",
+-        "androidx.fragment",
+-        "androidx.activity",
+-        "androidx.preference",
+-        "androidx.mediarouter",
+-        "androidx.leanback",
+-        "androidx.car"
++        "com.grab.geo"
+     ));
+     for (String packageName : libMap.keySet()) {
+       try {

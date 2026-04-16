@@ -1,0 +1,7 @@
+exports_files([
+    "busybox_package_aware_rtxt.patch",
+    "fix_exports_package_aware_rtxt.patch",
+    "package_aware_rtxt_merge_action.patch",
+    "package_aware_rtxt_tool.patch",
+    "provider_package_aware_rtxt.patch",
+])

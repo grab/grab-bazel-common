@@ -1,0 +1,30 @@
+--- a/src/tools/java/com/google/devtools/build/android/RClassGeneratorAction.java
++++ b/src/tools/java/com/google/devtools/build/android/RClassGeneratorAction.java
+@@ -117,6 +117,15 @@
+             "A boolean to control whether fields should be generated with an RPackage"
+                 + " class, defaults to false. Used for privacy sandbox.")
+     public boolean useRPackage;
++
++    @Parameter(
++        names = "--primaryOnly",
++        arity = 1,
++        description =
++            "Emit R class only for the primary package. Transitive symbols are still merged "
++                + "into the primary's R, but no per-library R classes are written. Used by "
++                + "aar_import compile-time R to avoid classpath shadowing across AARs.")
++    public boolean primaryOnly = false;
+   }
+
+   public static void main(String[] args) throws Exception {
+@@ -158,8 +167,10 @@
+         final RPackageId rPackageId =
+             options.useRPackage ? RPackageId.createFor(appPackageName) : null;
+         // For now, assuming not used for libraries and setting final access for fields.
++        Multimap<String, ResourceSymbols> emissionLibMap =
++            options.primaryOnly ? ArrayListMultimap.create() : libSymbolMap;
+         fullSymbolValues.writeClassesTo(
+-            libSymbolMap, appPackageName, classOutPath, options.finalFields, rPackageId);
++            emissionLibMap, appPackageName, classOutPath, options.finalFields, rPackageId);
+         logger.fine(
+             String.format("Finished R.class at %sms", timer.elapsed(TimeUnit.MILLISECONDS)));
+       } else if (!options.libraries.isEmpty()) {
