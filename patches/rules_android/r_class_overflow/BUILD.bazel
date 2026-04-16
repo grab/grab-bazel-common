@@ -1,0 +1,6 @@
+exports_files([
+    "binary_r_class_too_large_fix.patch",
+    "binary_r_primary_only.patch",
+    "merge_compiled_r_class_too_large_fix.patch",
+    "merge_primary_library_symbols.patch",
+])

@@ -30,10 +30,10 @@ diff -ruN a/rules/flags/additional_flags.bzl b/rules/flags/additional_flags.bzl
 @@ -13,7 +13,7 @@
  # limitations under the License.
  """Additional flag definitions."""
- 
+
 -load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
 +load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "string_flag")
- 
+
  def additional_flags():
 
 @@ -28,4 +28,16 @@
@@ -112,13 +112,13 @@ diff -ruN a/rules/resources.bzl b/rules/resources.bzl
 +            resources_ctx[_VALIDATION_RESULTS].append(merged_assets)
 +        else:
 +            ctx.actions.write(merged_assets, "")
- 
+
          if assets:
              compiled_assets = ctx.actions.declare_file(ctx.label.name + "_symbols/assets.zip")
-@@ -1575,35 +1587,51 @@
+@@ -1575,35 +1587,84 @@
          )
          resources_ctx[_MERGED_MANIFEST] = processed_manifest
- 
+
 -        apk = ctx.actions.declare_file(ctx.label.name + "_files/library.ap_")
 -        r_java = ctx.actions.declare_file(ctx.label.name + ".srcjar")
 -        r_txt = ctx.actions.declare_file(ctx.label.name + "_symbols/R.txt")
@@ -186,29 +186,62 @@ diff -ruN a/rules/resources.bzl b/rules/resources.bzl
 +            ctx.actions.write(r_java, "")
 +            ctx.actions.write(r_txt, "")
 +
-+            # Re-use the non-transitive R class from merge_compiled directly.
-+            # This avoids the extra generate_binary_r action and provides a
-+            # complete R class (all inner classes) for consumers at compile time.
-+            java_info = JavaInfo(
-+                output_jar = out_class_jar,
-+                compile_jar = out_class_jar,
-+            )
- 
++            # Mirror Bazel 7's AarImport.nonTransitiveRClass = false hardcode.
++            # aar_import always receives a transitive compile-time R jar so
++            # that consumers can resolve cross-module resource IDs referenced
++            # from the AAR's own bytecode (which was compiled outside our
++            # build with a transitive R in scope). android_library uses the
++            # cheap non-transitive R from merge_compiled. The `aar` attribute
++            # exists only on aar_import, making it a reliable rule-kind
++            # detector inside this shared _process_starlark function.
++            _is_aar_import = hasattr(ctx.attr, "aar")
++
++            if _is_aar_import:
++                compile_r_jar = ctx.actions.declare_file(
++                    ctx.label.name + "_symbols/compile_R.jar",
++                )
++                _busybox.generate_binary_r(
++                    ctx,
++                    out_class_jar = compile_r_jar,
++                    r_txt = out_aapt2_r_txt,
++                    manifest = processed_manifest,
++                    package_for_r = java_package,
++                    final_fields = False,
++                    use_r_package = False,
++                    resources_nodes = depset(
++                        transitive = direct_resources_nodes + transitive_resources_nodes,
++                    ),
++                    transitive_r_txts = transitive_r_txts,
++                    transitive_manifests = transitive_manifests,
++                    busybox = busybox,
++                    host_javabase = host_javabase,
++                    primary_only = True,
++                )
++                java_info = JavaInfo(
++                    output_jar = out_class_jar,
++                    compile_jar = compile_r_jar,
++                )
++            else:
++                java_info = JavaInfo(
++                    output_jar = out_class_jar,
++                    compile_jar = out_class_jar,
++                )
+
          packages_to_r_txts_depset.setdefault(java_package, []).append(depset([out_aapt2_r_txt]))
- 
-@@ -1612,12 +1660,13 @@
- 
+
+@@ -1612,12 +1693,13 @@
+
          # In a normal build, the outputs of _busybox.validate_and_link are unused. However we need
          # this action to run to support resource visibility checks.
 -        resources_ctx[_VALIDATION_RESULTS].append(r_txt)
 +        if _should_link:
 +            resources_ctx[_VALIDATION_RESULTS].append(r_txt)
- 
+
          # Needed for AAR generation. The Starlark resource processing pipeline uses the aapt2_r_txt file,
          # which is why we can't use the StarlarkAndroidResourcesInfo provider when generating the aar.
          resources_ctx[_STARLARK_PROCESSED_MANIFEST] = processed_manifest
 -        resources_ctx[_STARLARK_R_TXT] = r_txt
 +        resources_ctx[_STARLARK_R_TXT] = out_aapt2_r_txt
          resources_ctx[_STARLARK_PROCESSED_RESOURCES] = processed_resources
- 
+
      # TODO(b/117338320): Transitive lists defined here are incorrect; direct should come

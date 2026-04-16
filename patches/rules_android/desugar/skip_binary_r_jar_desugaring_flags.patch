@@ -1,0 +1,18 @@
+--- a/rules/flags/additional_flags.bzl
++++ b/rules/flags/additional_flags.bzl
+@@ -40,4 +40,14 @@
+         name = "link_library_resources",
+         build_setting_default = True,
+         visibility = ["//visibility:public"],
++    )
++    # When False, the android_binary skips desugaring its own _resources.jar.
++    # That jar contains only the aggregate R class (static final int / int[]
++    # constants); it never contains Java 8+ bytecode, so desugaring it is
++    # wasted CPU and can be slow when the R class is large.  Mirrors the
++    # Bazel 7 `--experimental_android_desugar_resources_jar` option.
++    bool_flag(
++        name = "desugar_resources_jar",
++        build_setting_default = True,
++        visibility = ["//visibility:public"],
+     )
+\ No newline at end of file

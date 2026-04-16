@@ -1,0 +1,21 @@
+--- a/rules/busybox.bzl
++++ b/rules/busybox.bzl
+@@ -1020,7 +1020,8 @@
+         transitive_r_txts = [],
+         transitive_manifests = [],
+         busybox = None,
+-        host_javabase = None):
++        host_javabase = None,
++        primary_only = False):
+     """Generate compiled resources class jar.
+
+     Args:
+@@ -1056,6 +1057,8 @@
+         args.add("--nofinalFields")
+     if use_r_package:
+         args.add("--useRPackage")
++    if primary_only:
++        args.add("--primaryOnly")
+
+     # TODO(b/154003916): support transitive "--library transitive_r_txt_path,transitive_manifest_path" flags
+     args.add("--classJarOutput", out_class_jar)

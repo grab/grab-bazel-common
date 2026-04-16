@@ -1,0 +1,12 @@
+--- a/rules/android_binary/attrs.bzl
++++ b/rules/android_binary/attrs.bzl
+@@ -247,6 +247,9 @@
+             _manifest_merge_order = attr.label(
+                 default = "//rules/flags:manifest_merge_order",
+             ),
++            _desugar_resources_jar = attr.label(
++                default = "//rules/flags:desugar_resources_jar",
++            ),
+             _rewrite_resources_through_optimizer = attr.bool(
+                 default = False,
+                 doc = """
