@@ -15,4 +15,3 @@
 +        build_setting_default = True,
 +        visibility = ["//visibility:public"],
      )
-\ No newline at end of file
