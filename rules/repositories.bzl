@@ -29,7 +29,6 @@ def _android():
             "@grab_bazel_common//patches/rules_android/aar_import:fix_aar_import_databinding_info.patch",
             "@grab_bazel_common//patches/rules_android/databinding:fix_databinding_providers.patch",
             "@grab_bazel_common//patches/rules_android/databinding:fix_databinding_data_binding.patch",
-            "@grab_bazel_common//patches/rules_android/infra:busybox_jvm_flags.patch",
             "@grab_bazel_common//patches/rules_android/non_transitive_r:fix_binary_r_class_generation.patch",
             "@grab_bazel_common//patches/rules_android/infra:wire_strict_deps_flag.patch",
             "@grab_bazel_common//patches/rules_android/infra:disable_aar_import_deps_checker.patch",
