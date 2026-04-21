@@ -1,0 +1,20 @@
+--- a/rules/dex_desugar_aspect.bzl
++++ b/rules/dex_desugar_aspect.bzl
+@@ -185,6 +185,17 @@ def _get_produced_runtime_jars(target, ctx, extra_toolchain_jars):
+         if JavaInfo in target:
+             jars.extend(target[JavaInfo].runtime_output_jars)
+
++        # aar_import generates a *_resources.jar (e.g. from databinding AARs)
++        # that contains generated binding code.  This jar is provided as an
++        # inline dep JavaInfo so the aspect never visits it as a build target,
++        # meaning it has no entry in dex_archives_dict and causes a hard failure
++        # in rules_android 0.7.1+.  Explicitly include it here so it gets dexed.
++        if ctx.rule.kind == "aar_import":
++            if AndroidIdeInfo in target and target[AndroidIdeInfo].resource_jar:
++                resource_class_jar = target[AndroidIdeInfo].resource_jar.class_jar
++                if resource_class_jar not in jars:
++                    jars.append(resource_class_jar)
++
+         # R classes contain only public static (final) int fields -- no Java 8+
+         # constructs that need desugaring.  Skipping avoids the significant
+         # overhead of desugaring every library's R class JAR, especially when
