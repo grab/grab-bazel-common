@@ -1,4 +1,4 @@
-load("rules_android_ndk//:rules.bzl", "android_ndk_repository")
+load("@rules_android_ndk//:rules.bzl", "android_ndk_repository")
 
 def android_ndk_setup(name = "androidndk", api_level = None):
     kwargs = {"name" : name}

@@ -5,6 +5,13 @@ def http_archive(name, **kwargs):
     maybe(_http_archive, name = name, **kwargs)
 
 def _android():
+    http_archive(
+        name = "rules_android_ndk",
+        sha256 = "07e7a2777113bb3d0a432265d1c78cfaa140a5bc4c82be4c8cd988b34382ec90",
+        strip_prefix = "rules_android_ndk-0.1.5",
+        url = "https://github.com/bazelbuild/rules_android_ndk/releases/download/v0.1.5/rules_android_ndk-v0.1.5.tar.gz",
+    )
+
     rules_android_tag = "0.7.1"
     http_archive(
         name = "rules_android",
