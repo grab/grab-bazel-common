@@ -1,15 +1,23 @@
 --- a/rules/dex_desugar_aspect.bzl
 +++ b/rules/dex_desugar_aspect.bzl
-@@ -185,6 +185,17 @@ def _get_produced_runtime_jars(target, ctx, extra_toolchain_jars):
+@@ -185,6 +185,25 @@ def _get_produced_runtime_jars(target, ctx, extra_toolchain_jars):
          if JavaInfo in target:
              jars.extend(target[JavaInfo].runtime_output_jars)
 
-+        # aar_import generates a *_resources.jar (e.g. from databinding AARs)
-+        # that contains generated binding code.  This jar is provided as an
-+        # inline dep JavaInfo so the aspect never visits it as a build target,
-+        # meaning it has no entry in dex_archives_dict and causes a hard failure
-+        # in rules_android 0.7.1+.  Explicitly include it here so it gets dexed.
-+        if ctx.rule.kind == "aar_import":
++        # aar_import and android_library targets may generate a *_resources.jar
++        # via AndroidIdeInfo.resource_jar that is not present in
++        # JavaInfo.runtime_output_jars (it is created as an inline JavaInfo dep,
++        # not a standalone build target).  rules_android 0.7.1+ will fail the
++        # build if such a jar appears in transitive_runtime_jars_for_archive
++        # without a corresponding dex archive entry.
++        #
++        # - aar_import: resource_jar may contain generated binding code (e.g.
++        #   androidx.databinding).
++        # - android_library (incl. kt_android_library): resource_jar is an R
++        #   class jar.  AndroidLibraryResourceClassJarProvider may not be
++        #   propagated by kt_android_library wrappers, so the jar bypasses the
++        #   library_r_jar_dict filter in impl.bzl and reaches _to_dexed_classpath.
++        if ctx.rule.kind in ("aar_import", "android_library"):
 +            if AndroidIdeInfo in target and target[AndroidIdeInfo].resource_jar:
 +                resource_class_jar = target[AndroidIdeInfo].resource_jar.class_jar
 +                if resource_class_jar not in jars:
