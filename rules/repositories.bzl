@@ -53,6 +53,7 @@ def _android():
             "@grab_bazel_common//patches/rules_android/r_class_overflow:binary_r_primary_only.patch",
             "@grab_bazel_common//patches/rules_android/databinding:fix_databinding_copydir_symlink.patch",
             "@grab_bazel_common//patches/rules_android/desugar:skip_r_jar_desugaring.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:dex_aar_import_resources_jar.patch",
             "@grab_bazel_common//patches/rules_android/r_class_overflow:merge_compiled_r_class_too_large_fix.patch",
             "@grab_bazel_common//patches/rules_android/package_aware_rtxt:fix_exports_package_aware_rtxt.patch",
             "@grab_bazel_common//patches/rules_android/r_class_overflow:merge_primary_library_symbols.patch",
