@@ -16,6 +16,7 @@ define_kt_toolchain(
     name = "kotlin_toolchain",
     api_version = "2.1",
     experimental_multiplex_workers = True,
+    experimental_reduce_classpath_mode = "KOTLINBUILDER_REDUCED",
     experimental_report_unused_deps = "off",
     experimental_strict_kotlin_deps = "off",
     experimental_use_abi_jars = True,
