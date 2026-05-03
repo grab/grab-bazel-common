@@ -1,6 +1,7 @@
 exports_files([
     "allow_deps_without_srcs.patch",
     "allow_resource_conflicts.patch",
+    "compress_java_resources.patch",
     "disable_aar_import_deps_checker.patch",
     "guava_version.patch",
     "macos_cp_reflink.patch",
