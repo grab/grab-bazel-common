@@ -1,0 +1,7 @@
+exports_files([
+    "gen_base_classes_worker_java.patch",
+    "gen_base_classes_worker_lib.patch",
+    "databinding_exec_worker_binary.patch",
+    "databinding_exec_worker_toolchain.patch",
+    "generate_databinding_base_classes_worker.patch",
+])
