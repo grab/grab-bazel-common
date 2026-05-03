@@ -1,0 +1,148 @@
+--- a/src/tools/java/com/google/devtools/build/android/GenBaseClassesWorker.java
++++ b/src/tools/java/com/google/devtools/build/android/GenBaseClassesWorker.java
+@@ -0,0 +1,144 @@
++// Copyright 2024 The Bazel Authors. All rights reserved.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//    http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++package com.google.devtools.build.android;
++
++import com.google.devtools.build.lib.worker.ProtoWorkerMessageProcessor;
++import com.google.devtools.build.lib.worker.WorkRequestHandler;
++import java.io.IOException;
++import java.io.PrintStream;
++import java.io.PrintWriter;
++import java.security.Permission;
++import java.time.Duration;
++import java.util.List;
++import java.util.logging.Logger;
++
++/**
++ * Persistent worker wrapper for the GenerateDataBindingBaseClasses action.
++ *
++ * <p>Wraps {@code android.databinding.AndroidDataBinding} (which is a plain JCommander CLI and
++ * does not implement the Bazel worker protocol) so that it can participate in Bazel's persistent
++ * worker mechanism, avoiding repeated JVM startup costs across modules.
++ *
++ * <p>Bazel starts this binary once with {@code --persistent_worker}, then sends one
++ * {@link WorkRequest} per action via stdin, reading the corresponding {@link WorkResponse} from
++ * stdout. Each request's {@code arguments} list contains a single {@code @flagfile} entry (written
++ * by {@code args.use_param_file("@%s")} in data_binding.bzl) whose contents are expanded by
++ * JCommander inside {@code AndroidDataBinding.main()}.
++ */
++public final class GenBaseClassesWorker {
++
++  private static final Logger logger = Logger.getLogger(GenBaseClassesWorker.class.getName());
++
++  // ---------------------------------------------------------------------------
++  // System.exit() interception
++  //
++  // android.databinding.AndroidDataBinding.main() may call System.exit() to
++  // signal the exit code to the OS. In a persistent worker the JVM must not
++  // exit between requests, so we temporarily install a SecurityManager that
++  // converts System.exit() into a catchable exception.
++  // SecurityManager is deprecated-for-removal in Java 17+ but is still present
++  // and functional in Java 21 (the JDK used by this project).
++  // ---------------------------------------------------------------------------
++
++  /** Thrown instead of terminating the JVM when wrapped code calls {@code System.exit()}. */
++  static final class ExitException extends SecurityException {
++    final int status;
++
++    ExitException(int status) {
++      super("System.exit(" + status + ") intercepted by GenBaseClassesWorker");
++      this.status = status;
++    }
++  }
++
++  /** SecurityManager that converts {@code System.exit()} into {@link ExitException}. */
++  @SuppressWarnings("removal")
++  static final class NoExitSecurityManager extends java.lang.SecurityManager {
++    @Override
++    public void checkExit(int status) {
++      throw new ExitException(status);
++    }
++
++    @Override
++    public void checkPermission(Permission perm) {
++      // Allow everything else.
++    }
++  }
++
++  // ---------------------------------------------------------------------------
++  // Entry point
++  // ---------------------------------------------------------------------------
++
++  public static void main(String[] args) throws Exception {
++    if (args.length == 1 && args[0].equals("--persistent_worker")) {
++      System.exit(runPersistentWorker());
++    } else {
++      // Direct (non-worker) invocation: delegate straight to the wrapped binary.
++      android.databinding.AndroidDataBinding.main(args);
++    }
++  }
++
++  // ---------------------------------------------------------------------------
++  // Persistent worker loop
++  // ---------------------------------------------------------------------------
++
++  private static int runPersistentWorker() throws Exception {
++    PrintStream realStdErr = System.err;
++    try {
++      WorkRequestHandler workerHandler =
++          new WorkRequestHandler.WorkRequestHandlerBuilder(
++                  new WorkRequestHandler.WorkRequestCallback(
++                      (request, pw) -> processRequest(request.getArgumentsList(), pw)),
++                  realStdErr,
++                  new ProtoWorkerMessageProcessor(System.in, System.out))
++              .setCpuUsageBeforeGc(Duration.ofSeconds(10))
++              .build();
++      workerHandler.processRequests();
++    } catch (IOException e) {
++      logger.severe(e.getMessage());
++      e.printStackTrace(realStdErr);
++      return 1;
++    }
++    return 0;
++  }
++
++  // ---------------------------------------------------------------------------
++  // Per-request processing
++  // ---------------------------------------------------------------------------
++
++  @SuppressWarnings("removal")
++  private static int processRequest(List<String> args, PrintWriter pw) {
++    // Redirect stdout for the duration of the request so that any diagnostic
++    // output from the wrapped binary goes to the WorkResponse output field
++    // rather than corrupting the binary worker protocol stream on stdout.
++    PrintStream realStdOut = System.out;
++    // Install the no-exit manager to intercept System.exit() calls.
++    java.lang.SecurityManager previousSm = System.getSecurityManager();
++    System.setSecurityManager(new NoExitSecurityManager());
++    try {
++      android.databinding.AndroidDataBinding.main(args.toArray(new String[0]));
++      return 0;
++    } catch (ExitException e) {
++      if (e.status != 0) {
++        pw.println("AndroidDataBinding exited with status " + e.status);
++      }
++      return e.status;
++    } catch (Exception e) {
++      e.printStackTrace(pw);
++      return 1;
++    } finally {
++      System.setSecurityManager(previousSm);
++      System.setOut(realStdOut);
++    }
++  }
++}
+
