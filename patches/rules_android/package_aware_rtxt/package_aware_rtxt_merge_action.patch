@@ -1,6 +1,6 @@
---- a/src/tools/java/com/google/devtools/build/android/AndroidCompiledResourceMergingAction.java	2026-03-19 14:05:30.950621802 +0700
-+++ b/src/tools/java/com/google/devtools/build/android/AndroidCompiledResourceMergingAction.java	2026-03-19 14:09:00.882649895 +0700
-@@ -139,6 +139,15 @@
+--- a/src/tools/java/com/google/devtools/build/android/AndroidCompiledResourceMergingAction.java
++++ b/src/tools/java/com/google/devtools/build/android/AndroidCompiledResourceMergingAction.java
+@@ -139,6 +139,18 @@
          description =
              "Path to where an R.txt file declaring potentially-used resources should be written.")
      public Path rTxtOut;
@@ -11,15 +11,25 @@
 +        description =
 +            "Path to where a package-aware R.txt file should be written. "
 +                + "This format has the package name on the first line, followed by "
-+                + "'type name' lines, suitable for databinding non-transitive R class support.")
++                + "'type name' lines, suitable for databinding non-transitive R class support. "
++                + "When set, the output class jar will also contain ONLY own symbols "
++                + "(no transitive R classes from deps), matching Bazel 7's "
++                + "CompileLibraryResourcesAction.generateRFiles() behavior.")
 +    public Path packageAwareRTxt;
    }
  
    public static void main(String[] args) throws Exception {
-@@ -189,6 +198,11 @@
+@@ -189,6 +201,18 @@
        PlaceholderRTxtWriter rTxtWriter =
            options.rTxtOut != null ? PlaceholderRTxtWriter.create(options.rTxtOut) : null;
  
++      // When --packageAwareRTxt is set, we're in non-transitive R mode. In that
++      // mode we also want the output class jar to contain ONLY own symbols (no
++      // transitive R classes from deps), so downstream compiles must reference
++      // each package's own R explicitly. This matches Bazel 7's
++      // CompileLibraryResourcesAction.generateRFiles() which used an
++      // AndroidResourceClassWriter scoped to a single package.
++      Path pkgAwareClassDir = tmp.resolve("pkg_aware_generated");
 +      PlaceholderRTxtWriter packageAwareRTxtWriter =
 +          options.packageAwareRTxt != null
 +              ? PlaceholderRTxtWriter.create(options.packageAwareRTxt, true, packageForR)
@@ -28,13 +38,17 @@
        AndroidResourceMerger.mergeCompiledData(
            options.primaryData,
            options.primaryManifest,
-@@ -198,6 +212,23 @@
+@@ -198,10 +222,39 @@
            rTxtWriter,
            options.throwOnResourceConflict,
            executorService);
 +
 +      if (packageAwareRTxtWriter != null) {
-+        // Re-merge with only primary data to produce non-transitive package-aware R.txt.
++        // Re-merge with only primary data to produce non-transitive artifacts:
++        //   1. package-aware R.txt (first line = package, then `type name` lines)
++        //   2. own-only R .class files under pkg_aware_generated/
++        // Used below in place of the transitive-merged .class files when
++        // options.packageAwareRTxt is set (non-transitive R mode).
 +        AndroidResourceMerger.mergeCompiledData(
 +            options.primaryData,
 +            options.primaryManifest,
@@ -43,7 +57,7 @@
 +            AndroidResourceClassWriter.createWith(
 +                options.targetLabel,
 +                aaptConfigOptions.androidJar,
-+                tmp.resolve("pkg_aware_generated"),
++                pkgAwareClassDir,
 +                packageForR),
 +            packageAwareRTxtWriter,
 +            options.throwOnResourceConflict,
@@ -51,4 +65,17 @@
 +      }
        logger.fine(String.format("Merging finished at %sms", timer.elapsed(TimeUnit.MILLISECONDS)));
  
++      // Class jar source: in non-transitive R mode, ship the own-only .class
++      // files from the second merge (deps empty). In transitive mode, ship the
++      // fully-merged .class files with all transitive R classes (existing).
++      Path classJarSrcDir =
++          options.packageAwareRTxt != null ? pkgAwareClassDir : generatedSources;
        AndroidResourceOutputs.createClassJar(
+-          generatedSources, options.classJarOutput, options.targetLabel, options.injectingRuleKind);
++          classJarSrcDir,
++          options.classJarOutput,
++          options.targetLabel,
++          options.injectingRuleKind);
+       logger.fine(
+           String.format("Create classJar finished at %sms", timer.elapsed(TimeUnit.MILLISECONDS)));
+ 

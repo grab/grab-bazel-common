@@ -5,7 +5,7 @@ Custom R.txt format for databinding non-transitive R support. Standard R.txt doe
 Format: first line = package name, rest = `type name` lines. Produced as a side output of `merge_compiled` (zero extra actions).
 
 - `package_aware_rtxt_tool.patch` — `PlaceholderRTxtWriter` gains a package-aware mode.
-- `package_aware_rtxt_merge_action.patch` — `AndroidCompiledResourceMergingAction` accepts `--packageAwareRTxt`, re-runs merge with empty deps to get non-transitive symbols.
+- `package_aware_rtxt_merge_action.patch` — `AndroidCompiledResourceMergingAction` accepts `--packageAwareRTxt`, re-runs merge with empty deps to get non-transitive symbols. When the flag is set, the output class jar ALSO uses the own-only `.class` files produced by that second merge (matching Bazel 7's `CompileLibraryResourcesAction.generateRFiles()`), so downstream compiles can no longer reach transitive deps' R symbols through this library's compile jar — closing the gap that forced `r_class_overflow/binary_r_primary_only.patch` to keep a transitive-R allowlist for packages whose bytecode leaked cross-module R refs.
 - `busybox_package_aware_rtxt.patch` — Starlark: `merge_compiled` accepts `out_package_aware_r_txt`, passes it as `--packageAwareRTxt`.
 - `provider_package_aware_rtxt.patch` — add `transitive_package_aware_r_txts` field to `StarlarkAndroidResourcesInfo`.
 - `fix_exports_package_aware_rtxt.patch` — propagate package-aware R.txts through `exports`, not just `deps`.
