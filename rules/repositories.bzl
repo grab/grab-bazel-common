@@ -26,6 +26,7 @@ def _android():
             "@grab_bazel_common//patches/rules_android/databinding:databinding_deps.patch",
             "@grab_bazel_common//patches/rules_android/resources:android_resource_processor_bazel_paths.patch",
             "@grab_bazel_common//patches/rules_android/infra:allow_resource_conflicts.patch",
+            "@grab_bazel_common//patches/rules_android/infra:suppress_resource_conflict_warnings.patch",
             "@grab_bazel_common//patches/rules_android/infra:compress_java_resources.patch",
             "@grab_bazel_common//patches/rules_android/non_transitive_r:generate_binary_r_primary_only_busybox.patch",
             "@grab_bazel_common//patches/rules_android/non_transitive_r:generate_binary_r_primary_only_rclass.patch",

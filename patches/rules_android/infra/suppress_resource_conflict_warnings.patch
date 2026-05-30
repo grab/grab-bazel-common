@@ -1,0 +1,14 @@
+diff --git a/src/tools/java/com/google/devtools/build/android/AndroidDataMerger.java b/src/tools/java/com/google/devtools/build/android/AndroidDataMerger.java
+index 4f6b5d6b0..2e4f2f4d1 100644
+--- a/src/tools/java/com/google/devtools/build/android/AndroidDataMerger.java
++++ b/src/tools/java/com/google/devtools/build/android/AndroidDataMerger.java
+@@ -391,7 +391,8 @@ class AndroidDataMerger {
+         if (throwOnResourceConflict) {
+           throw MergeConflictException.withMessage(Joiner.on("\n").join(messages));
+         } else {
+-          logger.warning(Joiner.on("\n").join(messages));
++          // Conflicts are intentionally allowed for this target, so keep build output quiet.
++          // Targets outside the allowlist still fail through the throwOnResourceConflict branch.
+         }
+       }
+     } catch (IOException e) {
