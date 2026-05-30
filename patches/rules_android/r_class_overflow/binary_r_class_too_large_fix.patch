@@ -1,6 +1,6 @@
 --- a/src/tools/java/com/google/devtools/build/android/resources/ResourceSymbols.java	2026-03-22 18:02:31.371129817 +0700
 +++ b/src/tools/java/com/google/devtools/build/android/resources/ResourceSymbols.java	2026-03-22 19:29:47.131789645 +0700
-@@ -228,13 +228,189 @@
+@@ -228,13 +228,168 @@
              finalFields,
              /* annotateTransitiveFields= */ false,
              rPackageId);
@@ -8,37 +8,16 @@
 +    // Track packages that fail ASM due to 64K limit
 +    java.util.List<String> oversizedPackages = new java.util.ArrayList<>();
 +
-+    // AAR libraries that reference transitive R fields at runtime need
-+    // full (transitive) symbols. All others use filtered (own only) — fast.
-+    java.util.Set<String> transitiveRPackages = new java.util.HashSet<>(java.util.Arrays.asList(
-+        "com.google.android.material",
-+        "com.google.android.gms",
-+        "com.google.firebase",
-+        "com.google.android.play",
-+        "androidx.appcompat",
-+        "androidx.core",
-+        "androidx.fragment",
-+        "androidx.activity",
-+        "androidx.preference",
-+        "androidx.mediarouter",
-+        "androidx.leanback",
-+        "androidx.car"
-+    ));
      for (String packageName : libMap.keySet()) {
 -      classWriter.write(packageName, ResourceSymbols.merge(libMap.get(packageName)).values);
 +      try {
-+        boolean needsTransitive = false;
-+        for (String prefix : transitiveRPackages) {
-+          if (packageName.startsWith(prefix)) {
-+            needsTransitive = true;
-+            break;
-+          }
-+        }
-+        if (needsTransitive) {
-+          classWriter.write(packageName);
-+        } else {
-+          classWriter.write(packageName, ResourceSymbols.merge(libMap.get(packageName)).values);
-+        }
++        // Per-package filtering: only this package's own field names are emitted.
++        // RClassGenerator.write(String, FieldInitializers) resolves real aapt2-
++        // linked resource IDs from classWriter's initializers (the full merged R.txt)
++        // via FieldInitializers.filter() — the values in symbolsToWrite are only used
++        // as a name filter, never as values — so each field carries the real aapt2 ID,
++        // not a placeholder zero.
++        classWriter.write(packageName, ResourceSymbols.merge(libMap.get(packageName)).values);
 +      } catch (org.objectweb.asm.ClassTooLargeException e) {
 +        oversizedPackages.add(packageName);
 +      }
@@ -52,7 +31,7 @@
 +      } catch (org.objectweb.asm.ClassTooLargeException e) {
 +        oversizedPackages.add(appPackageName);
 +      }
-+    }
+     }
 +
 +    // For packages that exceeded 64K, fall back to generating one .java
 +    // file per inner class (R$id.java, R$string.java, etc.) and compiling
@@ -92,7 +71,7 @@
 +        fileManager.close();
 +      }
 +    }
-+  }
+   }
 +
 +  /**
 +   * Writes separate .java files for each R inner class to avoid the 64K
@@ -191,6 +170,6 @@
 +        writer.write(String.format("    public static final class %s extends %s {}\n", typeName, lastChunk));
 +      }
 +      writer.write("}\n");
-     }
-   }
++    }
++  }
  }

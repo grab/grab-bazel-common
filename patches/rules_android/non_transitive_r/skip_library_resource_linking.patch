@@ -115,7 +115,7 @@ diff -ruN a/rules/resources.bzl b/rules/resources.bzl
 
          if assets:
              compiled_assets = ctx.actions.declare_file(ctx.label.name + "_symbols/assets.zip")
-@@ -1575,35 +1587,84 @@
+@@ -1575,35 +1587,90 @@
          )
          resources_ctx[_MERGED_MANIFEST] = processed_manifest
 
@@ -218,18 +218,24 @@ diff -ruN a/rules/resources.bzl b/rules/resources.bzl
 +                    primary_only = True,
 +                )
 +                java_info = JavaInfo(
-+                    output_jar = out_class_jar,
++                    # Precompiled AAR bytecode was compiled against a transitive
++                    # R class. Use the generated primary-only jar for compile
++                    # time, but keep it out of runtime so the final binary's
++                    # aggregate R jar owns the real linked resource IDs.
++                    output_jar = compile_r_jar,
 +                    compile_jar = compile_r_jar,
++                    neverlink = True,
 +                )
 +            else:
 +                java_info = JavaInfo(
 +                    output_jar = out_class_jar,
 +                    compile_jar = out_class_jar,
++                    neverlink = True,
 +                )
 
          packages_to_r_txts_depset.setdefault(java_package, []).append(depset([out_aapt2_r_txt]))
 
-@@ -1612,12 +1693,13 @@
+@@ -1612,12 +1699,13 @@
 
          # In a normal build, the outputs of _busybox.validate_and_link are unused. However we need
          # this action to run to support resource visibility checks.
