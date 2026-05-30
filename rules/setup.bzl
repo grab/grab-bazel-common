@@ -18,6 +18,7 @@ load("@rules_detekt//detekt:toolchains.bzl", "rules_detekt_toolchains")
 
 # Rules Jvm External
 load("@rules_jvm_external//:defs.bzl", "maven_install")
+load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
 
 # Test Maven
 load("@grab_bazel_common//rules/test:setup.bzl", "bazel_common_test_maven")
@@ -59,6 +60,7 @@ def bazel_common_setup(
     _rules_android_setup()
 
     android_sdk_repository(name = "androidsdk")
+    rules_jvm_external_deps()
     register_common_toolchains(
         buildifier = _buildifier_version(
             version = buildifier_version,

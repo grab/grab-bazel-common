@@ -24,13 +24,9 @@ load("@com_google_protobuf//bazel/private:proto_bazel_features.bzl", "proto_baze
 
 proto_bazel_features(name = "proto_bazel_features")
 
-load("@grab_bazel_common//rules:deps_setup.bzl", "bazel_common_deps_setup")
+load("@rules_java//java:repositories.bzl", "rules_java_toolchains")
 
-bazel_common_deps_setup()
-
-load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
-
-rules_jvm_external_setup()
+rules_java_toolchains()
 
 # Step 4: Main setup (kotlin, android, maven, detekt)
 load("@grab_bazel_common//rules:setup.bzl", "bazel_common_setup")
