@@ -20,9 +20,6 @@ load("@rules_detekt//detekt:toolchains.bzl", "rules_detekt_toolchains")
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
 
-# Rules Java
-load("@rules_java//java:repositories.bzl", "rules_java_toolchains")
-
 # Test Maven
 load("@grab_bazel_common//rules/test:setup.bzl", "bazel_common_test_maven")
 
