@@ -5,6 +5,9 @@ kotlin_library(
     srcs = [
         "SourceSet.kt",
     ],
+    visibility = [
+        "//visibility:public",
+    ],
 )
 
 java_library(

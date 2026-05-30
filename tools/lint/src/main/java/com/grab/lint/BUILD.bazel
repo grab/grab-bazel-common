@@ -12,9 +12,11 @@ kotlin_library(
         "//:dagger",
         "//tools/cli_utils",
         "//tools/worker:worker_lib",
+        "@bazel_common_maven//:com_android_tools_common",
         "@bazel_common_maven//:com_android_tools_lint_lint",
         "@bazel_common_maven//:com_android_tools_lint_lint_api",
         "@bazel_common_maven//:com_android_tools_lint_lint_checks",
+        "@bazel_common_maven//:com_android_tools_lint_lint_model",
         "@bazel_common_maven//:com_github_ajalt_clikt",
     ],
 )
