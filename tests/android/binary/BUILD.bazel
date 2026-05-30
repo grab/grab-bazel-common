@@ -57,6 +57,7 @@ android_binary(
         "//tests:dagger-runtime",
         "//tests/android/library:android_library_sample",
         "@bazel_common_maven//:com_google_android_material_material",
+        "@bazel_common_maven//:javax_inject_javax_inject",
     ],
 )
 

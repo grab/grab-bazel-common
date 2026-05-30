@@ -12,7 +12,9 @@ kotlin_library(
         "//:dagger",
         "//tools/aapt_lite/src/main/java/com/google/devtools/build/android:resource",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/binding",
+        "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/binding/model",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/brclass",
+        "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/common",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/di:aapt_scope",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/mapper",
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/rclass",
@@ -20,5 +22,6 @@ kotlin_library(
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/util/jars",
         "//tools/cli_utils",
         "//tools/worker:worker_lib",
+        "@bazel_common_maven//:com_github_ajalt_clikt",
     ],
 )

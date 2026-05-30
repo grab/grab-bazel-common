@@ -5,6 +5,7 @@ def dagger_rules(repo_name = "@maven"):
         visibility = ["//visibility:public"],
         exports = [
             "%s//:com_google_dagger_dagger" % repo_name,
+            "%s//:jakarta_inject_jakarta_inject_api" % repo_name,
             "%s//:javax_inject_javax_inject" % repo_name,
         ],
     )
@@ -17,6 +18,7 @@ def dagger_rules(repo_name = "@maven"):
             "%s//:com_google_dagger_dagger_compiler" % repo_name,
             "%s//:com_google_dagger_dagger" % repo_name,  # FIX: Added for Bazel 8
             "%s//:com_google_dagger_dagger_spi" % repo_name,  # FIX: Added for Bazel 8
+            "%s//:jakarta_inject_jakarta_inject_api" % repo_name,
         ],
     )
 

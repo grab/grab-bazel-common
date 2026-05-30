@@ -12,5 +12,6 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         "@bazel_common_maven//:com_google_auto_service_auto_service",
+        "@bazel_common_maven//:com_google_auto_service_auto_service_annotations",
     ],
 )
