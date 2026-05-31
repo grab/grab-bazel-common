@@ -7,6 +7,14 @@ target and retrieving jar files that ends with `_resources.jar` into a JavaInfo
 which can then be loaded during runtime.
 """
 
+load("@rules_android//providers:providers.bzl", "AndroidLibraryResourceClassJarProvider")
+
+def _add_resource_jar(resources_java_infos, jar):
+    resources_java_infos[jar.path] = JavaInfo(
+        output_jar = jar,
+        compile_jar = jar,
+    )
+
 def _runtime_resources_impl(ctx):
     deps = ctx.attr.deps
 
@@ -15,10 +23,11 @@ def _runtime_resources_impl(ctx):
         if (JavaInfo in target):
             for jar in target[JavaInfo].transitive_compile_time_jars.to_list():
                 if (jar.basename.endswith("_resources.jar")):
-                    resources_java_infos[jar.path] = JavaInfo(
-                        output_jar = jar,
-                        compile_jar = jar,
-                    )
+                    _add_resource_jar(resources_java_infos, jar)
+
+        if (AndroidLibraryResourceClassJarProvider in target):
+            for jar in target[AndroidLibraryResourceClassJarProvider].jars.to_list():
+                _add_resource_jar(resources_java_infos, jar)
 
     resources_java_infos = list(resources_java_infos.values())
     merged_java_infos = java_common.merge(resources_java_infos)
