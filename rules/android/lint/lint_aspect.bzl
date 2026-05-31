@@ -671,6 +671,7 @@ lint_aspect = aspect(
         ),
         "_android_sdk": attr.label(default = "@androidsdk//:sdk"),  # Use toolchains later
         "_javabase": attr.label(
+            cfg = "exec",
             default = "@rules_java//toolchains:current_java_runtime",
         ),
     },
