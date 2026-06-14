@@ -1,0 +1,33 @@
+diff --git a/rules/java.bzl b/rules/java.bzl
+--- a/rules/java.bzl
++++ b/rules/java.bzl
+@@ -238,11 +238,18 @@ def _compile_android(
+             # additionally forces java_common.compile method to create the
+             # empty output jar and srcjar when srcs have not been specified.
+             noop_java_info = java_common.merge([])
+             exports = exports + [noop_java_info]
+-
++
+     r_java_info = [r_java] if r_java else []
++    compile_deps = r_java_info + deps
++    if not srcs:
++        # Bazel 7's native Android wrapper compile did not put dependency jars
++        # on the empty javac action for Android targets without Java sources.
++        # Keep provider propagation through exports above, but avoid making the
++        # synthetic action depend on transitive ABI jars that it cannot use.
++        compile_deps = []
+-
++
+     java_info = _compile(
+         ctx,
+         output_jar,
+         output_srcjar = output_srcjar,
+@@ -250,7 +257,7 @@ def _compile_android(
+         srcs = srcs,
+         resources = resources,
+         javac_opts = javac_opts,
+-        deps = r_java_info + deps,
++        deps = compile_deps,
+         # In native, the JavaInfo exposes two Jars as compile-time deps, the
+         # compiled sources and the Android R.java jars. To simulate this
+         # behavior, the JavaInfo of the R.jar is also exported.
