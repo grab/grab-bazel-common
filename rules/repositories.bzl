@@ -41,6 +41,7 @@ def _android():
             "@grab_bazel_common//patches/rules_android/databinding:databinding_ap_turbine_skip.patch",
             "@grab_bazel_common//patches/rules_android/non_transitive_r:fix_binary_r_class_generation.patch",
             "@grab_bazel_common//patches/rules_android/infra:wire_strict_deps_flag.patch",
+            "@grab_bazel_common//patches/rules_android/infra:no_source_compile_classpath.patch",
             "@grab_bazel_common//patches/rules_android/infra:disable_aar_import_deps_checker.patch",
             "@grab_bazel_common//patches/rules_android/infra:allow_deps_without_srcs.patch",
             "@grab_bazel_common//patches/rules_android/aar_import:aar_import_export_r_java.patch",

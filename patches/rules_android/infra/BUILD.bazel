@@ -5,6 +5,7 @@ exports_files([
     "disable_aar_import_deps_checker.patch",
     "guava_version.patch",
     "macos_cp_reflink.patch",
+    "no_source_compile_classpath.patch",
     "suppress_resource_conflict_warnings.patch",
     "wire_strict_deps_flag.patch",
 ])
