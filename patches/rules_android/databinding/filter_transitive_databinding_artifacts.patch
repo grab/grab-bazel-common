@@ -1,0 +1,345 @@
+diff --git a/providers/providers.bzl b/providers/providers.bzl
+index b03a63f..2baf818 100644
+--- a/providers/providers.bzl
++++ b/providers/providers.bzl
+@@ -316,6 +316,7 @@ DataBindingV2Info = provider(
+         transitive_setter_stores = "Depset of setter_store files propagated transitively through both deps and exports. Only consumed at APPLICATION level.",
+         transitive_br_files = "",
+         java_packages = "List of the Java packages of this rule and any rules that this rule exports.",
++        direct_java_packages = "List of Java packages directly owned by this rule for directDependencyPkgs.",
+         db_package_files = "Depset of files containing Java packages from AARs with data binding.",
+     ),
+ )
+diff --git a/rules/aar_import/impl.bzl b/rules/aar_import/impl.bzl
+index 5eb1a6a..68b74e6 100644
+--- a/rules/aar_import/impl.bzl
++++ b/rules/aar_import/impl.bzl
+@@ -663,6 +663,7 @@ def _impl(ctx):
+             transitive = [info.transitive_br_files for info in db_dep_infos],
+         ),
+         java_packages = [package] if package else [],
++        direct_java_packages = [package] if package else [],
+         db_package_files = depset(
+             direct = [db_package_file],
+             transitive = [getattr(info, "db_package_files", depset())
+diff --git a/rules/data_binding.bzl b/rules/data_binding.bzl
+index fe5cef1..941c526 100644
+--- a/rules/data_binding.bzl
++++ b/rules/data_binding.bzl
+@@ -49,6 +49,8 @@ DataBindingContextInfo = provider(
+ 
+ # Path used when resources have not been defined.
+ _NO_RESOURCES_PATH = "/tmp/no_resources"
++_DIRECT_TAG_PREFIX = "@direct//"
++_MAVEN_TAG_PREFIX = "@maven//:"
+ 
+ def _copy_annotation_file(ctx, output_dir, annotation_template):
+     annotation_out = ctx.actions.declare_file(
+@@ -57,7 +59,230 @@ def _copy_annotation_file(ctx, output_dir, annotation_template):
+     _utils.copy_file(ctx, annotation_template, annotation_out)
+     return annotation_out
+ 
+-def _gen_sources(ctx, output_dir, java_package, deps, layout_info, data_binding_exec):
++def _direct_dependency_filter(ctx):
++    direct_labels = {}
++    maven_substrings = {}
++    if hasattr(ctx.attr, "tags"):
++        for tag in ctx.attr.tags:
++            if tag.startswith(_DIRECT_TAG_PREFIX):
++                direct_labels["//" + tag[len(_DIRECT_TAG_PREFIX):]] = True
++            elif tag.startswith(_MAVEN_TAG_PREFIX):
++                maven_substrings[tag[len(_MAVEN_TAG_PREFIX):]] = True
++
++    has_direct_tags = bool(direct_labels) or bool(maven_substrings)
++    if not has_direct_tags:
++        return struct(
++            enabled = False,
++            filter_external = False,
++            direct_labels = direct_labels,
++            maven_substrings = maven_substrings,
++        )
++
++    # Bazel 7 gated this through the native Java flag. The Bazel 8 fork may expose
++    # it to Starlark later; until then the generated @direct/@maven tags are the
++    # opt-in signal used by the Java classpath filter.
++    enabled = (
++        ctx.fragments.java.filter_transitive_artifacts
++        if hasattr(ctx.fragments.java, "filter_transitive_artifacts")
++        else True
++    )
++    filter_external = (
++        ctx.fragments.java.filter_external_transitive_artifacts
++        if hasattr(ctx.fragments.java, "filter_external_transitive_artifacts")
++        else True
++    )
++    return struct(
++        enabled = enabled,
++        filter_external = filter_external,
++        direct_labels = direct_labels,
++        maven_substrings = maven_substrings,
++    )
++
++def _owner_label(artifact):
++    owner = artifact.owner
++    if not owner:
++        return ""
++
++    owner_label = str(owner)
++    if owner_label.startswith("@@//"):
++        return owner_label[2:]
++    if owner_label.startswith("@//"):
++        return owner_label[1:]
++    return owner_label.replace("@@", "@")
++
++def _matches_direct_label(dep_target_label, direct_labels):
++    internal_target_name = dep_target_label.replace(":_", ":")
++    for direct_label in direct_labels:
++        if (dep_target_label.startswith(direct_label) or
++            internal_target_name.startswith(direct_label)):
++            return True
++    return False
++
++def _matches_maven_label(dep_target_label, maven_substrings):
++    for maven_substring in maven_substrings:
++        if maven_substring in dep_target_label:
++            return True
++    return False
++
++def _is_allowed_databinding_artifact(ctx, artifact, direct_filter):
++    if not direct_filter.enabled:
++        return True
++
++    current_package = str(ctx.label).split(":")[0]
++    dep_target_label = _owner_label(artifact)
++
++    if direct_filter.filter_external:
++        name_criteria = "maven//" not in dep_target_label and not dep_target_label.startswith("//")
++    else:
++        name_criteria = not dep_target_label.startswith("//")
++
++    is_android_ijar_artifact = artifact.path.endswith("android-ijar.jar")
++    is_current_target_dependency = dep_target_label.startswith(current_package + ":")
++    is_patch_dependency = dep_target_label.startswith("//patches")
++    is_parcelize = "parcelize" in dep_target_label
++    is_error_prone = "errorprone" in dep_target_label
++    is_grab_base = "com_grab_base" in dep_target_label
++    is_jakarta_inject = "jakarta_inject" in dep_target_label
++    is_databinding_mapper_target = (
++        dep_target_label.startswith(current_package) and
++        dep_target_label.endswith("_mapper")
++    )
++
++    if (name_criteria or
++        is_android_ijar_artifact or
++        is_current_target_dependency or
++        is_patch_dependency or
++        is_databinding_mapper_target or
++        is_parcelize or
++        is_error_prone or
++        is_grab_base or
++        is_jakarta_inject):
++        return True
++
++    return (
++        _matches_direct_label(dep_target_label, direct_filter.direct_labels) or
++        _matches_maven_label(dep_target_label, direct_filter.maven_substrings)
++    )
++
++def _filter_artifacts(ctx, artifacts, direct_filter):
++    if not direct_filter.enabled:
++        return artifacts
++    return [
++        artifact
++        for artifact in artifacts
++        if _is_allowed_databinding_artifact(ctx, artifact, direct_filter)
++    ]
++
++def _java_package_from_databinding_artifact(artifact):
++    basename = artifact.basename
++    if basename.endswith("-setter_store.json"):
++        return basename[:-len("-setter_store.json")]
++    if basename.endswith("-br.bin"):
++        return basename[:-len("-br.bin")]
++    return None
++
++def _java_packages_from_artifacts(artifacts):
++    java_packages = {}
++    for artifact in artifacts:
++        java_package = _java_package_from_databinding_artifact(artifact)
++        if java_package:
++            java_packages[java_package] = True
++    return java_packages
++
++def _has_external_databinding_metadata(artifacts):
++    for artifact in artifacts:
++        if not _owner_label(artifact).startswith("//"):
++            return True
++    return False
++
++def _filter_databinding_infos(ctx, deps, artifact_type):
++    direct_filter = _direct_dependency_filter(ctx)
++    if not direct_filter.enabled:
++        return deps
++
++    filtered_infos = []
++    for info in deps:
++        original_br_files = info.transitive_br_files.to_list()
++        br_files = _filter_artifacts(
++            ctx,
++            original_br_files,
++            direct_filter,
++        )
++        setter_stores = _filter_artifacts(
++            ctx,
++            _utils.list_or_depset_to_list(info.setter_stores),
++            direct_filter,
++        )
++        class_infos = _filter_artifacts(
++            ctx,
++            _utils.list_or_depset_to_list(info.class_infos),
++            direct_filter,
++        )
++
++        if artifact_type == "APPLICATION":
++            # App-level databinding intentionally keeps the transitive AAR
++            # metadata used by the synthetic reflection mapper.
++            transitive_setter_stores = _utils.list_or_depset_to_list(
++                getattr(info, "transitive_setter_stores", depset()),
++            )
++            db_package_files = getattr(info, "db_package_files", depset()).to_list()
++        else:
++            transitive_setter_stores = _filter_artifacts(
++                ctx,
++                _utils.list_or_depset_to_list(
++                    getattr(info, "transitive_setter_stores", depset()),
++                ),
++                direct_filter,
++            )
++            db_package_files = _filter_artifacts(
++                ctx,
++                getattr(info, "db_package_files", depset()).to_list(),
++                direct_filter,
++            )
++
++        package_artifacts = br_files + setter_stores
++        if artifact_type == "APPLICATION":
++            package_artifacts = package_artifacts + transitive_setter_stores
++        direct_java_packages = {}
++        for java_package in getattr(info, "direct_java_packages", info.java_packages):
++            direct_java_packages[java_package] = True
++        java_packages = _java_packages_from_artifacts(package_artifacts)
++        if direct_java_packages:
++            filtered_java_packages = {}
++            for java_package in java_packages:
++                if java_package in direct_java_packages:
++                    filtered_java_packages[java_package] = True
++            java_packages = filtered_java_packages
++        else:
++            java_packages = {}
++
++        if (not java_packages and
++            direct_java_packages and
++            setter_stores and
++            (not original_br_files or br_files) and
++            _has_external_databinding_metadata(setter_stores + db_package_files)):
++            for java_package in direct_java_packages:
++                java_packages[java_package] = True
++
++        has_allowed_metadata = (
++            br_files or
++            setter_stores or
++            class_infos or
++            transitive_setter_stores or
++            db_package_files
++        )
++        filtered_infos.append(struct(
++            db_package_files = depset(db_package_files),
++            setter_stores = depset(setter_stores),
++            class_infos = depset(class_infos),
++            transitive_setter_stores = depset(transitive_setter_stores),
++            transitive_br_files = depset(br_files),
++            java_packages = list(java_packages.keys()) if has_allowed_metadata else [],
++        ))
++
++    return filtered_infos
++
++def _gen_sources(ctx, output_dir, java_package, deps, layout_info, data_binding_exec, artifact_type):
+     class_info = ctx.actions.declare_file(output_dir + "class-info.zip")
+     srcjar = ctx.actions.declare_file(output_dir + "baseClassSrc.srcjar")
+ 
+@@ -397,6 +622,7 @@ def _process(
+     br_out = None
+     setter_store_out = None
+     class_info = None
++    filtered_deps = _filter_databinding_infos(ctx, deps, artifact_type)
+     if defines_resources:
+         # Outputs of the Data Binding annotation processor.
+         br_out = ctx.actions.declare_file(
+@@ -414,9 +640,10 @@ def _process(
+             ctx,
+             output_dir,
+             java_package,
+-            deps,
++            filtered_deps,
+             layout_info,
+             data_binding_exec,
++            artifact_type,
+         )
+         db_info[_JAVA_SRCS].append(srcjar)
+         db_info[_JAVA_ANNOTATION_PROCESSOR_ADDITIONAL_INPUTS].append(class_info)
+@@ -424,7 +651,7 @@ def _process(
+             layout_info,
+         )
+ 
+-    dep_lib_artifacts = _setup_dependent_lib_artifacts(ctx, output_dir, deps, artifact_type)
++    dep_lib_artifacts = _setup_dependent_lib_artifacts(ctx, output_dir, filtered_deps, artifact_type)
+     db_info[_JAVA_ANNOTATION_PROCESSOR_ADDITIONAL_INPUTS].extend(
+         dep_lib_artifacts,
+     )
+@@ -454,6 +681,7 @@ def _process(
+                                                  [info.transitive_br_files for info in deps] +
+                                                  [info.transitive_br_files for info in exports]),
+                 java_packages = list({p: True for p in _merge_lists([info.java_packages for info in exports])}.keys()),
++                direct_java_packages = [],
+             ),
+         ]
+         return struct(**db_info)
+@@ -457,11 +685,19 @@ def _process(
+     _all_r_txts = []
+     if local_package_aware_r_txt:
+         _all_r_txts.append(local_package_aware_r_txt)
+-    _all_r_txts.extend(dep_package_aware_r_txts)
++    filtered_dep_package_aware_r_txts = dep_package_aware_r_txts
++    if artifact_type != "APPLICATION":
++        filtered_dep_package_aware_r_txts = _filter_artifacts(
++            ctx,
++            dep_package_aware_r_txts,
++            _direct_dependency_filter(ctx),
++        )
++
++    _all_r_txts.extend(filtered_dep_package_aware_r_txts)
+     db_info[_JAVA_ANNOTATION_PROCESSOR_ADDITIONAL_INPUTS].extend(_all_r_txts)
+ 
+     # Use local as fallback dep when no dep R.txts available but local exists.
+-    _dep_r_txts = dep_package_aware_r_txts if dep_package_aware_r_txts else (
++    _dep_r_txts = filtered_dep_package_aware_r_txts if filtered_dep_package_aware_r_txts else (
+         [local_package_aware_r_txt] if local_package_aware_r_txt else []
+     )
+@@ -465,7 +693,7 @@ def _process(
+         br_out.dirname,
+         class_info.path if class_info else _NO_RESOURCES_PATH,
+         layout_info.path if layout_info else _NO_RESOURCES_PATH,
+-        deps,
++        deps if artifact_type == "APPLICATION" else filtered_deps,
+         extra_packages,
+         local_package_aware_r_txt = local_package_aware_r_txt,
+         dep_package_aware_r_txts = _dep_r_txts,
+@@ -498,6 +726,7 @@ def _process(
+                 transitive = [info.transitive_br_files for info in deps] +
+                              [info.transitive_br_files for info in exports],
+             ),
+             java_packages = list({p: True for p in ([java_package] + _merge_lists([info.java_packages for info in exports]))}.keys()),
++            direct_java_packages = [java_package] if br_out else [],
+             db_package_files = depset(
+                 transitive = [getattr(info, "db_package_files", depset()) for info in deps] +
+                              [getattr(info, "db_package_files", depset()) for info in exports],
