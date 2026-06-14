@@ -65,6 +65,7 @@ def _android():
             "@grab_bazel_common//patches/rules_android/workers:databinding_exec_worker_binary.patch",
             "@grab_bazel_common//patches/rules_android/workers:databinding_exec_worker_toolchain.patch",
             "@grab_bazel_common//patches/rules_android/workers:generate_databinding_base_classes_worker.patch",
+            "@grab_bazel_common//patches/rules_android/databinding:filter_transitive_databinding_artifacts.patch",
         ],
         patch_args = ["-p1"],
     )
