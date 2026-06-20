@@ -1,0 +1,14 @@
+diff --git a/src/tools/java/com/google/devtools/build/android/r8/ZipUtils.java b/src/tools/java/com/google/devtools/build/android/r8/ZipUtils.java
+--- a/src/tools/java/com/google/devtools/build/android/r8/ZipUtils.java
++++ b/src/tools/java/com/google/devtools/build/android/r8/ZipUtils.java
+@@ -69,6 +69,10 @@ public class ZipUtils {
+     if (entry.getLastAccessTime() != null) {
+       copy.setLastAccessTime(entry.getLastAccessTime());
+     }
++
++    // Match Bazel 7 behavior: copied zip entry timestamps should not affect artifact sharing.
++    copy.setTime(0);
++
+     return copy;
+   }
+ 

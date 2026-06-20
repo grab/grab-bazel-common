@@ -67,6 +67,13 @@ def _android():
             "@grab_bazel_common//patches/rules_android/workers:databinding_exec_worker_toolchain.patch",
             "@grab_bazel_common//patches/rules_android/workers:generate_databinding_base_classes_worker.patch",
             "@grab_bazel_common//patches/rules_android/databinding:filter_transitive_databinding_artifacts.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:isolate_metadata_desugar_worker.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:normalize_desugar_zip_timestamps.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:normalize_desugar_missing_interface_origins.patch",
+            "@grab_bazel_common//patches/rules_android/dexer:cache_dexbuilder_synthetic_context.patch",
+            "@grab_bazel_common//patches/rules_android/resources:canonicalize_manifest_merger_log_paths.patch",
+            "@grab_bazel_common//patches/rules_android/resources:normalize_databinding_compiled_resources_timestamps.patch",
+            "@grab_bazel_common//patches/rules_android/resources:sort_resource_source_table.patch",
         ],
         patch_args = ["-p1"],
     )

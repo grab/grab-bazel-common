@@ -1,0 +1,53 @@
+diff --git a/src/tools/java/com/google/devtools/build/android/DataSourceTable.java b/src/tools/java/com/google/devtools/build/android/DataSourceTable.java
+--- a/src/tools/java/com/google/devtools/build/android/DataSourceTable.java
++++ b/src/tools/java/com/google/devtools/build/android/DataSourceTable.java
+@@ -21,8 +21,9 @@ import com.google.devtools.build.android.proto.SerializeFormat.Header;
+ import com.google.devtools.build.android.proto.SerializeFormat.ProtoSource;
+ import java.io.IOException;
+ import java.io.InputStream;
+ import java.io.OutputStream;
+ import java.nio.file.FileSystem;
++import java.util.Comparator;
+ import java.util.LinkedHashMap;
+ import java.util.LinkedList;
+ import java.util.List;
+@@ -37,6 +38,11 @@ import java.util.stream.Collectors;
+ class DataSourceTable {
+ 
+   private static final Function<DataValue, DataSource> VALUE_TO_SOURCE = DataValue::source;
++  private static final Comparator<DataSource> SOURCE_ORDER =
++      Comparator.comparing((DataSource source) -> source.getPath().toString())
++          .thenComparing(source -> source.getDependencyInfo().dependencyType().ordinal())
++          .thenComparing(source -> source.getDependencyInfo().label());
++
+   private final Map<DataSource, Integer> sourceTable = new LinkedHashMap<>();
+   private DataSource[] idToSource;
+ 
+@@ -71,14 +77,16 @@ class DataSourceTable {
+     LinkedList<DataSource> sourceQueue =
+         map.values()
+             .stream()
+             .map(VALUE_TO_SOURCE)
++            .sorted(SOURCE_ORDER)
+             .collect(Collectors.toCollection(LinkedList::new));
+     while (!sourceQueue.isEmpty()) {
+       DataSource source = sourceQueue.pop();
+       if (!sourceTable.containsKey(source)) {
+         sourceTable.put(source, sourceNumber);
+         ++sourceNumber;
+-        sourceQueue.addAll(source.overrides());
++        sourceQueue.addAll(
++            source.overrides().stream().sorted(SOURCE_ORDER).collect(Collectors.toList()));
+       }
+     }
+     for (DataSource dataSource : sourceTable.keySet()) {
+@@ -90,7 +98,8 @@ class DataSourceTable {
+ 
+   private List<Integer> sourcesToIds(ImmutableSet<DataSource> overrides) {
+     ImmutableList.Builder<Integer> idsBuilder = ImmutableList.builder();
+-    for (DataSource dataSource : overrides) {
++    for (DataSource dataSource :
++        overrides.stream().sorted(SOURCE_ORDER).collect(Collectors.toList())) {
+       if (!sourceTable.containsKey(dataSource)) {
+         throw new IllegalArgumentException(
+             "Cannot find data source: " + dataSource.toString() + " in " + sourceTable.keySet());

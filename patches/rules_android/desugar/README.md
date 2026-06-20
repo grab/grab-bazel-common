@@ -1,5 +1,47 @@
 # desugar
 
+## Clean-build determinism context
+
+This group owns the Desugar part of the clean-build cache-key issue found while
+validating Bazel 8 rules_android against `bazel-playground-android`.
+
+The reproducer is two clean `//app:app-gps-pax-debug.apk` builds with:
+
+- the same source tree, Bazel binary, SDK, NDK, and flags
+- different Bazel output roots
+- separate empty action disk caches
+- the same repository cache
+- `--execution_log_json_file` enabled for both builds
+
+Before these fixes, `tools_android`'s cache validator reported same-key actions
+with different outputs. The Desugar-side root artifacts were desugared jars, and
+their differences propagated into downstream `DexBuilder`, `JavaDeployJar`, and
+`ShardForMultidex` actions.
+
+Two Desugar output sources were observed:
+
+- copied ZIP entry timestamps could leak into desugared jars
+- `META-INF/desugar_deps` could report the same missing interface through
+  different valid origin classes across clean builds
+
+The validation command is:
+
+```sh
+cd <workspace>/tools_android
+bazelisk --output_user_root=/private/tmp/cache-validator-bazel run \
+  //cache_validator:cache-validator -- \
+  --color=never --root-cause \
+  /private/tmp/cache-key-check/build1-exec.json \
+  /private/tmp/cache-key-check/build2-exec.json
+```
+
+After applying the deterministic-output patch set, the expected result is:
+
+```text
+Total changed actions: 0
+Selected root files: 0
+```
+
 Desugaring is slow. R class jars contain only static final int constants, no Java 8+ bytecode, so desugaring them is pure overhead. These patches skip it.
 
 - `skip_binary_r_jar_desugaring_flags.patch` — adds `//rules/flags:desugar_resources_jar` bool_flag.
@@ -18,3 +60,25 @@ Flip `common --@rules_android//rules/flags:desugar_resources_jar=false` in bazel
   - **`android_library` (including `kt_android_library` wrappers)**: The R class jar is provided via `AndroidIdeInfo.resource_jar`. `_get_library_r_jars` in `impl.bzl` is supposed to filter it from `transitive_runtime_jars_for_archive` via `AndroidLibraryResourceClassJarProvider`, but `kt_android_library` wrappers do not propagate this provider, so the jar slips through the filter and reaches `_to_dexed_classpath` without a dex archive entry.
 
   `skip_r_jar_desugaring.patch` removed all `AndroidIdeInfo.resource_jar` handling from the aspect. This patch adds it back selectively for `aar_import` and `android_library`, so the vast majority of R jar desugaring overhead is still avoided while the affected jars are correctly dexed.
+
+- `normalize_desugar_zip_timestamps.patch` — restores Bazel 7's `ZipUtils.copyEntryMetadata`
+  behavior for D8 desugar output jars by setting copied entry timestamps to zero. Without this,
+  identical clean builds can produce byte-different desugared jars because copied resource entry
+  timestamps leak into the output artifact.
+
+- `normalize_desugar_missing_interface_origins.patch` — stabilizes `META-INF/desugar_deps` when
+  R8 reports the same missing interface through different valid implementation classes across clean
+  builds. SingleJar's correctness check is keyed by the missing target; `origin` is only retained for
+  error text. The patch therefore canonicalizes `missing_interface.origin` to the missing target
+  before filtering/emitting metadata, then sorts and deduplicates dependencies. This prevents
+  semantically equivalent missing-interface diagnostics from changing desugared jar bytes across
+  clean builds.
+
+- `isolate_metadata_desugar_worker.patch` — keeps Desugar actions compatible with Bazel's worker
+  strategy, but makes the persistent worker run metadata-emitting requests in a fresh Java child
+  process when `--emit_dependency_metadata_as_needed` is present. In full Android builds, D8's
+  persistent worker process can make `META-INF/desugar_deps` depend on prior requests handled by
+  the same worker. Isolating only metadata-emitting requests keeps clean-build cache keys stable
+  without requiring repository-level `--strategy=Desugar` changes. The isolated child JVM is
+  launched through a Java argfile because large app targets can have desugar classpaths that exceed
+  the OS command-line length limit if every argument is passed directly to `ProcessBuilder`.
