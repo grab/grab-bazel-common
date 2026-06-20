@@ -1,4 +1,7 @@
 exports_files([
     "android_resource_processor_bazel_paths.patch",
+    "canonicalize_manifest_merger_log_paths.patch",
     "fix_resource_priority_ordering.patch",
+    "normalize_databinding_compiled_resources_timestamps.patch",
+    "sort_resource_source_table.patch",
 ])

@@ -1,0 +1,73 @@
+diff --git a/src/tools/java/com/google/devtools/build/android/r8/Desugar.java b/src/tools/java/com/google/devtools/build/android/r8/Desugar.java
+--- a/src/tools/java/com/google/devtools/build/android/r8/Desugar.java
++++ b/src/tools/java/com/google/devtools/build/android/r8/Desugar.java
+@@ -44,5 +44,6 @@ import com.google.devtools.build.lib.worker.WorkRequestHandler;
+ import com.google.devtools.build.lib.worker.WorkRequestHandler;
+ import java.io.IOException;
++import java.io.InputStream;
+ import java.io.PrintStream;
+ import java.io.PrintWriter;
+ import java.nio.file.Files;
+@@ -59,6 +60,8 @@ public class Desugar {
+   public static final String CONTEXT_MAP_FILENAME = "META-INF/metadata/synthetic-contexts.map";
+   // We shard the compilation if we have more than this number of entries to avoid timing out.
+   private static final int NUMBER_OF_ENTRIES_PER_SHARD = 100000;
++  private static final String ISOLATED_METADATA_WORKER_PROPERTY =
++      "com.google.devtools.build.android.r8.Desugar.isolated_metadata_worker";
+   private static final Logger logger = Logger.getLogger(Desugar.class.getName());
+ 
+   /** Commandline options for {@link com.google.devtools.build.android.r8.Desugar}. */
+@@ -614,9 +617,53 @@ public class Desugar {
+     return exitCode;
+   }
+ 
++  private static boolean shouldIsolateMetadataWorkerRequest(List<String> args) {
++    if (Boolean.getBoolean(ISOLATED_METADATA_WORKER_PROPERTY)) {
++      return false;
++    }
++
++    String[] preprocessedArgs =
++        AndroidOptionsUtils.runArgFilePreprocessor(args.toArray(new String[0]));
++    return Arrays.asList(preprocessedArgs).contains("--emit_dependency_metadata_as_needed");
++  }
++
++  private static int processRequestInIsolatedJvm(
++      List<String> args, PrintWriter pw, PrintStream diagnosticsHandlerPrintStream) {
++    ImmutableList.Builder<String> command = ImmutableList.builder();
++    command.add(Path.of(System.getProperty("java.home"), "bin", "java").toString());
++    for (String flag : DesugarJvmFlags.getDesugarJvmFlags()) {
++      command.add("-D" + flag + "=");
++    }
++    command.add("-D" + ISOLATED_METADATA_WORKER_PROPERTY + "=true");
++    command.add("-cp", System.getProperty("java.class.path"), Desugar.class.getName());
++    command.addAll(args);
++
++    try {
++      Process process = new ProcessBuilder(command.build()).redirectErrorStream(true).start();
++      process.getOutputStream().close();
++      try (InputStream stream = process.getInputStream()) {
++        stream.transferTo(diagnosticsHandlerPrintStream);
++      }
++      return process.waitFor();
++    } catch (IOException | InterruptedException e) {
++      if (e instanceof InterruptedException) {
++        Thread.currentThread().interrupt();
++      }
++      e.printStackTrace(pw);
++      return 1;
++    }
++  }
++
+   private static int processRequest(
+       List<String> args, PrintWriter pw, PrintStream diagnosticsHandlerPrintStream) {
+     int exitCode;
++    if (shouldIsolateMetadataWorkerRequest(args)) {
++      // Keep the Bazel action worker-compatible, but isolate metadata-emitting requests from
++      // persistent D8 worker process state. Otherwise META-INF/desugar_deps can depend on the
++      // sequence of previous requests handled by the same worker.
++      return processRequestInIsolatedJvm(args, pw, diagnosticsHandlerPrintStream);
++    }
++
+     try {
+       // Process the actual request and grab the exit code
+       exitCode = processRequest(args, diagnosticsHandlerPrintStream);

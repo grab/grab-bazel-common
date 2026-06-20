@@ -1,0 +1,11 @@
+diff --git a/rules/resources.bzl b/rules/resources.bzl
+--- a/rules/resources.bzl
++++ b/rules/resources.bzl
+@@ -391,6 +391,7 @@ if zipinfo -t "$1"; then
+             NEW_NAME=`echo "$FILE" | sed 's/Databinding\\-processed\\-resources/databinding\\-processed\\-resources/g' | sed 's#'"$IN_DIR"'/##g'`
+             mkdir -p `dirname "$OUT_DIR/$NEW_NAME"` && touch "$OUT_DIR/$NEW_NAME"
+             cp -p "$FILE" "$OUT_DIR/$NEW_NAME"
++            touch -t 198001010000 "$OUT_DIR/$NEW_NAME"
+ 
+             PATH_SEGMENTS=(`echo ${FILE} | tr '/' ' '`)
+             BASE_PATH_SEGMENT="${PATH_SEGMENTS[0]}"

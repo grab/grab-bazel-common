@@ -1,0 +1,3 @@
+exports_files([
+    "cache_dexbuilder_synthetic_context.patch",
+])

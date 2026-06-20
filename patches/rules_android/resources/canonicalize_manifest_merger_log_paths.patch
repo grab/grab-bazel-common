@@ -1,0 +1,39 @@
+diff --git a/src/tools/java/com/google/devtools/build/android/AndroidManifestProcessor.java b/src/tools/java/com/google/devtools/build/android/AndroidManifestProcessor.java
+--- a/src/tools/java/com/google/devtools/build/android/AndroidManifestProcessor.java
++++ b/src/tools/java/com/google/devtools/build/android/AndroidManifestProcessor.java
+@@ -30,4 +30,5 @@ import com.google.common.collect.ImmutableMap;
+ import com.google.common.collect.Maps;
++import java.io.ByteArrayOutputStream;
+ import java.io.IOException;
+ import java.io.PrintStream;
+ import java.nio.file.Files;
+@@ -73,5 +74,15 @@ public class AndroidManifestProcessor {
+           });
+ 
++  private static String canonicalizeManifestMergerLog(String log) {
++    // The manifest merger log is an output artifact. Do not let absolute Bazel output roots make
++    // same-key actions produce byte-different logs across clean builds.
++    return log.replaceAll(
++        "(?m)(?:[A-Za-z]:)?[^\\s\\[]*[/\\\\]execroot[/\\\\][^/\\\\\\s]+[/\\\\]([^\\s:]+)",
++        "$1");
++  }
++
+   /** Creates a new processor with the appropriate logger. */
+   public static AndroidManifestProcessor with(StdLogger stdLogger) {
+     return new AndroidManifestProcessor(stdLogger);
+@@ -161,9 +172,14 @@ public class AndroidManifestProcessor {
+ 
+       if (logFile != null) {
+         logFile.getParent().toFile().mkdirs();
+-        try (PrintStream stream = new PrintStream(logFile.toFile())) {
++        ByteArrayOutputStream logBytes = new ByteArrayOutputStream();
++        try (PrintStream stream = new PrintStream(logBytes, true, UTF_8)) {
+           mergingReport.log(new AndroidResourceProcessor.PrintStreamLogger(stream));
+         }
++        Files.writeString(
++            logFile,
++            canonicalizeManifestMergerLog(new String(logBytes.toByteArray(), UTF_8)),
++            UTF_8);
+       }
+       switch (mergingReport.getResult()) {
+         case WARNING:
