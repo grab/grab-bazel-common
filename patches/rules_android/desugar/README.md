@@ -1,6 +1,6 @@
 # desugar
 
-## Clean-build determinism context
+## Clean-build determinism and min-SDK context
 
 This group owns the Desugar part of the clean-build cache-key issue found while
 validating Bazel 8 rules_android against `bazel-playground-android`.
@@ -13,16 +13,26 @@ The reproducer is two clean `//app:app-gps-pax-debug.apk` builds with:
 - the same repository cache
 - `--execution_log_json_file` enabled for both builds
 
-Before these fixes, `tools_android`'s cache validator reported same-key actions
-with different outputs. The Desugar-side root artifacts were desugared jars, and
-their differences propagated into downstream `DexBuilder`, `JavaDeployJar`, and
-`ShardForMultidex` actions.
+The root Desugar parity gap was that rules_android was not propagating the
+Android binary min SDK into Desugar actions. Bazel 7 passed
+`android_binary.min_sdk_version` into both the binary's own jar desugar action
+and the transitive dex/desugar aspect. In rules_android, the equivalent Starlark
+code existed, but `min_sdk_version.clamp` returned `0` and `min_sdk_version.get`
+ignored the propagated build setting, so `--min_sdk_version` was omitted or fell
+back to the depot floor. Our macro now passes the derived min SDK value to native
+`android_binary`, and the patches below restore the rules_android propagation
+path.
 
-Two Desugar output sources were observed:
+The min-SDK propagation validation is an `aquery` over Desugar actions:
 
-- copied ZIP entry timestamps could leak into desugared jars
-- `META-INF/desugar_deps` could report the same missing interface through
-  different valid origin classes across clean builds
+```sh
+bazel aquery 'mnemonic("Desugar", deps(//app:app-gps-pax-debug))' \
+  --include_commandline --output=textproto
+```
+
+Before this fix, `bazel-playground-android` showed 1 Desugar action at min SDK
+24 and 1158 actions at min SDK 23. After this fix, all 1159 Desugar actions
+carry `--min_sdk_version 24`.
 
 The validation command is:
 
@@ -35,12 +45,18 @@ bazelisk --output_user_root=/private/tmp/cache-validator-bazel run \
   /private/tmp/cache-key-check/build2-exec.json
 ```
 
-After applying the deterministic-output patch set, the expected result is:
+After applying the min-SDK propagation patches, the expected clean-build
+comparison result is:
 
 ```text
 Total changed actions: 0
 Selected root files: 0
 ```
+
+We also validated two clean playground APK builds with the earlier Desugar
+output-normalization experiments disabled together. The comparison still
+reported `Total changed actions: 0`, so this group keeps the min-SDK propagation
+fixes and does not carry additional Desugar output-normalization patches.
 
 Desugaring is slow. R class jars contain only static final int constants, no Java 8+ bytecode, so desugaring them is pure overhead. These patches skip it.
 
@@ -51,6 +67,17 @@ Desugaring is slow. R class jars contain only static final int constants, no Jav
 
 Flip `common --@rules_android//rules/flags:desugar_resources_jar=false` in bazelrc to enable the binary-side skip.
 
+- `propagate_min_sdk_to_desugar.patch` — restores Bazel 7 min SDK propagation for
+  desugar/dex actions. It allows main-repo `android_binary.min_sdk_version`,
+  enables rules_android's intended min-SDK clamp, and makes dex/desugar actions
+  read the propagated `//rules/flags:min_sdk_version` setting instead of always
+  using the depot floor.
+
+- `propagate_min_sdk_through_split_transition.patch` — carries the propagated
+  min-SDK build setting through the Android split transition used by
+  `android_binary.deps`, so the dex/desugar aspect on transitive dependencies
+  sees the same min SDK as the binary.
+
 - `dex_aar_import_resources_jar.patch` — restores dex processing of `AndroidIdeInfo.resource_jar.class_jar` for `aar_import` and `android_library` targets.
 
   **Problem solved:** `rules_android` 0.7.1 introduced a strict check in `dex.bzl` (`_to_dexed_classpath`) that fails the build if any jar appears in `transitive_runtime_jars_for_archive` without a corresponding entry in `dex_archives_dict`. Two target kinds are affected:
@@ -60,25 +87,3 @@ Flip `common --@rules_android//rules/flags:desugar_resources_jar=false` in bazel
   - **`android_library` (including `kt_android_library` wrappers)**: The R class jar is provided via `AndroidIdeInfo.resource_jar`. `_get_library_r_jars` in `impl.bzl` is supposed to filter it from `transitive_runtime_jars_for_archive` via `AndroidLibraryResourceClassJarProvider`, but `kt_android_library` wrappers do not propagate this provider, so the jar slips through the filter and reaches `_to_dexed_classpath` without a dex archive entry.
 
   `skip_r_jar_desugaring.patch` removed all `AndroidIdeInfo.resource_jar` handling from the aspect. This patch adds it back selectively for `aar_import` and `android_library`, so the vast majority of R jar desugaring overhead is still avoided while the affected jars are correctly dexed.
-
-- `normalize_desugar_zip_timestamps.patch` — restores Bazel 7's `ZipUtils.copyEntryMetadata`
-  behavior for D8 desugar output jars by setting copied entry timestamps to zero. Without this,
-  identical clean builds can produce byte-different desugared jars because copied resource entry
-  timestamps leak into the output artifact.
-
-- `normalize_desugar_missing_interface_origins.patch` — stabilizes `META-INF/desugar_deps` when
-  R8 reports the same missing interface through different valid implementation classes across clean
-  builds. SingleJar's correctness check is keyed by the missing target; `origin` is only retained for
-  error text. The patch therefore canonicalizes `missing_interface.origin` to the missing target
-  before filtering/emitting metadata, then sorts and deduplicates dependencies. This prevents
-  semantically equivalent missing-interface diagnostics from changing desugared jar bytes across
-  clean builds.
-
-- `isolate_metadata_desugar_worker.patch` — keeps Desugar actions compatible with Bazel's worker
-  strategy, but makes the persistent worker run metadata-emitting requests in a fresh Java child
-  process when `--emit_dependency_metadata_as_needed` is present. In full Android builds, D8's
-  persistent worker process can make `META-INF/desugar_deps` depend on prior requests handled by
-  the same worker. Isolating only metadata-emitting requests keeps clean-build cache keys stable
-  without requiring repository-level `--strategy=Desugar` changes. The isolated child JVM is
-  launched through a Java argfile because large app targets can have desugar classpaths that exceed
-  the OS command-line length limit if every argument is passed directly to `ProcessBuilder`.
