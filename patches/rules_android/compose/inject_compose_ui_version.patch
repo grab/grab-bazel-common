@@ -1,0 +1,62 @@
+diff --git a/rules/android_binary/attrs.bzl b/rules/android_binary/attrs.bzl
+--- a/rules/android_binary/attrs.bzl
++++ b/rules/android_binary/attrs.bzl
+@@ -249,6 +249,9 @@ ATTRS = _attrs.replace(
+             _desugar_resources_jar = attr.label(
+                 default = "//rules/flags:desugar_resources_jar",
+             ),
++            _androidx_compose_ui_version = attr.label(
++                default = "//rules/flags:androidx_compose_ui_version",
++            ),
+             _rewrite_resources_through_optimizer = attr.bool(
+                 default = False,
+                 doc = """
+diff --git a/rules/apk_packaging.bzl b/rules/apk_packaging.bzl
+--- a/rules/apk_packaging.bzl
++++ b/rules/apk_packaging.bzl
+@@ -16,3 +16,4 @@
++load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+ load("//providers:providers.bzl", "ApkInfo")
+ load("//rules:visibility.bzl", "PROJECT_VISIBILITY")
+ load(":java.bzl", "java")
+@@ -22,3 +23,5 @@ visibility(PROJECT_VISIBILITY)
++_COMPOSE_UI_VERSION_FILE_NAME = "androidx.compose.ui_ui.version"
++
+ _PROVIDERS = "providers"
+ _IMPLICIT_OUTPUTS = "implicit_outputs"
+ _OUTPUT_GROUPS = "output_groups"
+@@ -255,3 +258,17 @@ def _build_apk(
++    compose_ui_version = (
++        ctx.attr._androidx_compose_ui_version[BuildSettingInfo].value
++        if hasattr(ctx.attr, "_androidx_compose_ui_version")
++        else ""
++    )
++    if compose_ui_version:
++        compose_ui_version_file = ctx.actions.declare_file(_COMPOSE_UI_VERSION_FILE_NAME)
++        ctx.actions.write(
++            output = compose_ui_version_file,
++            content = compose_ui_version,
++        )
++        resources.append(compose_ui_version_file)
++        resource_paths.append("%s:META-INF/%s" % (compose_ui_version_file.path, _COMPOSE_UI_VERSION_FILE_NAME))
++
+     java.singlejar(
+         ctx,
+         inputs = depset(inputs, transitive = native_libs_aars.values()),
+diff --git a/rules/flags/additional_flags.bzl b/rules/flags/additional_flags.bzl
+--- a/rules/flags/additional_flags.bzl
++++ b/rules/flags/additional_flags.bzl
+@@ -50,4 +50,13 @@ def additional_flags():
+         name = "desugar_resources_jar",
+         build_setting_default = True,
+         visibility = ["//visibility:public"],
+     )
++
++    # When set, android_binary embeds the Compose UI version in the APK at
++    # META-INF/androidx.compose.ui_ui.version. Android Studio uses this metadata
++    # for Compose preview and Layout Inspector integration.
++    string_flag(
++        name = "androidx_compose_ui_version",
++        build_setting_default = "",
++        visibility = ["//visibility:public"],
++    )

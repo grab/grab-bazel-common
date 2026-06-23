@@ -1,0 +1,3 @@
+exports_files([
+    "inject_compose_ui_version.patch",
+])
