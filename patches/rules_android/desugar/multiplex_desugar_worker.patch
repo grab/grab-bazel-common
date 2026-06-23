@@ -1,0 +1,23 @@
+diff --git a/rules/desugar.bzl b/rules/desugar.bzl
+--- a/rules/desugar.bzl
++++ b/rules/desugar.bzl
+@@ -69,6 +69,10 @@ def _desugar(
+     if min_sdk_version > 0:
+         args.add("--min_sdk_version", str(min_sdk_version))
+ 
++    execution_requirements = {"supports-workers": "1"}
++    if ctx.fragments.android.persistent_multiplex_android_dex_desugar:
++        execution_requirements["supports-multiplex-workers"] = "1"
++
+     ctx.actions.run(
+         inputs = depset(input_file_deps + bootclasspath, transitive = [classpath]),
+         outputs = [output],
+@@ -76,7 +80,7 @@ def _desugar(
+         arguments = [args],
+         mnemonic = "Desugar",
+         progress_message = "Desugaring " + input.short_path + " for Android",
+-        execution_requirements = {"supports-workers": "1"},
++        execution_requirements = execution_requirements,
+         use_default_shell_env = True,
+         toolchain = toolchain_type,
+     )

@@ -58,6 +58,26 @@ output-normalization experiments disabled together. The comparison still
 reported `Total changed actions: 0`, so this group keeps the min-SDK propagation
 fixes and does not carry additional Desugar output-normalization patches.
 
+## Multiplex Desugar worker context
+
+Bazel 7's native Android `DexArchiveAspect` used the same dex/desugar execution
+requirements helper for both `DexBuilder` and `Desugar`. With
+`--persistent_multiplex_android_dex_desugar`, both actions advertised
+`supports-multiplex-workers`.
+
+In rules_android 0.7.1, `rules/dex.bzl` already mirrors that behavior for
+`DexBuilder`, but `rules/desugar.bzl` only advertised `supports-workers`. In our
+bazelrc we cap `--worker_max_instances=Desugar=1` to avoid worker-pool CPU
+thrashing. Without the multiplex execution requirement, that cap means only one
+Desugar request can run at a time and the build UI shows many queued
+`[Sched] Desugaring ...` actions.
+
+- `multiplex_desugar_worker.patch` — adds
+  `supports-multiplex-workers` to `Desugar` actions when
+  `ctx.fragments.android.persistent_multiplex_android_dex_desugar` is enabled,
+  matching Bazel 7's flag-gated behavior and rules_android's current
+  `DexBuilder` behavior.
+
 Desugaring is slow. R class jars contain only static final int constants, no Java 8+ bytecode, so desugaring them is pure overhead. These patches skip it.
 
 - `skip_binary_r_jar_desugaring_flags.patch` — adds `//rules/flags:desugar_resources_jar` bool_flag.

@@ -35,6 +35,7 @@ def _android():
             "@grab_bazel_common//patches/rules_android/non_transitive_r:skip_library_resource_linking.patch",
             "@grab_bazel_common//patches/rules_android/desugar:propagate_min_sdk_to_desugar.patch",
             "@grab_bazel_common//patches/rules_android/desugar:propagate_min_sdk_through_split_transition.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:multiplex_desugar_worker.patch",
             "@grab_bazel_common//patches/rules_android/desugar:skip_binary_r_jar_desugaring_attrs.patch",
             "@grab_bazel_common//patches/rules_android/desugar:skip_binary_r_jar_desugaring_impl.patch",
             "@grab_bazel_common//patches/rules_android/desugar:skip_binary_r_jar_desugaring_flags.patch",
