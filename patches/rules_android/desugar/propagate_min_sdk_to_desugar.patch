@@ -1,0 +1,50 @@
+diff --git a/rules/acls/android_binary_min_sdk_version_attribute.bzl b/rules/acls/android_binary_min_sdk_version_attribute.bzl
+--- a/rules/acls/android_binary_min_sdk_version_attribute.bzl
++++ b/rules/acls/android_binary_min_sdk_version_attribute.bzl
+@@ -18,6 +18,7 @@ visibility(PROJECT_VISIBILITY)
+ 
+ # keep sorted.
+ ANDROID_BINARY_MIN_SDK_VERSION_ATTRIBUTE_ALLOWLIST = [
++    "//:__subpackages__",
+     "//test/rules/android_binary:__subpackages__",
+     "//tools/build_defs/android/test:__subpackages__",
+ ]
+diff --git a/rules/min_sdk_version.bzl b/rules/min_sdk_version.bzl
+--- a/rules/min_sdk_version.bzl
++++ b/rules/min_sdk_version.bzl
+@@ -35,26 +35,20 @@ _ATTRS = dict(
+ )
+ 
+ def _clamp(min_sdk_version):
+-    # TODO(asinclair): Uncomment this once android_binary is Starlarkified and the order of the
+-    # Android Platforms Transition and Feature Flags transition is swapped.
+-    # clamped = _MIN_SDK_LEVELS[0]
+-    # for m in _MIN_SDK_LEVELS:
+-    #     if m > min_sdk_version:
+-    #         return clamped
+-    #     clamped = m
+-    # return clamped
+-    return 0
++    clamped = _MIN_SDK_LEVELS[0]
++    for m in _MIN_SDK_LEVELS:
++        if m > min_sdk_version:
++            return clamped
++        clamped = m
++    return clamped
+ 
+ def _get(ctx):
+     # This is the case when an android_binary target does not set a value explicitly.
+     # The configuration value defaults to 0
+     # So in this case we use the depot floor.
+-    # TODO(asinclair): Uncomment this once android_binary is Starlarkified and the order of the
+-    # Android Platforms Transition and Feature Flags transition is swapped.
+-    # if not ctx.attr._min_sdk_version[BuildSettingInfo].value:
+-    #     return _DEPOT_FLOOR
+-    # return ctx.attr._min_sdk_version[BuildSettingInfo].value
+-    return _DEPOT_FLOOR
++    if not ctx.attr._min_sdk_version[BuildSettingInfo].value:
++        return _DEPOT_FLOOR
++    return ctx.attr._min_sdk_version[BuildSettingInfo].value
+ 
+ min_sdk_version = struct(
+     attrs = _ATTRS,

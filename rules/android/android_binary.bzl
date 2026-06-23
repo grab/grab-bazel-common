@@ -158,7 +158,7 @@ def android_binary(
         manifest = manifest,
         multidex = attrs.get("multidex", default = None),
         manifest_values = attrs.get("manifest_values", default = None),
-        #min_sdk_version = min_sdk_version_value,
+        min_sdk_version = min_sdk_version_value,
         resource_configuration_filters = attrs.get("resource_configuration_filters", default = None),
         tags = tags,
         visibility = attrs.get("visibility", default = None),
