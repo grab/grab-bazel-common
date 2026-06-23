@@ -4,6 +4,15 @@ Build infra tweaks. Not feature stuff, just making rules_android play nice with 
 
 - `macos_cp_reflink.patch` — default `cp --reflink=auto` is Linux-only, drop the flag so macOS doesn't fail.
 - `guava_version.patch` — force guava from our maven, avoid version conflict with rules_android's pinned copy.
+- `pin_rules_android_maven.patch` — enable rules_android's checked-in `rules_android_maven_install.json` for both WORKSPACE and Bzlmod paths so cold builds don't perform large live Coursier resolution for rules_android tool dependencies. The WORKSPACE path uses `@rules_android//:rules_android_maven_install.json` because `//:...` resolves against the consuming workspace from `defs.bzl`. This addresses https://github.com/bazelbuild/rules_android/issues/485 for our WORKSPACE-based consumers.
+- `repin_rules_android_maven_install.patch` — repin rules_android's Maven lockfile with `rules_jvm_external` 6.10. Enabling the upstream lockfile as-is fails because it has the old v2 hash format and stale resolved entries (for example protobuf 4.33.1 while `defs.bzl` requests 4.33.4).
+
+Pinned WORKSPACE-mode `maven_install` repositories also require a follow-up call
+to the generated `@repo//:defs.bzl%pinned_maven_install` macro so the per-artifact
+`http_file` repositories exist. `rules/maven.bzl` wires
+`@rules_android_maven//:defs.bzl%pinned_maven_install` into
+`pin_bazel_common_dependencies()`, matching the existing bazel_common maven setup.
+
 - `busybox_jvm_flags.patch` — bump busybox heap 3G → 8G. Big apps OOM on default. [this is temporary patch, will remove later]
 - `allow_deps_without_srcs.patch` — rules_android 0.7 made "deps without srcs" a hard error. We still have legacy targets doing this, soften back to allow.
 - `disable_aar_import_deps_checker.patch` — empty the rollout allowlist, checker is noisy on our AAR graph.

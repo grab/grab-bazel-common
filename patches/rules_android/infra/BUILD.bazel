@@ -6,6 +6,8 @@ exports_files([
     "guava_version.patch",
     "macos_cp_reflink.patch",
     "no_source_compile_classpath.patch",
+    "pin_rules_android_maven.patch",
+    "repin_rules_android_maven_install.patch",
     "suppress_resource_conflict_warnings.patch",
     "wire_strict_deps_flag.patch",
 ])

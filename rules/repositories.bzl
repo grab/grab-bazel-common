@@ -20,6 +20,8 @@ def _android():
         url = "https://github.com/bazelbuild/rules_android/releases/download/v%s/rules_android-v%s.tar.gz" % (rules_android_tag, rules_android_tag),
         patches = [
             "@grab_bazel_common//patches/rules_android/infra:guava_version.patch",
+            "@grab_bazel_common//patches/rules_android/infra:pin_rules_android_maven.patch",
+            "@grab_bazel_common//patches/rules_android/infra:repin_rules_android_maven_install.patch",
             "@grab_bazel_common//patches/rules_android/infra:macos_cp_reflink.patch",
             "@grab_bazel_common//patches/rules_android/androidx:use_androidx.patch",
             "@grab_bazel_common//patches/rules_android/androidx:androidx_annotation_template.patch",
