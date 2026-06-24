@@ -1,0 +1,47 @@
+--- a/rules/resources.bzl
++++ b/rules/resources.bzl
+@@ -1423,6 +1423,7 @@
+     r_txt = None
+     data_binding_layout_info = None
+     processed_resources = resource_files
++    aar_r_class_resources_nodes = []
+     processed_manifest = None
+     if not defines_resources:
+         if aapt:
+@@ -1732,1 +1733,26 @@
+         packages_to_r_txts_depset.setdefault(java_package, []).append(depset([out_aapt2_r_txt]))
++        if defines_resources and not _should_link and hasattr(ctx.attr, "aar") and processed_manifest:
++            # Bazel 7 hardcoded aar_import to nonTransitiveRClass=false. That means
++            # precompiled AAR bytecode can reference R fields from its dependency
++            # closure. Do not feed those deps back into merge_compiled: some AARs
++            # legitimately have no compiled symbols.zip. Instead, add R-generation-
++            # only aliases that pair each dependency R.txt with this AAR manifest.
++            # Package/merge actions ignore these nodes because compiled_resources is
++            # None, but generate_binary_r still consumes their r_txt + manifest pair.
++            aar_r_class_resources_nodes = [
++                ResourcesNodeInfo(
++                    label = ctx.label,
++                    assets = depset(),
++                    assets_dir = None,
++                    assets_symbols = None,
++                    compiled_assets = None,
++                    resource_apks = depset(),
++                    resource_files = depset(),
++                    compiled_resources = None,
++                    r_txt = node.r_txt,
++                    manifest = processed_manifest,
++                    exports_manifest = False,
++                )
++                for node in depset(transitive = direct_resources_nodes + transitive_resources_nodes, order = "postorder").to_list()
++                if node.r_txt
++            ]
+@@ -1839,7 +1864,8 @@
+                 order = "postorder",
+             ),
+             transitive_resources_nodes = depset(
+-                transitive = transitive_resources_nodes + exports_transitive_resources_nodes,
++                aar_r_class_resources_nodes,
++                transitive = transitive_resources_nodes + exports_transitive_resources_nodes,
+                 order = "postorder",
+             ),
+             transitive_assets = depset(

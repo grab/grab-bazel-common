@@ -1,0 +1,6 @@
+exports_files([
+    "aar_import_export_r_java.patch",
+    "aar_import_transitive_r_txt.patch",
+    "fix_aar_import_databinding_info.patch",
+    "native_databinding_package_info.patch",
+])

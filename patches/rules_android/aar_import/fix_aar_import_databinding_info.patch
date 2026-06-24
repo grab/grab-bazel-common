@@ -1,0 +1,112 @@
+diff --git a/rules/aar_import/impl.bzl b/rules/aar_import/impl.bzl
+index 527c5a5..77ec637 100644
+--- a/rules/aar_import/impl.bzl
++++ b/rules/aar_import/impl.bzl
+@@ -14,5 +14,5 @@
+ """Implementation."""
+
+-load("//providers:providers.bzl", "AndroidLintRulesInfo", "AndroidNativeLibsInfo")
++load("//providers:providers.bzl", "AndroidLintRulesInfo", "AndroidNativeLibsInfo", "DataBindingV2Info")
+ load(
+     "//rules:acls.bzl",
+@@ -92,4 +92,56 @@ def extract_single_file(
+     )
+
++def _extract_data_binding(ctx, aar, unzip_tool):
++    """Extracts the data-binding directory from an AAR if present.
++
++    AARs compiled with data binding contain a 'data-binding/' directory with
++    setter_store.json and br.bin files. These need to be propagated via
++    DataBindingV2Info so that consuming android_library targets can find
++    binding adapters (e.g. android:onClick -> setOnClickListener).
++    """
++    data_binding_dir = _create_aar_tree_artifact(ctx, "data-binding")
++    ctx.actions.run_shell(
++        tools = [unzip_tool],
++        inputs = [aar],
++        outputs = [data_binding_dir],
++        command = """
++            mkdir -p {out_dir}
++            if {unzip} -l {aar} | grep -q 'data-binding/'; then
++                {unzip} -q -j {aar} 'data-binding/*' -d {out_dir} 2>/dev/null || true
++            fi
++        """.format(
++            unzip = unzip_tool.executable.path,
++            aar = aar.path,
++            out_dir = data_binding_dir.path,
++        ),
++        mnemonic = "AarDataBindingExtractor",
++        progress_message = "Extracting data-binding info from %s" % aar.basename,
++        toolchain = ANDROID_TOOLCHAIN_TYPE,
++    )
++    return data_binding_dir
++
++def _extract_db_package(ctx, aar, unzip_tool):
++    """Extracts the Java package from an AAR's AndroidManifest.xml for data binding mapper registration."""
++    pkg_file = create_aar_artifact(ctx, "db_package.txt")
++    ctx.actions.run_shell(
++        tools = [unzip_tool],
++        inputs = [aar],
++        outputs = [pkg_file],
++        command = """
++            if {unzip} -l {aar} 2>/dev/null | grep -q 'data-binding/'; then
++                {unzip} -p {aar} AndroidManifest.xml 2>/dev/null | sed -n 's/.*package="\\([^"]*\\)".*/\\1/p' | head -1 > {out}
++            fi
++            [ -s {out} ] || touch {out}
++        """.format(
++            unzip = unzip_tool.executable.path,
++            aar = aar.path,
++            out = pkg_file.path,
++        ),
++        mnemonic = "AarDataBindingPkgExtract",
++        progress_message = "Extracting data-binding package from %s" % aar.basename,
++        toolchain = ANDROID_TOOLCHAIN_TYPE,
++    )
++    return pkg_file
++
+ def _extract_resources(
+         ctx,
+@@ -576,4 +628,43 @@ def impl(ctx):
+     providers.extend(lint_providers)
+
++    # Extract data-binding metadata from the AAR and propagate it as
++    # DataBindingV2Info so that consuming android_library targets with
++    # enable_data_binding=True can find binding adapters (setter_store.json)
++    # from AAR dependencies (e.g. databinding_adapters).
++    # Without this, ProcessDataBinding AP cannot find @BindingAdapter definitions
++    # that are only available in AARs (e.g. android:onClick -> setOnClickListener),
++    # causing "Cannot find a setter" errors for lambda expressions.
++    data_binding_dir = _extract_data_binding(ctx, aar, unzip_tool)
++    db_package_file = _extract_db_package(ctx, aar, unzip_tool)
++    db_dep_infos = _utils.collect_providers(
++        DataBindingV2Info,
++        ctx.attr.deps,
++        ctx.attr.exports,
++    )
++    providers.append(DataBindingV2Info(
++        setter_stores = depset(
++            direct = [data_binding_dir],
++            transitive = [info.setter_stores for info in db_dep_infos],
++        ),
++        transitive_setter_stores = depset(
++            direct = [data_binding_dir],
++            transitive = [info.setter_stores for info in db_dep_infos] +
++                         [getattr(info, "transitive_setter_stores", depset())
++                          for info in db_dep_infos],
++        ),
++        class_infos = depset(
++            transitive = [info.class_infos for info in db_dep_infos],
++        ),
++        transitive_br_files = depset(
++            transitive = [info.transitive_br_files for info in db_dep_infos],
++        ),
++        java_packages = [package] if package else [],
++        db_package_files = depset(
++            direct = [db_package_file],
++            transitive = [getattr(info, "db_package_files", depset())
++                          for info in db_dep_infos],
++        ),
++    ))
++
+     validation_outputs.append(_validate_rule(
+         ctx,
