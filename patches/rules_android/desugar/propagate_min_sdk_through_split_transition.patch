@@ -1,0 +1,56 @@
+--- a/rules/android_split_transition.bzl
++++ b/rules/android_split_transition.bzl
+@@ -19,6 +19,7 @@ Default
+ """
+
+ load("//rules:visibility.bzl", "PROJECT_VISIBILITY")
++load(":min_sdk_version.bzl", "min_sdk_version")
+ load(":utils.bzl", "utils")
+
+ visibility(PROJECT_VISIBILITY)
+@@ -33,13 +34,18 @@ visibility(PROJECT_VISIBILITY)
+-def _android_split_transition_impl(settings, _):
++def _android_split_transition_impl(settings, attrs):
+     # Always use `--android_platforms` when toolchain resolution is enabled.
+     platforms_to_split = utils.get_cls(settings, "android_platforms")
+     if not platforms_to_split:
+         # If `--android_platforms` is unset, instead use only the first
+         # value from `--platforms`.
+         target_platform = utils.only(utils.get_cls(settings, "platforms"))
+         platforms_to_split = [target_platform]
+-    return _handle_android_platforms(settings, platforms_to_split)
++    configs = _handle_android_platforms(settings, platforms_to_split)
++    if getattr(attrs, "min_sdk_version", 0) and not settings.get(min_sdk_version.SETTING, None):
++        min_sdk = min_sdk_version.clamp(getattr(attrs, "min_sdk_version", 0))
++        for config in configs.values():
++            config[min_sdk_version.SETTING] = min_sdk
++    return configs
+
+ # This transition exists so targets can be built in the same configuration as the deps of android_binary.
+@@ -75,24 +76,26 @@ def _cc_flags_from_android(settings, new_settings):
+ _INPUTS = [
+     "//command_line_option:Android configuration distinguisher",
+     "//command_line_option:android_compiler",
+     "//command_line_option:android_dynamic_mode",
+     "//command_line_option:android_platforms",
+     "//command_line_option:compiler",
+     "//command_line_option:dynamic_mode",
+     "//command_line_option:platforms",
++    min_sdk_version.SETTING,
+ ]
+
+ _OUTPUTS = [
+     "//command_line_option:Android configuration distinguisher",
+     "//command_line_option:android_compiler",
+     "//command_line_option:android_dynamic_mode",
+     "//command_line_option:android_platforms",
+     "//command_line_option:compiler",
+     "//command_line_option:dynamic_mode",
+     "//command_line_option:platforms",
++    min_sdk_version.SETTING,
+ ]
+ android_split_transition = transition(
+     implementation = _android_split_transition_impl,
+     inputs = _INPUTS,
+     outputs = _OUTPUTS,
+ )

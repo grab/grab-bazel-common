@@ -1,0 +1,29 @@
+--- a/rules/android_binary/impl.bzl
++++ b/rules/android_binary/impl.bzl
+@@ -491,7 +491,26 @@
+             desugared_jars.append(utils.only(get_android_toolchain(ctx).desugar_globals_jar.files.to_list()))
+         desugar_dict = {d.jar: d.desugared_jar for d in dex_archives if d.desugared_jar}
+
++        _native_desugar_resources_jar = (
++            ctx.fragments.android.desugar_resources_jar
++            if hasattr(ctx.fragments.android, "desugar_resources_jar")
++            else True
++        )
++        _desugar_resources_jar = (
++            _native_desugar_resources_jar and ctx.attr._desugar_resources_jar[BuildSettingInfo].value
++            if hasattr(ctx.attr, "_desugar_resources_jar")
++            else _native_desugar_resources_jar
++        )
+         for jar in binary_runtime_jars:
++            # The binary's _resources.jar is the aggregate R class jar — it
++            # contains only static final int / int[] constants and never has
++            # Java 8+ bytecode, so desugaring it is pure overhead.  When the
++            # desugar_resources_jar flag is False, pass the jar through
++            # untransformed. Mirrors the Bazel 7 --experimental_android_desugar_resources_jar.
++            if not _desugar_resources_jar and jar.basename.endswith("_resources.jar"):
++                desugared_jars.append(jar)
++                desugar_dict[jar] = jar
++                continue
+             desugared_jar = ctx.actions.declare_file(ctx.label.name + "/" + jar.basename + "_desugared.jar")
+             _desugar.desugar(
+                 ctx,

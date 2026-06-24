@@ -1,0 +1,11 @@
+--- a/src/tools/java/com/google/devtools/build/android/AndroidResourceProcessor.java
++++ b/src/tools/java/com/google/devtools/build/android/AndroidResourceProcessor.java
+@@ -306,7 +306,7 @@ public class AndroidResourceProcessor {
+     ProcessXmlOptionsWrapper options = new ProcessXmlOptionsWrapper();
+     options.setAppId(packagePath);
+-    options.setResInput(inputResourcesDir.toFile());
++    options.setResInput(inputResourcesDir.toFile().getAbsoluteFile());
+     options.setResOutput(processedResourceDir.toFile());
+     options.setLayoutInfoOutput(dataBindingInfoOut.toFile());
+     options.setUseAndroidX(useDataBindingAndroidX);
+     // Whether or not to aggregate data-bound .xml files into a single .zip.

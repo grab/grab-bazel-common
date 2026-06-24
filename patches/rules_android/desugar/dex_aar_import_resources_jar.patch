@@ -1,0 +1,28 @@
+--- a/rules/dex_desugar_aspect.bzl
++++ b/rules/dex_desugar_aspect.bzl
+@@ -185,6 +185,25 @@ def _get_produced_runtime_jars(target, ctx, extra_toolchain_jars):
+         if JavaInfo in target:
+             jars.extend(target[JavaInfo].runtime_output_jars)
+
++        # aar_import and android_library targets may generate a *_resources.jar
++        # via AndroidIdeInfo.resource_jar that is not present in
++        # JavaInfo.runtime_output_jars (it is created as an inline JavaInfo dep,
++        # not a standalone build target).  rules_android 0.7.1+ will fail the
++        # build if such a jar appears in transitive_runtime_jars_for_archive
++        # without a corresponding dex archive entry.
++        #
++        # - aar_import: resource_jar may contain generated binding code (e.g.
++        #   androidx.databinding).
++        # - android_library (incl. kt_android_library): resource_jar is an R
++        #   class jar.  AndroidLibraryResourceClassJarProvider may not be
++        #   propagated by kt_android_library wrappers, so the jar bypasses the
++        #   library_r_jar_dict filter in impl.bzl and reaches _to_dexed_classpath.
++        if ctx.rule.kind in ("aar_import", "android_library"):
++            if AndroidIdeInfo in target and target[AndroidIdeInfo].resource_jar:
++                resource_class_jar = target[AndroidIdeInfo].resource_jar.class_jar
++                if resource_class_jar not in jars:
++                    jars.append(resource_class_jar)
++
+         # R classes contain only public static (final) int fields -- no Java 8+
+         # constructs that need desugaring.  Skipping avoids the significant
+         # overhead of desugaring every library's R class JAR, especially when
