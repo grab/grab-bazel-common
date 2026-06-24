@@ -12,7 +12,7 @@ def mock_android_jar(name = "mock_android_jar"):
 
     """
     mock_jar_generator = "@grab_bazel_common//tools/android_mock:mocked_android_jar_generator"
-    android_jar = "@bazel_tools//tools/android:android_jar"
+    android_jar = "@androidsdk//:platforms/android-36/android.jar"
     android_mock_jar = "android_mock.jar"
 
     native.genrule(
