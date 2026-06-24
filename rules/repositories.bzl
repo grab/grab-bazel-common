@@ -4,23 +4,81 @@ load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 def http_archive(name, **kwargs):
     maybe(_http_archive, name = name, **kwargs)
 
-def _rules_jvm_deps():
+def _android():
     http_archive(
-        name = "rules_java",
-        urls = [
-            "https://github.com/bazelbuild/rules_java/releases/download/7.6.1/rules_java-7.6.1.tar.gz",
-        ],
-        sha256 = "f8ae9ed3887df02f40de9f4f7ac3873e6dd7a471f9cddf63952538b94b59aeb3",
+        name = "rules_android_ndk",
+        sha256 = "07e7a2777113bb3d0a432265d1c78cfaa140a5bc4c82be4c8cd988b34382ec90",
+        strip_prefix = "rules_android_ndk-0.1.5",
+        url = "https://github.com/bazelbuild/rules_android_ndk/releases/download/v0.1.5/rules_android_ndk-v0.1.5.tar.gz",
     )
 
-    rules_license_tag = "1.0.0"
+    rules_android_tag = "0.7.1"
     http_archive(
-        name = "rules_license",
-        urls = [
-            "https://mirror.bazel.build/github.com/bazelbuild/rules_license/releases/download/%s/rules_license-%s.tar.gz" % (rules_license_tag, rules_license_tag),
-            "https://github.com/bazelbuild/rules_license/releases/download/%s/rules_license-%s.tar.gz" % (rules_license_tag, rules_license_tag),
+        name = "rules_android",
+        sha256 = "7c45b6aaa837fb6f2f23ad11387638cb00fa9f839a04ec564caac70a543a9cd5",
+        strip_prefix = "rules_android-%s" % rules_android_tag,
+        url = "https://github.com/bazelbuild/rules_android/releases/download/v%s/rules_android-v%s.tar.gz" % (rules_android_tag, rules_android_tag),
+        patches = [
+            "@grab_bazel_common//patches/rules_android/infra:guava_version.patch",
+            "@grab_bazel_common//patches/rules_android/infra:pin_rules_android_maven.patch",
+            "@grab_bazel_common//patches/rules_android/infra:repin_rules_android_maven_install.patch",
+            "@grab_bazel_common//patches/rules_android/infra:macos_cp_reflink.patch",
+            "@grab_bazel_common//patches/rules_android/androidx:use_androidx.patch",
+            "@grab_bazel_common//patches/rules_android/androidx:androidx_annotation_template.patch",
+            "@grab_bazel_common//patches/rules_android/databinding:databinding_deps.patch",
+            "@grab_bazel_common//patches/rules_android/resources:android_resource_processor_bazel_paths.patch",
+            "@grab_bazel_common//patches/rules_android/infra:allow_resource_conflicts.patch",
+            "@grab_bazel_common//patches/rules_android/infra:suppress_resource_conflict_warnings.patch",
+            "@grab_bazel_common//patches/rules_android/infra:compress_java_resources.patch",
+            "@grab_bazel_common//patches/rules_android/non_transitive_r:generate_binary_r_primary_only_busybox.patch",
+            "@grab_bazel_common//patches/rules_android/non_transitive_r:generate_binary_r_primary_only_rclass.patch",
+            "@grab_bazel_common//patches/rules_android/non_transitive_r:skip_library_resource_linking.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:propagate_min_sdk_to_desugar.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:propagate_min_sdk_through_split_transition.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:multiplex_desugar_worker.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:skip_binary_r_jar_desugaring_attrs.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:skip_binary_r_jar_desugaring_impl.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:skip_binary_r_jar_desugaring_flags.patch",
+            "@grab_bazel_common//patches/rules_android/compose:inject_compose_ui_version.patch",
+            "@grab_bazel_common//patches/rules_android/resources:fix_resource_priority_ordering.patch",
+            "@grab_bazel_common//patches/rules_android/aar_import:fix_aar_import_databinding_info.patch",
+            "@grab_bazel_common//patches/rules_android/databinding:fix_databinding_providers.patch",
+            "@grab_bazel_common//patches/rules_android/databinding:fix_databinding_data_binding.patch",
+            "@grab_bazel_common//patches/rules_android/databinding:databinding_ap_turbine_skip.patch",
+            "@grab_bazel_common//patches/rules_android/non_transitive_r:fix_binary_r_class_generation.patch",
+            "@grab_bazel_common//patches/rules_android/infra:wire_strict_deps_flag.patch",
+            "@grab_bazel_common//patches/rules_android/infra:no_source_compile_classpath.patch",
+            "@grab_bazel_common//patches/rules_android/infra:disable_aar_import_deps_checker.patch",
+            "@grab_bazel_common//patches/rules_android/infra:allow_deps_without_srcs.patch",
+            "@grab_bazel_common//patches/rules_android/aar_import:aar_import_export_r_java.patch",
+            "@grab_bazel_common//patches/rules_android/non_transitive_r:connect_native_android_flags.patch",
+            "@grab_bazel_common//patches/rules_android/aar_import:native_databinding_package_info.patch",
+            "@grab_bazel_common//patches/rules_android/package_aware_rtxt:package_aware_rtxt_tool.patch",
+            "@grab_bazel_common//patches/rules_android/package_aware_rtxt:package_aware_rtxt_merge_action.patch",
+            "@grab_bazel_common//patches/rules_android/package_aware_rtxt:busybox_package_aware_rtxt.patch",
+            "@grab_bazel_common//patches/rules_android/package_aware_rtxt:provider_package_aware_rtxt.patch",
+            "@grab_bazel_common//patches/rules_android/databinding:databinding_non_transitive_r.patch",
+            "@grab_bazel_common//patches/rules_android/databinding:databinding_non_transitive_r_impl.patch",
+            "@grab_bazel_common//patches/rules_android/r_class_overflow:binary_r_class_too_large_fix.patch",
+            "@grab_bazel_common//patches/rules_android/databinding:fix_databinding_copydir_symlink.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:skip_r_jar_desugaring.patch",
+            "@grab_bazel_common//patches/rules_android/desugar:dex_aar_import_resources_jar.patch",
+            "@grab_bazel_common//patches/rules_android/r_class_overflow:merge_compiled_r_class_too_large_fix.patch",
+            "@grab_bazel_common//patches/rules_android/package_aware_rtxt:fix_exports_package_aware_rtxt.patch",
+            "@grab_bazel_common//patches/rules_android/aar_import:aar_import_transitive_r_txt.patch",
+            "@grab_bazel_common//patches/rules_android/r_class_overflow:merge_primary_library_symbols.patch",
+            "@grab_bazel_common//patches/rules_android/workers:gen_base_classes_worker_java.patch",
+            "@grab_bazel_common//patches/rules_android/workers:gen_base_classes_worker_lib.patch",
+            "@grab_bazel_common//patches/rules_android/workers:databinding_exec_worker_binary.patch",
+            "@grab_bazel_common//patches/rules_android/workers:databinding_exec_worker_toolchain.patch",
+            "@grab_bazel_common//patches/rules_android/workers:generate_databinding_base_classes_worker.patch",
+            "@grab_bazel_common//patches/rules_android/databinding:filter_transitive_databinding_artifacts.patch",
+            "@grab_bazel_common//patches/rules_android/dexer:cache_dexbuilder_synthetic_context.patch",
+            "@grab_bazel_common//patches/rules_android/resources:canonicalize_manifest_merger_log_paths.patch",
+            "@grab_bazel_common//patches/rules_android/resources:normalize_databinding_compiled_resources_timestamps.patch",
+            "@grab_bazel_common//patches/rules_android/resources:sort_resource_source_table.patch",
         ],
-        sha256 = "26d4021f6898e23b82ef953078389dd49ac2b5618ac564ade4ef87cced147b38",
+        patch_args = ["-p1"],
     )
 
 def _maven():
@@ -36,8 +94,9 @@ def _maven():
         patch_args = ["-p1"],
     )
 
-    DAGGER_TAG = "2.46.1"
-    DAGGER_SHA = "bbd75275faa3186ebaa08e6779dc5410741a940146d43ef532306eb2682c13f7"
+    DAGGER_TAG = "2.59.1"
+
+    DAGGER_SHA = "1faec1f454936fc9739a2bdf3c909528a031a8561113c3a4b350ee48c6746150"
 
     http_archive(
         name = "bazel_common_dagger",
@@ -46,10 +105,43 @@ def _maven():
         url = "https://github.com/google/dagger/archive/dagger-%s.zip" % DAGGER_TAG,
     )
 
-def _kotlin():
-    RULES_KOTLIN_VERSION = "1.9.6"
+def _java():
+    rules_license_tag = "1.0.0"
+    http_archive(
+        name = "rules_license",
+        urls = [
+            "https://mirror.bazel.build/github.com/bazelbuild/rules_license/releases/download/%s/rules_license-%s.tar.gz" % (rules_license_tag, rules_license_tag),
+            "https://github.com/bazelbuild/rules_license/releases/download/%s/rules_license-%s.tar.gz" % (rules_license_tag, rules_license_tag),
+        ],
+        sha256 = "26d4021f6898e23b82ef953078389dd49ac2b5618ac564ade4ef87cced147b38",
+    )
 
-    RULES_KOTLIN_SHA = "3b772976fec7bdcda1d84b9d39b176589424c047eb2175bed09aac630e50af43"
+    http_archive(
+        name = "bazel_features",
+        sha256 = "a660027f5a87f13224ab54b8dc6e191693c554f2692fcca46e8e29ee7dabc43b",
+        strip_prefix = "bazel_features-1.30.0",
+        url = "https://github.com/bazel-contrib/bazel_features/releases/download/v1.30.0/bazel_features-v1.30.0.tar.gz",
+    )
+
+    http_archive(
+        name = "rules_java",
+        urls = [
+            "https://github.com/bazelbuild/rules_java/releases/download/9.5.0/rules_java-9.5.0.tar.gz",
+        ],
+        sha256 = "440edfa8098d00b166a5a73d215f3214a6506db01e1ec45afee356b6679c5593",
+    )
+
+    http_archive(
+        name = "rules_cc",
+        urls = ["https://github.com/bazelbuild/rules_cc/releases/download/0.2.14/rules_cc-0.2.14.tar.gz"],
+        sha256 = "a2fdfde2ab9b2176bd6a33afca14458039023edb1dd2e73e6823810809df4027",
+        strip_prefix = "rules_cc-0.2.14",
+    )
+
+def _kotlin():
+    RULES_KOTLIN_VERSION = "2.1.10"
+
+    RULES_KOTLIN_SHA = "afa951024e022f7ec565295fcf4cb74738ef7b2ff968820f1465488c06ecf0a0"
 
     http_archive(
         name = "io_bazel_rules_kotlin",
@@ -77,22 +169,13 @@ def _jetifier():
         sha256 = JETIFIER_SOURCE_SHA,
         strip_prefix = "rules_jvm_external-5.3/third_party/jetifier",
         urls = ["https://github.com/bazelbuild/rules_jvm_external/archive/refs/tags/5.3.tar.gz"],
-        build_file = "@grab_bazel_common//patches/jetifier:BUILD.bazel",
-    )
-
-def _rules_java_transitive_deps():
-    """Declare transitive deps of rules_java needed before rules_java_dependencies() runs."""
-    http_archive(
-        name = "bazel_features",
-        sha256 = "2cd9e57d4c38675d321731d65c15258f3a66438ad531ae09cb8bb14217dc8572",
-        strip_prefix = "bazel_features-1.11.0",
-        urls = ["https://github.com/bazel-contrib/bazel_features/releases/download/v1.11.0/bazel_features-v1.11.0.tar.gz"],
+        build_file = "@grab_bazel_common//patches/jetifier:BUILD.jetifier",
     )
 
 def bazel_common_dependencies():
-    _rules_jvm_deps()
-    _rules_java_transitive_deps()
+    _android()
     _maven()
+    _java()
     _kotlin()
     _detekt()
     _jetifier()

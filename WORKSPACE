@@ -8,6 +8,22 @@ load("@grab_bazel_common//rules:deps_init.bzl", "bazel_common_deps_init")
 
 bazel_common_deps_init()
 
+load("@rules_cc//cc:extensions.bzl", "compatibility_proxy_repo")
+
+compatibility_proxy_repo()
+
+load("@rules_java//java:rules_java_deps.bzl", "rules_java_dependencies")
+
+rules_java_dependencies()
+
+load("@com_google_protobuf//bazel/private:proto_bazel_features.bzl", "proto_bazel_features")
+
+proto_bazel_features(name = "proto_bazel_features")
+
+load("@rules_java//java:repositories.bzl", "rules_java_toolchains")
+
+rules_java_toolchains()
+
 load("@grab_bazel_common//rules:setup.bzl", "bazel_common_setup")
 
 bazel_common_setup(
@@ -18,10 +34,6 @@ bazel_common_setup(
 load("@grab_bazel_common//rules:maven.bzl", "pin_bazel_common_dependencies")
 
 pin_bazel_common_dependencies()
-
-android_sdk_repository(
-    name = "androidsdk",
-)
 
 load("@grab_bazel_common//:workspace_defs.bzl", "GRAB_BAZEL_COMMON_ARTIFACTS")
 load("@rules_jvm_external//:defs.bzl", "maven_install")
