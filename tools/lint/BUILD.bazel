@@ -6,8 +6,13 @@ kotlin_test(
         "src/test/java/**/*.kt",
     ]),
     deps = [
+        "//tools/cli_utils",
         "//tools/lint/src/main/java/com/grab/lint",
         "//tools/test_utils",
+        "@bazel_common_maven//:com_android_tools_common",
+        "@bazel_common_maven//:com_android_tools_lint_lint_model",
+        "@bazel_common_maven//:com_android_tools_sdklib",
+        "@bazel_common_maven//:com_github_ajalt_clikt",
         "@bazel_common_maven//:junit_junit",
         "@maven//:org_jetbrains_kotlin_kotlin_test",
     ],

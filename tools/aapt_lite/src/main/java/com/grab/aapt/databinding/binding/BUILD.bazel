@@ -16,5 +16,6 @@ kotlin_library(
         "//tools/aapt_lite/src/main/java/com/grab/aapt/databinding/util",
         "@bazel_common_maven//:com_squareup_javapoet",
         "@bazel_common_maven//:com_squareup_moshi_moshi",
+        "@bazel_common_maven//:xmlpull_xmlpull",
     ],
 )

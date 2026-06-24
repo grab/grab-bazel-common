@@ -25,5 +25,5 @@ import dagger.Module
 @Module(includes = [LayoutStoreModule::class])
 interface BindingClassModule {
     @Binds
-    fun DefaultBindingClassGenerator.bindingClassGenerator(): BindingClassGenerator
+    fun bindingClassGenerator(impl: DefaultBindingClassGenerator): BindingClassGenerator
 }

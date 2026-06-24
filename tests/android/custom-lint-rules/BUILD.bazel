@@ -13,6 +13,8 @@ kotlin_library(
     ],
     deps = [
         "//third_party/auto-service",
+        "@bazel_common_maven//:com_android_tools_external_com_intellij_intellij_core",
+        "@bazel_common_maven//:com_android_tools_external_org_jetbrains_uast",
         "@bazel_common_maven//:com_android_tools_lint_lint_api",
         "@bazel_common_maven//:com_android_tools_lint_lint_checks",
     ],

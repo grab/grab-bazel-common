@@ -219,7 +219,7 @@ class WrongTimberUsageDetector : Detector(), UastScanner {
 
             val type = getType(argument) ?: continue
             val last = formatType.last()
-            if (formatType.length >= 2 && formatType[formatType.length - 2].toLowerCase() == 't') {
+            if (formatType.length >= 2 && formatType[formatType.length - 2].lowercaseChar() == 't') {
                 // Date time conversion.
                 when (last) {
                     'H', 'I', 'k', 'l', 'M', 'S', 'L', 'N', 'p', 'z', 'Z', 's', 'Q', // time

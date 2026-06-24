@@ -26,7 +26,7 @@ interface SrcJarPackager {
 @Module
 interface SrcJarPackageModule {
     @Binds
-    fun DefaultSrcJarPackager.packager(): SrcJarPackager
+    fun packager(impl: DefaultSrcJarPackager): SrcJarPackager
 }
 
 @AaptScope

@@ -43,6 +43,7 @@ kotlin_test(
     deps = [
         ":binding-adapter-bridge",
         ":binding-adapter-processor",
+        "@bazel_common_maven//:com_google_auto_auto_common",
         "@bazel_common_maven//:com_github_tschuchortdev_kotlin_compile_testing",
         "@bazel_common_maven//:junit_junit",
         "@maven//:org_jetbrains_kotlin_kotlin_test",
