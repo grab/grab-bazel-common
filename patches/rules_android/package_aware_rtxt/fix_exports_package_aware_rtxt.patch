@@ -41,7 +41,7 @@ diff -ruN a/rules/resources.bzl b/rules/resources.bzl
 diff -ruN a/rules/android_library/impl.bzl b/rules/android_library/impl.bzl
 --- a/rules/android_library/impl.bzl
 +++ b/rules/android_library/impl.bzl
-@@ -246,6 +246,9 @@
+@@ -246,7 +246,10 @@
      if ctx.attr.enable_data_binding and local_pkg_r_txt:
          for dep in utils.collect_providers(StarlarkAndroidResourcesInfo, ctx.attr.deps):
              if hasattr(dep, "transitive_package_aware_r_txts") and dep.transitive_package_aware_r_txts:

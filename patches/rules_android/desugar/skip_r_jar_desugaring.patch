@@ -1,6 +1,6 @@
 --- a/rules/dex_desugar_aspect.bzl
 +++ b/rules/dex_desugar_aspect.bzl
-@@ -185,10 +185,10 @@
+@@ -185,9 +185,9 @@
          if JavaInfo in target:
              jars.extend(target[JavaInfo].runtime_output_jars)
 

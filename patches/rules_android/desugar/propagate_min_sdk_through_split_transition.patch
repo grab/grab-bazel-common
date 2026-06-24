@@ -8,7 +8,7 @@
  load(":utils.bzl", "utils")
 
  visibility(PROJECT_VISIBILITY)
-@@ -33,13 +34,18 @@ visibility(PROJECT_VISIBILITY)
+@@ -33,11 +34,16 @@ visibility(PROJECT_VISIBILITY)
 -def _android_split_transition_impl(settings, _):
 +def _android_split_transition_impl(settings, attrs):
      # Always use `--android_platforms` when toolchain resolution is enabled.

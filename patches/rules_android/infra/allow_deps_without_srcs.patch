@@ -1,7 +1,7 @@
 diff --git a/rules/android_library/impl.bzl b/rules/android_library/impl.bzl
 --- a/rules/android_library/impl.bzl
 +++ b/rules/android_library/impl.bzl
-@@ -93,8 +93,8 @@
+@@ -93,9 +93,9 @@
  def _check_deps_without_java_srcs(ctx):
      if not ctx.attr.deps or _has_srcs(ctx):
          return False

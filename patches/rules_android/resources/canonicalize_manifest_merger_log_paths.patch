@@ -7,7 +7,7 @@ diff --git a/src/tools/java/com/google/devtools/build/android/AndroidManifestPro
  import java.io.IOException;
  import java.io.PrintStream;
  import java.nio.file.Files;
-@@ -73,5 +74,15 @@ public class AndroidManifestProcessor {
+@@ -73,5 +74,13 @@ public class AndroidManifestProcessor {
            });
 
 +  private static String canonicalizeManifestMergerLog(String log) {

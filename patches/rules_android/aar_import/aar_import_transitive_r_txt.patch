@@ -8,7 +8,7 @@
      processed_manifest = None
      if not defines_resources:
          if aapt:
-@@ -1732,1 +1733,26 @@
+@@ -1732 +1733,26 @@
          packages_to_r_txts_depset.setdefault(java_package, []).append(depset([out_aapt2_r_txt]))
 +        if defines_resources and not _should_link and hasattr(ctx.attr, "aar") and processed_manifest:
 +            # Bazel 7 hardcoded aar_import to nonTransitiveRClass=false. That means

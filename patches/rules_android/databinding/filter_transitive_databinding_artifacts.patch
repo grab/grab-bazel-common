@@ -304,7 +304,7 @@ index fe5cef1..941c526 100644
              ),
          ]
          return struct(**db_info)
-@@ -457,11 +685,19 @@ def _process(
+@@ -457,10 +685,18 @@ def _process(
      _all_r_txts = []
      if local_package_aware_r_txt:
          _all_r_txts.append(local_package_aware_r_txt)
@@ -334,7 +334,7 @@ index fe5cef1..941c526 100644
          extra_packages,
          local_package_aware_r_txt = local_package_aware_r_txt,
          dep_package_aware_r_txts = _dep_r_txts,
-@@ -498,6 +726,7 @@ def _process(
+@@ -498,7 +726,8 @@ def _process(
                  transitive = [info.transitive_br_files for info in deps] +
                               [info.transitive_br_files for info in exports],
              ),

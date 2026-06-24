@@ -13,7 +13,7 @@ diff --git a/rules/android_library/impl.bzl b/rules/android_library/impl.bzl
 diff --git a/rules/android_binary/impl.bzl b/rules/android_binary/impl.bzl
 --- a/rules/android_binary/impl.bzl
 +++ b/rules/android_binary/impl.bzl
-@@ -228,7 +228,7 @@
+@@ -228,8 +228,8 @@
          annotation_processor_additional_outputs =
              db_ctx.java_annotation_processor_additional_outputs,
          annotation_processor_additional_inputs =

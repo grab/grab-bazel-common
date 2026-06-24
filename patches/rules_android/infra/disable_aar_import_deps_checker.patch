@@ -1,7 +1,7 @@
 diff --git a/rules/acls/aar_import_deps_checker.bzl b/rules/acls/aar_import_deps_checker.bzl
 --- a/rules/acls/aar_import_deps_checker.bzl
 +++ b/rules/acls/aar_import_deps_checker.bzl
-@@ -22,6 +22,5 @@
+@@ -22,7 +22,6 @@
 
  # keep sorted
 -AAR_IMPORT_DEPS_CHECKER_ROLLOUT = [

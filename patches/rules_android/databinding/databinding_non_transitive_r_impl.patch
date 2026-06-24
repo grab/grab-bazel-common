@@ -18,7 +18,7 @@
      return ProviderInfo(
          name = "db_ctx",
          value = _data_binding.process(
-@@ -252,6 +263,8 @@
+@@ -252,5 +263,7 @@
                  get_android_toolchain(ctx).data_binding_annotation_processor,
              data_binding_annotation_template =
                  utils.only(get_android_toolchain(ctx).data_binding_annotation_template.files.to_list()),
