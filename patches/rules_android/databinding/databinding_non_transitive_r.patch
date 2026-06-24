@@ -1,0 +1,71 @@
+--- a/rules/data_binding.bzl	2026-03-18 22:51:55.471649099 +0700
++++ b/rules/data_binding.bzl	2026-03-19 00:24:01.833844540 +0700
+@@ -164,7 +164,9 @@
+         class_info_path,
+         layout_info_path,
+         deps,
+-        extra_packages = []):
++        extra_packages = [],
++        local_package_aware_r_txt = None,
++        dep_package_aware_r_txts = []):
+     java_packages = []
+     for info in deps:
+         java_packages.extend(info.java_packages)
+@@ -191,6 +193,18 @@
+
+     javac_opts.append("-Aandroid.databinding.classLogDir=" + class_info_path)
+     javac_opts.append("-Aandroid.databinding.layoutInfoDir=" + layout_info_path)
++    javac_opts.append("-Aandroid.databinding.enableDebugLogs=0")
++
++    # Non-transitive R class: tell AP which resources belong where.
++    if local_package_aware_r_txt:
++        javac_opts.append("-Aandroid.databinding.localResourceFile=" +
++                          local_package_aware_r_txt.path)
++    if dep_package_aware_r_txts:
++        javac_opts.append(
++            "-Aandroid.databinding.dependenciesRFiles=" +
++            ":".join([f.path for f in dep_package_aware_r_txts]),
++        )
++
+     return javac_opts
+
+ # Shell script to generate the synthetic AAR DataBinderMapperImpl.
+@@ -278,7 +292,9 @@
+         exports = [],
+         data_binding_exec = None,
+         data_binding_annotation_processor = None,
+-        data_binding_annotation_template = None):
++        data_binding_annotation_template = None,
++        local_package_aware_r_txt = None,
++        dep_package_aware_r_txts = []):
+     """Processes Android Data Binding.
+
+     Args:
+@@ -399,6 +415,18 @@
+             db_info[_JAVA_SRCS].append(aar_mapper_src)
+             extra_packages = ["com.databinding.aar"]
+
++    # Add package-aware R.txt files as AP inputs for sandbox access.
++    _all_r_txts = []
++    if local_package_aware_r_txt:
++        _all_r_txts.append(local_package_aware_r_txt)
++    _all_r_txts.extend(dep_package_aware_r_txts)
++    db_info[_JAVA_ANNOTATION_PROCESSOR_ADDITIONAL_INPUTS].extend(_all_r_txts)
++
++    # Use local as fallback dep when no dep R.txts available but local exists.
++    _dep_r_txts = dep_package_aware_r_txts if dep_package_aware_r_txts else (
++        [local_package_aware_r_txt] if local_package_aware_r_txt else []
++    )
++
+     db_info[_JAVAC_OPTS] = _get_javac_opts(
+         ctx,
+         java_package,
+@@ -415,6 +443,8 @@
+         layout_info.path if layout_info else _NO_RESOURCES_PATH,
+         deps,
+         extra_packages,
++        local_package_aware_r_txt = local_package_aware_r_txt,
++        dep_package_aware_r_txts = _dep_r_txts,
+     )
+
+     db_info[_PROVIDERS] = [

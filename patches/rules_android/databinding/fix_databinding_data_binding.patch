@@ -1,0 +1,223 @@
+diff --git a/rules/data_binding.bzl b/rules/data_binding.bzl
+index 20bf4c5..a3120f4 100644
+--- a/rules/data_binding.bzl
++++ b/rules/data_binding.bzl
+@@ -100,5 +100,5 @@ def _gen_sources(ctx, output_dir, java_package, deps, layout_info, data_binding_
+     return srcjar, class_info
+
+-def _setup_dependent_lib_artifacts(ctx, output_dir, deps):
++def _setup_dependent_lib_artifacts(ctx, output_dir, deps, artifact_type = "LIBRARY"):
+     # DataBinding requires files in very specific locations.
+     # The following expand_template (copy actions) are moving the files
+@@ -107,7 +107,19 @@ def _setup_dependent_lib_artifacts(ctx, output_dir, deps):
+     for info in deps:
+         # Yes, DataBinding requires depsets iterations.
+-        for artifact in (info.transitive_br_files.to_list() +
++        # For APPLICATION targets, also include transitive_setter_stores
++        # to ensure all AAR data-binding mappers get registered in the
++        # final MergedDataBinderMapper. At LIBRARY level we only use
++        # direct setter_stores to avoid strict-deps violations.
++        extra_stores = (
++            _utils.list_or_depset_to_list(
++                getattr(info, "transitive_setter_stores", depset()),
++            ) if artifact_type == "APPLICATION" else []
++        )
++        all_artifacts = (info.transitive_br_files.to_list() +
+                          _utils.list_or_depset_to_list(info.setter_stores) +
+-                         _utils.list_or_depset_to_list(info.class_infos)):
++                         _utils.list_or_depset_to_list(info.class_infos) +
++                         extra_stores)
++        seen_paths = {}
++        for artifact in all_artifacts:
+             # short_path might contain a parent directory reference if the
+             # databinding artifact is from an external repository (e.g. an aar
+@@ -118,14 +130,26 @@ def _setup_dependent_lib_artifacts(ctx, output_dir, deps):
+             if path.startswith("../"):
+                 path = path[3:]
+-            dep_lib_artifact = ctx.actions.declare_file(
+-                output_dir + "dependent-lib-artifacts/" + path,
+-            )
+
+-            # Copy file to a location required by the DataBinding annotation
+-            # processor.
++            # Deduplicate artifacts that appear in both setter_stores
++            # and transitive_setter_stores.
++            if path in seen_paths:
++                continue
++            seen_paths[path] = True
++
++            # Copy file/directory to a location required by the DataBinding
++            # annotation processor.
+             # TODO(djwhang): Look into SymlinkAction.
+             if artifact.is_directory:
++                # Tree artifacts (e.g. data-binding dirs from aar_import)
++                # must be declared as directories to satisfy Bazel output
++                # validation. Using declare_file for a directory path fails.
++                dep_lib_artifact = ctx.actions.declare_directory(
++                    output_dir + "dependent-lib-artifacts/" + path,
++                )
+                 _utils.copy_dir(ctx, artifact, dep_lib_artifact)
+             else:
++                dep_lib_artifact = ctx.actions.declare_file(
++                    output_dir + "dependent-lib-artifacts/" + path,
++                )
+                 _utils.copy_file(ctx, artifact, dep_lib_artifact)
+             dep_lib_artifacts.append(dep_lib_artifact)
+@@ -140,8 +164,11 @@ def _get_javac_opts(
+         class_info_path,
+         layout_info_path,
+-        deps):
++        deps,
++        extra_packages = []):
+     java_packages = []
+     for info in deps:
+         java_packages.extend(info.java_packages)
++    java_packages.extend(extra_packages)
++    java_packages = list({p: True for p in java_packages}.keys())  # deduplicate
+
+     javac_opts = []
+@@ -167,4 +194,71 @@ def _get_javac_opts(
+     return javac_opts
+
++# Shell script to generate the synthetic AAR DataBinderMapperImpl.
++# This class uses reflection to load DataBinderMapperImpl from each AAR
++# that has data binding, allowing the MergedDataBinderMapper to discover
++# them via the collectDependencies() chain.
++_AAR_MAPPER_GEN_CMD = """\
++OUT="$1"; shift
++cat > "$OUT" << 'JAVAHEADER'
++package com.databinding.aar;
++
++import androidx.databinding.DataBinderMapper;
++import androidx.databinding.DataBindingComponent;
++import androidx.databinding.ViewDataBinding;
++import android.view.View;
++import java.util.List;
++import java.util.ArrayList;
++
++public class DataBinderMapperImpl extends DataBinderMapper {
++    @Override
++    public List<DataBinderMapper> collectDependencies() {
++        ArrayList<DataBinderMapper> result = new ArrayList<>();
++JAVAHEADER
++for f in "$@"; do
++    if [ -s "$f" ]; then
++        pkg=$(cat "$f")
++        if [ -n "$pkg" ]; then
++            printf '        try { result.add((DataBinderMapper) Class.forName("%s.DataBinderMapperImpl").getDeclaredConstructor().newInstance()); } catch (Exception e) {}\\n' "$pkg" >> "$OUT"
++        fi
++    fi
++done
++cat >> "$OUT" << 'JAVAFOOTER'
++        return result;
++    }
++    @Override
++    public ViewDataBinding getDataBinder(DataBindingComponent c, View v, int id) { return null; }
++    @Override
++    public ViewDataBinding getDataBinder(DataBindingComponent c, View[] v, int id) { return null; }
++    @Override
++    public int getLayoutId(String tag) { return 0; }
++    @Override
++    public String convertBrIdToString(int id) { return null; }
++}
++JAVAFOOTER
++"""
++
++def _generate_aar_mapper_source(ctx, output_dir, deps):
++    """Generate a synthetic DataBinderMapperImpl for AAR data binding packages."""
++    pkg_files = []
++    for info in deps:
++        pkg_files.extend(getattr(info, "db_package_files", depset()).to_list())
++    if not pkg_files:
++        return None
++    aar_mapper_src = ctx.actions.declare_file(
++        output_dir + "aar_mapper/DataBinderMapperImpl.java",
++    )
++    args = ctx.actions.args()
++    args.add(aar_mapper_src)
++    args.add_all(pkg_files)
++    ctx.actions.run_shell(
++        inputs = pkg_files,
++        outputs = [aar_mapper_src],
++        arguments = [args],
++        command = _AAR_MAPPER_GEN_CMD,
++        mnemonic = "AarDataBindingMapperGen",
++        progress_message = "Generating AAR data binding mapper registrations",
++    )
++    return aar_mapper_src
++
+ def _merge_lists(lists):
+     merged = []
+@@ -230,8 +324,20 @@ def _process(
+         db_info[_PROVIDERS] = [
+             DataBindingV2Info(
++                db_package_files = depset(
++                    transitive = [getattr(info, "db_package_files", depset()) for info in deps] +
++                                 [getattr(info, "db_package_files", depset()) for info in exports],
++                ),
+                 setter_stores = depset(transitive = [info.setter_stores for info in exports]),
+                 class_infos = depset(transitive = [info.class_infos for info in exports]),
++                transitive_setter_stores = depset(
++                    transitive = [info.setter_stores for info in deps] +
++                                 [info.setter_stores for info in exports] +
++                                 [getattr(info, "transitive_setter_stores", depset())
++                                  for info in deps] +
++                                 [getattr(info, "transitive_setter_stores", depset())
++                                  for info in exports],
++                ),
+                 transitive_br_files = depset(transitive =
+                                                  [info.transitive_br_files for info in deps] +
+                                                  [info.transitive_br_files for info in exports]),
+-                java_packages = _merge_lists([info.java_packages for info in exports]),
++                java_packages = list({p: True for p in _merge_lists([info.java_packages for info in exports])}.keys()),
+@@ -279,9 +385,19 @@ def _process(
+         )
+
+-    dep_lib_artifacts = _setup_dependent_lib_artifacts(ctx, output_dir, deps)
++    dep_lib_artifacts = _setup_dependent_lib_artifacts(ctx, output_dir, deps, artifact_type)
+     db_info[_JAVA_ANNOTATION_PROCESSOR_ADDITIONAL_INPUTS].extend(
+         dep_lib_artifacts,
+     )
+
++    # At APPLICATION level, generate a synthetic DataBinderMapperImpl that
++    # uses reflection to load all AAR data binding mappers. This bridges
++    # the gap where AAR packages cannot be determined at analysis time.
++    extra_packages = []
++    if artifact_type == "APPLICATION":
++        aar_mapper_src = _generate_aar_mapper_source(ctx, output_dir, deps)
++        if aar_mapper_src:
++            db_info[_JAVA_SRCS].append(aar_mapper_src)
++            extra_packages = ["com.databinding.aar"]
++
+     db_info[_JAVAC_OPTS] = _get_javac_opts(
+         ctx,
+@@ -299,4 +415,5 @@ def _process(
+         layout_info.path if layout_info else _NO_RESOURCES_PATH,
+         deps,
++        extra_packages,
+     )
+
+@@ -311,4 +428,13 @@ def _process(
+                 transitive = [info.class_infos for info in exports],
+             ),
++            transitive_setter_stores = depset(
++                direct = [setter_store_out] if setter_store_out else [],
++                transitive = [info.setter_stores for info in deps] +
++                             [info.setter_stores for info in exports] +
++                             [getattr(info, "transitive_setter_stores", depset())
++                              for info in deps] +
++                             [getattr(info, "transitive_setter_stores", depset())
++                              for info in exports],
++            ),
+             transitive_br_files = depset(
+                 direct = [br_out] if br_out else [],
+@@ -317,4 +443,8 @@ def _process(
+             ),
+-            java_packages = [java_package] + _merge_lists([info.java_packages for info in exports]),
++            java_packages = list({p: True for p in ([java_package] + _merge_lists([info.java_packages for info in exports]))}.keys()),
++            db_package_files = depset(
++                transitive = [getattr(info, "db_package_files", depset()) for info in deps] +
++                             [getattr(info, "db_package_files", depset()) for info in exports],
++            ),
+         ),
+     ]

@@ -1,0 +1,10 @@
+exports_files([
+    "databinding_ap_turbine_skip.patch",
+    "databinding_deps.patch",
+    "databinding_non_transitive_r.patch",
+    "databinding_non_transitive_r_impl.patch",
+    "fix_databinding_copydir_symlink.patch",
+    "fix_databinding_data_binding.patch",
+    "fix_databinding_providers.patch",
+    "filter_transitive_databinding_artifacts.patch",
+])

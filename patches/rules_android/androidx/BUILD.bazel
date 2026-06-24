@@ -1,0 +1,4 @@
+exports_files([
+    "androidx_annotation_template.patch",
+    "use_androidx.patch",
+])
