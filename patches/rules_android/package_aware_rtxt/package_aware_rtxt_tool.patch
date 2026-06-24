@@ -1,0 +1,74 @@
+--- a/src/tools/java/com/google/devtools/build/android/PlaceholderRTxtWriter.java	2026-03-19 14:05:30.946615618 +0700
++++ b/src/tools/java/com/google/devtools/build/android/PlaceholderRTxtWriter.java	2026-03-19 14:08:03.084899660 +0700
+@@ -36,16 +36,24 @@
+ final class PlaceholderRTxtWriter extends AndroidResourceSymbolSink {
+
+   private final Path rTxtOut;
++  private final boolean packageAware;
++  private final String packageName;
+
+   private final Map<ResourceType, Set<String>> innerClasses = new EnumMap<>(ResourceType.class);
+   private final Map<String, Set</*attr=*/ String>> styleables = new TreeMap<>();
+
+   static PlaceholderRTxtWriter create(Path rTxtOut) {
+-    return new PlaceholderRTxtWriter(rTxtOut);
++    return new PlaceholderRTxtWriter(rTxtOut, false, null);
+   }
+
+-  private PlaceholderRTxtWriter(Path rTxtOut) {
++  static PlaceholderRTxtWriter create(Path rTxtOut, boolean packageAware, String packageName) {
++    return new PlaceholderRTxtWriter(rTxtOut, packageAware, packageName);
++  }
++
++  private PlaceholderRTxtWriter(Path rTxtOut, boolean packageAware, String packageName) {
+     this.rTxtOut = rTxtOut;
++    this.packageAware = packageAware;
++    this.packageName = packageName;
+   }
+
+   @Override
+@@ -73,6 +81,14 @@
+
+   @Override
+   public void flush() throws IOException {
++    if (packageAware) {
++      flushPackageAware();
++    } else {
++      flushStandard();
++    }
++  }
++
++  private void flushStandard() throws IOException {
+     try (BufferedWriter writer = Files.newBufferedWriter(rTxtOut, UTF_8)) {
+       for (Map.Entry<ResourceType, Set<String>> innerClass : innerClasses.entrySet()) {
+         ResourceType resourceType = innerClass.getKey();
+@@ -91,4 +107,29 @@
+       }
+     }
+   }
++
++  private void flushPackageAware() throws IOException {
++    try (BufferedWriter writer = Files.newBufferedWriter(rTxtOut, UTF_8)) {
++      writer.write(packageName);
++      writer.newLine();
++
++      for (Map.Entry<ResourceType, Set<String>> innerClass : innerClasses.entrySet()) {
++        ResourceType resourceType = innerClass.getKey();
++        for (String fieldName : innerClass.getValue()) {
++          writer.write(String.format("%s %s\n", resourceType.getName(), fieldName));
++        }
++      }
++
++      for (Map.Entry<String, Set<String>> styleable : styleables.entrySet()) {
++        StringBuilder sb = new StringBuilder("styleable ");
++        sb.append(styleable.getKey());
++        for (String attr : styleable.getValue()) {
++          sb.append(' ');
++          sb.append(attr);
++        }
++        writer.write(sb.toString());
++        writer.newLine();
++      }
++    }
++  }
+ }

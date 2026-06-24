@@ -1,0 +1,7 @@
+exports_files([
+    "connect_native_android_flags.patch",
+    "fix_binary_r_class_generation.patch",
+    "generate_binary_r_primary_only_busybox.patch",
+    "generate_binary_r_primary_only_rclass.patch",
+    "skip_library_resource_linking.patch",
+])

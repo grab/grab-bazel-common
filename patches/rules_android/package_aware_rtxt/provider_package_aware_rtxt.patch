@@ -1,0 +1,10 @@
+--- a/providers/providers.bzl	2026-03-19 00:20:08.370115247 +0700
++++ b/providers/providers.bzl	2026-03-19 00:20:57.833882602 +0700
+@@ -87,6 +87,7 @@
+         transitive_r_txts = "Depset of transitive R.txt files",
+         transitive_resource_files = "Depset of transitive resource files",
+         packages_to_r_txts = "Map of packages to depset of r_txt files",
++        transitive_package_aware_r_txts = "Depset of transitive package-aware R.txt files for databinding",
+         transitive_resource_apks = "Depset of transitive resource only apk files",
+         package = "String, the package used for the generated Java resources",
+     ),

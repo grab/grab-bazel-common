@@ -1,0 +1,20 @@
+--- a/rules/busybox.bzl	2026-03-19 00:16:00.472421817 +0700
++++ b/rules/busybox.bzl	2026-03-19 00:16:37.005925822 +0700
+@@ -721,6 +721,7 @@
+         out_class_jar = None,
+         out_manifest = None,
+         out_aapt2_r_txt = None,
++        out_package_aware_r_txt = None,
+         java_package = None,
+         manifest = None,
+         compiled_resources = None,
+@@ -769,6 +770,9 @@
+     output_files.append(out_manifest)
+     args.add("--rTxtOut", out_aapt2_r_txt)
+     output_files.append(out_aapt2_r_txt)
++    if out_package_aware_r_txt:
++        args.add("--packageAwareRTxt", out_package_aware_r_txt)
++        output_files.append(out_package_aware_r_txt)
+     args.add("--androidJar", android_jar)
+     args.add("--primaryManifest", manifest)
+     input_files.append(manifest)

@@ -1,0 +1,54 @@
+diff -ruN a/rules/resources.bzl b/rules/resources.bzl
+--- a/rules/resources.bzl
++++ b/rules/resources.bzl
+@@ -1385,6 +1385,7 @@
+     exports_transitive_resources_files = []
+     exports_transitive_manifests = []
+     exports_transitive_r_txts = []
++    exports_transitive_package_aware_r_txts = []
+     for dep in reversed(utils.collect_providers(StarlarkAndroidResourcesInfo, exports)):
+         exports_direct_resources_nodes.append(dep.direct_resources_nodes)
+         exports_transitive_resources_nodes.append(dep.transitive_resources_nodes)
+@@ -1396,6 +1397,8 @@
+         exports_transitive_resources_files.append(dep.transitive_resource_files)
+         exports_transitive_manifests.append(dep.transitive_manifests)
+         exports_transitive_r_txts.append(dep.transitive_r_txts)
++        if hasattr(dep, "transitive_package_aware_r_txts") and dep.transitive_package_aware_r_txts:
++            exports_transitive_package_aware_r_txts.append(dep.transitive_package_aware_r_txts)
+         for pkg, r_txts in dep.packages_to_r_txts.items():
+             packages_to_r_txts_depset.setdefault(pkg, []).append(r_txts)
+
+@@ -1410,6 +1413,7 @@
+     transitive_resources_files.extend(exports_transitive_resources_files)
+     transitive_manifests.extend(exports_transitive_manifests)
+     transitive_r_txts.extend(exports_transitive_r_txts)
++    transitive_package_aware_r_txts.extend(exports_transitive_package_aware_r_txts)
+
+     compiled_assets = None
+     parsed_assets = None
+@@ -1764,6 +1768,10 @@
+             ),
+             packages_to_r_txts = packages_to_r_txts,
+-            transitive_package_aware_r_txts = depset(),
++            transitive_package_aware_r_txts = depset(
++                [out_package_aware_r_txt] if out_package_aware_r_txt else [],
++                transitive = exports_transitive_package_aware_r_txts,
++                order = "postorder",
++            ),
+             transitive_resource_apks = depset(
+                 resource_apks,
+                 transitive = transitive_resource_apks,
+diff -ruN a/rules/android_library/impl.bzl b/rules/android_library/impl.bzl
+--- a/rules/android_library/impl.bzl
++++ b/rules/android_library/impl.bzl
+@@ -246,6 +246,9 @@
+     if ctx.attr.enable_data_binding and local_pkg_r_txt:
+         for dep in utils.collect_providers(StarlarkAndroidResourcesInfo, ctx.attr.deps):
+             if hasattr(dep, "transitive_package_aware_r_txts") and dep.transitive_package_aware_r_txts:
+                 dep_pkg_r_txts.extend(dep.transitive_package_aware_r_txts.to_list())
++        for dep in utils.collect_providers(StarlarkAndroidResourcesInfo, ctx.attr.exports):
++            if hasattr(dep, "transitive_package_aware_r_txts") and dep.transitive_package_aware_r_txts:
++                dep_pkg_r_txts.extend(dep.transitive_package_aware_r_txts.to_list())
+
+     return ProviderInfo(
+         name = "db_ctx",
