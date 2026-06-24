@@ -15,7 +15,7 @@
  
      if deps:
          if type(deps[0].class_infos) == "depset":
-@@ -88,9 +90,13 @@
+@@ -88,9 +90,14 @@
  
      ctx.actions.run(
          executable = data_binding_exec,
@@ -25,9 +25,9 @@
          outputs = [class_info, srcjar],
 +        execution_requirements = {
 +            "supports-workers": "1",
++            "supports-multiplex-workers": "1",
 +            "worker-key-mnemonic": "GenerateDataBindingBaseClasses",
 +        },
          mnemonic = "GenerateDataBindingBaseClasses",
          progress_message = (
              "GenerateDataBindingBaseClasses %s" % class_info.short_path
-

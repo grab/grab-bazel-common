@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/src/tools/java/com/google/devtools/build/android/GenBaseClassesWorker.java
-@@ -0,0 +1,202 @@
+@@ -0,0 +1,149 @@
 +// Copyright 2024 The Bazel Authors. All rights reserved.
 +//
 +// Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,6 @@
 +import java.nio.charset.StandardCharsets;
 +import java.nio.file.Files;
 +import java.nio.file.Paths;
-+import java.security.Permission;
 +import java.time.Duration;
 +import java.util.ArrayList;
 +import java.util.Arrays;
@@ -50,42 +49,6 @@
 +
 +  private static final Logger logger = Logger.getLogger(GenBaseClassesWorker.class.getName());
 +
-+  // ---------------------------------------------------------------------------
-+  // System.exit() interception
-+  //
-+  // android.databinding.AndroidDataBinding.main() may call System.exit() to
-+  // signal the exit code to the OS. In a persistent worker the JVM must not
-+  // exit between requests, so we temporarily install a SecurityManager that
-+  // converts System.exit() into a catchable exception.
-+  // SecurityManager is deprecated-for-removal in Java 17+ but is still present
-+  // and functional in Java 21 (the JDK used by this project).
-+  // ---------------------------------------------------------------------------
-+
-+  /** Thrown instead of terminating the JVM when wrapped code calls {@code System.exit()}. */
-+  static final class ExitException extends SecurityException {
-+    final int status;
-+
-+    ExitException(int status) {
-+      super("System.exit(" + status + ") intercepted by GenBaseClassesWorker");
-+      this.status = status;
-+    }
-+  }
-+
-+  /** SecurityManager that converts {@code System.exit()} into {@link ExitException}. */
-+  @SuppressWarnings("removal")
-+  static final class NoExitSecurityManager extends java.lang.SecurityManager {
-+    @Override
-+    public void checkExit(int status) {
-+      throw new ExitException(status);
-+    }
-+
-+    @Override
-+    public void checkPermission(Permission perm) {
-+      // Allow everything else.
-+    }
-+  }
-+
-+  // ---------------------------------------------------------------------------
 +  // Flagfile expansion
 +  //
 +  // AndroidDataBinding.main() checks args[0] as a plain string to dispatch its
@@ -167,15 +130,7 @@
 +  // Per-request processing
 +  // ---------------------------------------------------------------------------
 +
-+  @SuppressWarnings("removal")
 +  private static int processRequest(List<String> args, PrintWriter pw) {
-+    // Redirect stdout for the duration of the request so that any diagnostic
-+    // output from the wrapped binary goes to the WorkResponse output field
-+    // rather than corrupting the binary worker protocol stream on stdout.
-+    PrintStream realStdOut = System.out;
-+    // Install the no-exit manager to intercept System.exit() calls.
-+    java.lang.SecurityManager previousSm = System.getSecurityManager();
-+    System.setSecurityManager(new NoExitSecurityManager());
 +    try {
 +      // Expand any @flagfile entries before dispatching to AndroidDataBinding.
 +      // AndroidDataBinding checks args[0] as a plain string for the subcommand
@@ -189,17 +144,9 @@
 +      }
 +      android.databinding.AndroidDataBinding.main(expandedArgs.toArray(new String[0]));
 +      return 0;
-+    } catch (ExitException e) {
-+      if (e.status != 0) {
-+        pw.println("AndroidDataBinding exited with status " + e.status);
-+      }
-+      return e.status;
 +    } catch (Exception e) {
 +      e.printStackTrace(pw);
 +      return 1;
-+    } finally {
-+      System.setSecurityManager(previousSm);
-+      System.setOut(realStdOut);
 +    }
 +  }
 +}
