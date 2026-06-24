@@ -1,0 +1,152 @@
+--- /dev/null
++++ b/src/tools/java/com/google/devtools/build/android/GenBaseClassesWorker.java
+@@ -0,0 +1,149 @@
++// Copyright 2024 The Bazel Authors. All rights reserved.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//    http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++package com.google.devtools.build.android;
++
++import com.google.devtools.build.lib.worker.ProtoWorkerMessageProcessor;
++import com.google.devtools.build.lib.worker.WorkRequestHandler;
++import java.io.IOException;
++import java.io.PrintStream;
++import java.io.PrintWriter;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Paths;
++import java.time.Duration;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
++import java.util.logging.Logger;
++
++/**
++ * Persistent worker wrapper for the GenerateDataBindingBaseClasses action.
++ *
++ * <p>Wraps {@code android.databinding.AndroidDataBinding} (which is a plain JCommander CLI and
++ * does not implement the Bazel worker protocol) so that it can participate in Bazel's persistent
++ * worker mechanism, avoiding repeated JVM startup costs across modules.
++ *
++ * <p>Bazel starts this binary once with {@code --persistent_worker}, then sends one
++ * {@link WorkRequest} per action via stdin, reading the corresponding {@link WorkResponse} from
++ * stdout. Each request's {@code arguments} list contains a single {@code @flagfile} entry (written
++ * by {@code args.use_param_file("@%s")} in data_binding.bzl). The flagfile is expanded manually
++ * here before being passed to {@code AndroidDataBinding.main()}, because AndroidDataBinding
++ * dispatches its subcommand by checking {@code args[0]} directly before JCommander parses the
++ * remaining arguments.
++ */
++public final class GenBaseClassesWorker {
++
++  private static final Logger logger = Logger.getLogger(GenBaseClassesWorker.class.getName());
++
++  // Flagfile expansion
++  //
++  // AndroidDataBinding.main() checks args[0] as a plain string to dispatch its
++  // subcommand ("GEN_BASE_CLASSES" or "PROCESS") before JCommander is involved.
++  // When Bazel 8 worker protocol passes a single "@flagfile" argument, we must
++  // expand it ourselves so that args[0] == "GEN_BASE_CLASSES" by the time
++  // AndroidDataBinding sees the argument list.
++  // ---------------------------------------------------------------------------
++
++  /**
++   * Expands any {@code @flagfile} entries in {@code args} by reading their contents line-by-line.
++   * Non-{@code @} arguments are passed through unchanged. Empty lines are skipped.
++   */
++  static List<String> expandFlagfiles(List<String> args) throws IOException {
++    List<String> expanded = new ArrayList<>();
++    for (String arg : args) {
++      if (arg.startsWith("@")) {
++        List<String> lines =
++            Files.readAllLines(Paths.get(arg.substring(1)), StandardCharsets.UTF_8);
++        for (String line : lines) {
++          String trimmed = line.trim();
++          if (!trimmed.isEmpty()) {
++            expanded.add(trimmed);
++          }
++        }
++      } else {
++        expanded.add(arg);
++      }
++    }
++    return expanded;
++  }
++
++  // ---------------------------------------------------------------------------
++  // Entry point
++  // ---------------------------------------------------------------------------
++
++  public static void main(String[] args) throws Exception {
++    if (args.length == 1 && args[0].equals("--persistent_worker")) {
++      System.exit(runPersistentWorker());
++    } else {
++      // Direct (non-worker) invocation: expand @flagfile entries, then delegate.
++      List<String> expandedArgs;
++      try {
++        expandedArgs = expandFlagfiles(Arrays.asList(args));
++      } catch (IOException e) {
++        System.err.println("Failed to expand flagfile: " + e.getMessage());
++        System.exit(1);
++        return;
++      }
++      android.databinding.AndroidDataBinding.main(expandedArgs.toArray(new String[0]));
++    }
++  }
++
++  // ---------------------------------------------------------------------------
++  // Persistent worker loop
++  // ---------------------------------------------------------------------------
++
++  private static int runPersistentWorker() throws Exception {
++    PrintStream realStdErr = System.err;
++    try {
++      WorkRequestHandler workerHandler =
++          new WorkRequestHandler.WorkRequestHandlerBuilder(
++                  new WorkRequestHandler.WorkRequestCallback(
++                      (request, pw) -> processRequest(request.getArgumentsList(), pw)),
++                  realStdErr,
++                  new ProtoWorkerMessageProcessor(System.in, System.out))
++              .setCpuUsageBeforeGc(Duration.ofSeconds(10))
++              .build();
++      workerHandler.processRequests();
++    } catch (IOException e) {
++      logger.severe(e.getMessage());
++      e.printStackTrace(realStdErr);
++      return 1;
++    }
++    return 0;
++  }
++
++  // ---------------------------------------------------------------------------
++  // Per-request processing
++  // ---------------------------------------------------------------------------
++
++  private static int processRequest(List<String> args, PrintWriter pw) {
++    try {
++      // Expand any @flagfile entries before dispatching to AndroidDataBinding.
++      // AndroidDataBinding checks args[0] as a plain string for the subcommand
++      // name ("GEN_BASE_CLASSES"), so expansion must happen before it is called.
++      List<String> expandedArgs;
++      try {
++        expandedArgs = expandFlagfiles(args);
++      } catch (IOException e) {
++        pw.println("Failed to expand flagfile: " + e.getMessage());
++        return 1;
++      }
++      android.databinding.AndroidDataBinding.main(expandedArgs.toArray(new String[0]));
++      return 0;
++    } catch (Exception e) {
++      e.printStackTrace(pw);
++      return 1;
++    }
++  }
++}

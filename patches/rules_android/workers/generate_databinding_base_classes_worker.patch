@@ -1,0 +1,33 @@
+--- a/rules/data_binding.bzl
++++ b/rules/data_binding.bzl
+@@ -62,12 +62,14 @@
+     srcjar = ctx.actions.declare_file(output_dir + "baseClassSrc.srcjar")
+
+     args = ctx.actions.args()
++    args.add("GEN_BASE_CLASSES")
+     args.add("-layoutInfoFiles", layout_info)
+     args.add("-package", java_package)
+     args.add("-classInfoOut", class_info)
+     args.add("-sourceOut", srcjar)
+     args.add("-zipSourceOutput", "true")
+     args.add("-useAndroidX", "true")
++    args.use_param_file("@%s", use_always = True)
+
+     if deps:
+         if type(deps[0].class_infos) == "depset":
+@@ -88,9 +90,14 @@
+
+     ctx.actions.run(
+         executable = data_binding_exec,
+-        arguments = ["GEN_BASE_CLASSES", args],
++        arguments = [args],
+         inputs = inputs,
+         outputs = [class_info, srcjar],
++        execution_requirements = {
++            "supports-workers": "1",
++            "supports-multiplex-workers": "1",
++            "worker-key-mnemonic": "GenerateDataBindingBaseClasses",
++        },
+         mnemonic = "GenerateDataBindingBaseClasses",
+         progress_message = (
+             "GenerateDataBindingBaseClasses %s" % class_info.short_path

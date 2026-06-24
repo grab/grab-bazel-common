@@ -1,0 +1,11 @@
+--- a/toolchains/android/toolchain.bzl
++++ b/toolchains/android/toolchain.bzl
+@@ -118,7 +118,7 @@
+     ),
+     data_binding_exec = attr.label(
+         cfg = "exec",
+-        default = "//tools/android:databinding_exec",
++        default = "//tools/android:databinding_exec_worker",
+         executable = True,
+     ),
+     desugar = attr.label(

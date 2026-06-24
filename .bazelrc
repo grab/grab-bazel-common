@@ -1,5 +1,6 @@
 # BzlMod
 common --enable_bzlmod=false
+common --enable_workspace=true
 
 # Cache setup
 common --disk_cache=bazel-cache
@@ -51,6 +52,7 @@ common --define=android_standalone_dexing_tool=d8_compat_dx
 common --experimental_disable_instrumentation_manifest_merge
 common --features=android_resources_strict_deps
 common --output_library_merged_assets=false # Turn off asset merging artifact
+common --incompatible_disallow_empty_glob=false
 # common --android_non_transitive_r_class=true # Disable resource merging a.k.a non transitive R class
 # common --experimental_use_package_aware_rtxt=true # Use package aware R.txt files (required for databinding)
 # common --define=nontransitive_r_class=1 # Adapt bazel common rules for non transitive R class
@@ -74,7 +76,6 @@ common --persistent_multiplex_android_tools
 # Action Strategies
 common --strategy=AARGenerator=worker
 common --strategy=DatabindingStubs=worker
-common --modify_execution_info=GenerateDataBindingBaseClasses=+supports-multiplex-workers=1
 # TODO: KSP doesn't seem to work in a parallel environment, so we need to use sandboxed strategy. https://github.com/google/ksp/issues/427#issuecomment-1140076577
 common --strategy=KotlinKsp=sandboxed
 ## Java Workers
@@ -82,31 +83,34 @@ common --strategy=KotlinCompile=worker
 common --strategy=Javac=worker
 # common --strategy=Turbine=worker
 ## Worker configuration to avoid CPU thrashing https://github.com/bazelbuild/bazel/issues/8586#issuecomment-500070549
+## Keep these mnemonics aligned with the Bazel 8/rules_android action graph.
 common --worker_max_instances=Aapt2Optimize=1
-common --worker_max_instances=AaptPackage=1
-common --worker_max_instances=AndroidAapt2=1
-common --worker_max_instances=AndroidAssetMerger=1
-common --worker_max_instances=AndroidCompiledResourceMerger=1
-common --worker_max_instances=AndroidResourceCompiler=1
-common --worker_max_instances=AndroidResourceMerger=1
-common --worker_max_instances=AndroidResourceParser=1
-common --worker_max_instances=AndroidResourceValidator=1
 common --worker_max_instances=AndroidLintAnalyze=1
 common --worker_max_instances=AndroidLint=1
-common --worker_max_instances=BuildConfigGenerationWorker=1
+common --worker_max_instances=BuildConfigGeneration=1
+common --worker_max_instances=CompileAndroidResources=1
+common --worker_max_instances=DatabindingMapperStubs=1
 common --worker_max_instances=DatabindingStubs=1
-common --worker_max_instances=DatabindingWorker=1
 common --worker_max_instances=Desugar=1
 common --worker_max_instances=DexBuilder=1
 common --worker_max_instances=GenerateDataBindingBaseClasses=1
 common --worker_max_instances=Javac=1
+common --worker_max_instances=JavacTurbine=1
 common --worker_max_instances=JdepsMerge=1
 common --worker_max_instances=KotlinCompile=1
 common --worker_max_instances=KotlinKapt=1
+common --worker_max_instances=LinkAndroidResources=1
+common --worker_max_instances=MergeAndroidAssets=1
+common --worker_max_instances=MergeManifests=1
 common --worker_max_instances=MergeSourceSets=1
-common --worker_max_instances=ProcessDatabinding=1
-common --worker_max_instances=RClassGenerator=1
-common --worker_max_instances=Turbine=1
+common --worker_max_instances=PackageAndroidResources=1
+common --worker_max_instances=ParseAndroidResources=1
+common --worker_max_instances=ResourceConverter=1
+common --worker_max_instances=ResourceShrinker=1
+common --worker_max_instances=StarlarkAARGenerator=1
+common --worker_max_instances=StarlarkMergeCompiledAndroidResources=1
+common --worker_max_instances=StarlarkProcessDatabinding=1
+common --worker_max_instances=StarlarkRClassGenerator=1
 
 # Test config
 test --build_tests_only
@@ -119,5 +123,6 @@ run --ui_event_filters=-info,-stdout --noshow_progress
 # Ci Config
 common:ci --noshow_progress
 common:ci --color=yes
+#common --incompatible_autoload_externally=-@rules_android
 
 try-import local.bazelrc
