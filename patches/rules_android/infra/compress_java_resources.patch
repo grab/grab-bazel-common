@@ -1,0 +1,12 @@
+diff --git a/rules/android_binary/impl.bzl b/rules/android_binary/impl.bzl
+--- a/rules/android_binary/impl.bzl
++++ b/rules/android_binary/impl.bzl
+@@ -990,7 +990,7 @@
+         merged_manifest = packaged_resources_ctx.processed_manifest,
+         art_profile_zip = ap_ctx.art_profile_zip,
+         java_resources_zip = dex_info.java_resource_jar,
+-        compress_java_resources = ctx.fragments.android.compress_java_resources,
++        compress_java_resources = True,  # Restored: --experimental_android_compress_java_resources defaults to False in Bazel 8
+         nocompress_extensions = ctx.attr.nocompress_extensions,
+         output_jar_creator = "bazel",
+         signing_keys = signing_keys,

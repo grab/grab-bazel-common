@@ -4,7 +4,7 @@ load(
     _kt_jvm_library = "kt_jvm_library",
 )
 
-_ANDROID_SDK_JAR = "@io_bazel_rules_kotlin//third_party:android_sdk"
+_ANDROID_SDK_JAR = "@grab_bazel_common//tools/android:android_sdk"
 
 def _kt_android_artifact(
         name,
@@ -12,6 +12,7 @@ def _kt_android_artifact(
         deps = [],
         resources = [],
         resource_strip_prefix = "",
+        exports_manifest = None,
         plugins = [],
         associates = [],
         kotlinc_opts = None,
@@ -36,7 +37,8 @@ def _kt_android_artifact(
         name = base_name,
         visibility = ["//visibility:private"],
         exports = base_deps,
-        deps = deps if enable_data_binding else [],
+        exports_manifest = 1 if kwargs.get("manifest") else 0,
+        deps = deps,
         enable_data_binding = enable_data_binding,
         tags = [tag for tag in tags if tag != LINT_ENABLED],
         exec_properties = exec_properties,
@@ -71,9 +73,11 @@ def kt_android_library(name, exports = [], visibility = None, exec_properties = 
 
     # TODO(bazelbuild/rules_kotlin/issues/556): replace with starlark
     # buildifier: disable=native-android
+    artifact_targets = _kt_android_artifact(name, exec_properties = exec_properties, **kwargs)
     native.android_library(
         name = name,
-        exports = exports + _kt_android_artifact(name, exec_properties = exec_properties, **kwargs),
+        exports = exports + artifact_targets,
+        deps = exports + artifact_targets,
         visibility = visibility,
         tags = [tag for tag in kwargs.get("tags", default = []) if tag != LINT_ENABLED],
         testonly = kwargs.get("testonly", default = 0),
