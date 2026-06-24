@@ -1,0 +1,249 @@
+--- a/rules/resources.bzl	2026-03-22 11:06:01.132130420 +0700
++++ b/rules/resources.bzl	2026-03-22 18:03:59.281483840 +0700
+@@ -80,6 +80,7 @@
+ _VALIDATION_OUTPUTS = "validation_outputs"
+ _STARLARK_PROCESSED_MANIFEST = "starlark_processed_manifest"
+ _STARLARK_R_TXT = "starlark_r_txt"
++_PACKAGE_AWARE_R_TXT = "package_aware_r_txt"
+ _STARLARK_PROCESSED_RESOURCES = "starlark_processed_resources"
+
+ _ResourcesProcessContextInfo = provider(
+@@ -97,6 +98,7 @@
+         _STARLARK_PROCESSED_MANIFEST: "The processed manifest from the starlark resource processing pipeline.",
+         _STARLARK_R_TXT: "The R.txt from the starlark resource processing pipeline.",
+         _STARLARK_PROCESSED_RESOURCES: "The processed resources from the starlark processing pipeline.",
++        _PACKAGE_AWARE_R_TXT: "Package-aware R.txt for databinding non-transitive R support.",
+     },
+ )
+
+@@ -795,19 +797,33 @@
+     final_class_jar_name = ctx.label.name + "_migrated/" + ctx.label.name + "_final_resources.jar"
+
+     compile_class_jar = ctx.actions.declare_file(nonfinal_class_jar_name)
+-    use_final_fields = not shrink_resource_cycles and not instruments and not use_r_package
+-    if use_final_fields:
+-        if build_java_with_final_resources:
+-            output_class_jar = compile_class_jar
+-        else:
+-            output_class_jar = ctx.actions.declare_file(final_class_jar_name)
++    # Check whether non-transitive R mode is active via either the Starlark
++    # flag or the native flag.
++    _native_link_res = (
++        ctx.fragments.android.link_library_resources
++        if hasattr(ctx.fragments.android, "link_library_resources")
++        else True
++    )
++    _link_res = (
++        _native_link_res and ctx.attr._link_library_resources[BuildSettingInfo].value
++        if hasattr(ctx.attr, "_link_library_resources")
++        else _native_link_res
++    )
++
++    if not _link_res:
++        # Non-transitive R mode: use GENERATE_BINARY_R with non-final fields.
++        # If any R class exceeds 64K constant pool, binary_r_class_too_large_fix
++        # in ResourceSymbols.java falls back to javac compilation automatically.
++        # Library R classes get FULL (transitive) symbols so pre-compiled AAR
++        # bytecode finds all expected fields at runtime.
++        output_class_jar = compile_class_jar
+         _busybox.generate_binary_r(
+             ctx,
+             out_class_jar = output_class_jar,
+             r_txt = r_txt,
+             manifest = processed_manifest,
+             package_for_r = java_package,
+-            final_fields = True,
++            final_fields = False,
+             use_r_package = use_r_package,
+             resources_nodes = depset(transitive = direct_resources_nodes + transitive_resources_nodes),
+             transitive_r_txts = transitive_r_txts,
+@@ -816,23 +832,44 @@
+             host_javabase = host_javabase,
+         )
+     else:
+-        output_class_jar = compile_class_jar
++        use_final_fields = not shrink_resource_cycles and not instruments and not use_r_package
++        if use_final_fields:
++            if build_java_with_final_resources:
++                output_class_jar = compile_class_jar
++            else:
++                output_class_jar = ctx.actions.declare_file(final_class_jar_name)
++            _busybox.generate_binary_r(
++                ctx,
++                out_class_jar = output_class_jar,
++                r_txt = r_txt,
++                manifest = processed_manifest,
++                package_for_r = java_package,
++                final_fields = True,
++                use_r_package = use_r_package,
++                resources_nodes = depset(transitive = direct_resources_nodes + transitive_resources_nodes),
++                transitive_r_txts = transitive_r_txts,
++                transitive_manifests = transitive_manifests,
++                busybox = busybox,
++                host_javabase = host_javabase,
++            )
++        else:
++            output_class_jar = compile_class_jar
+
+-    if not use_final_fields or not build_java_with_final_resources:
+-        _busybox.generate_binary_r(
+-            ctx,
+-            out_class_jar = compile_class_jar,
+-            r_txt = r_txt,
+-            manifest = processed_manifest,
+-            package_for_r = java_package,
+-            final_fields = False,
+-            use_r_package = use_r_package,
+-            resources_nodes = depset(transitive = direct_resources_nodes + transitive_resources_nodes),
+-            transitive_r_txts = transitive_r_txts,
+-            transitive_manifests = transitive_manifests,
+-            busybox = busybox,
+-            host_javabase = host_javabase,
+-        )
++        if not use_final_fields or not build_java_with_final_resources:
++            _busybox.generate_binary_r(
++                ctx,
++                out_class_jar = compile_class_jar,
++                r_txt = r_txt,
++                manifest = processed_manifest,
++                package_for_r = java_package,
++                final_fields = False,
++                use_r_package = use_r_package,
++                resources_nodes = depset(transitive = direct_resources_nodes + transitive_resources_nodes),
++                transitive_r_txts = transitive_r_txts,
++                transitive_manifests = transitive_manifests,
++                busybox = busybox,
++                host_javabase = host_javabase,
++            )
+     packaged_resources_ctx[_PACKAGED_CLASS_JAR] = output_class_jar
+
+     java_info = JavaInfo(
+@@ -1303,8 +1340,11 @@
+         _STARLARK_PROCESSED_MANIFEST: None,
+         _STARLARK_R_TXT: None,
+         _STARLARK_PROCESSED_RESOURCES: [],
++        _PACKAGE_AWARE_R_TXT: None,
+     }
+
++    out_package_aware_r_txt = None
++
+     if resource_files and not manifest:
+         _log.error(_MANIFEST_MISSING_ERROR % ctx.label)
+
+@@ -1318,6 +1358,7 @@
+     transitive_resources_files = []
+     transitive_manifests = []
+     transitive_r_txts = []
++    transitive_package_aware_r_txts = []
+     packages_to_r_txts_depset = dict()
+     transitive_resource_apks = []
+
+@@ -1334,6 +1375,8 @@
+         transitive_resources_files.append(dep.transitive_resource_files)
+         transitive_manifests.append(dep.transitive_manifests)
+         transitive_r_txts.append(dep.transitive_r_txts)
++        if hasattr(dep, "transitive_package_aware_r_txts") and dep.transitive_package_aware_r_txts:
++            transitive_package_aware_r_txts.append(dep.transitive_package_aware_r_txts)
+         for pkg, r_txts in dep.packages_to_r_txts.items():
+             packages_to_r_txts_depset.setdefault(pkg, []).append(r_txts)
+         transitive_resource_apks.append(dep.transitive_resource_apks)
+@@ -1470,8 +1513,19 @@
+         )
+
+-        _should_link = (
+-            not hasattr(ctx.attr, "_link_library_resources") or
+-            ctx.attr._link_library_resources[BuildSettingInfo].value
+-        )
++        _native_should_link = (
++            ctx.fragments.android.link_library_resources
++            if hasattr(ctx.fragments.android, "link_library_resources")
++            else True
++        )
++        _should_link = (
++            _native_should_link and ctx.attr._link_library_resources[BuildSettingInfo].value
++            if hasattr(ctx.attr, "_link_library_resources")
++            else _native_should_link
++        )
++        _use_package_aware_rtxt = (
++            ctx.fragments.android.use_package_aware_rtxt
++            if hasattr(ctx.fragments.android, "use_package_aware_rtxt")
++            else False
++        )
+
+         merged_assets = ctx.actions.declare_file(ctx.label.name + "_files/assets.zip")
+@@ -1560,26 +1614,32 @@
+         out_aapt2_r_txt = ctx.actions.declare_file(
+             ctx.label.name + "_symbols/R.aapt2.txt",
+         )
++        out_package_aware_r_txt = ctx.actions.declare_file(
++            ctx.label.name + "_symbols/package_aware_R.txt",
++        ) if _use_package_aware_rtxt else None
+         _busybox.merge_compiled(
+             ctx,
+             out_class_jar = out_class_jar,
+             out_manifest = processed_manifest,
+             out_aapt2_r_txt = out_aapt2_r_txt,
++            out_package_aware_r_txt = out_package_aware_r_txt,
+             java_package = java_package,
+             manifest = manifest,
+             compiled_resources = compiled_resources,
+-            direct_resources_nodes =
+-                depset(transitive = direct_resources_nodes, order = "postorder"),
++            direct_resources_nodes = depset(
++                transitive = direct_resources_nodes if _should_link else [],
++                order = "postorder",
++            ),
+             transitive_resources_nodes = depset(
+-                transitive = transitive_resources_nodes,
++                transitive = transitive_resources_nodes if _should_link else [],
+                 order = "postorder",
+             ),
+             direct_compiled_resources = depset(
+-                transitive = direct_compiled_resources,
++                transitive = direct_compiled_resources if _should_link else [],
+                 order = "postorder",
+             ),
+             transitive_compiled_resources = depset(
+-                transitive = transitive_compiled_resources,
++                transitive = transitive_compiled_resources if _should_link else [],
+                 order = "postorder",
+             ),
+             android_jar = android_jar,
+@@ -1587,6 +1647,7 @@
+             host_javabase = host_javabase,
+         )
+         resources_ctx[_MERGED_MANIFEST] = processed_manifest
++        resources_ctx[_PACKAGE_AWARE_R_TXT] = out_package_aware_r_txt
+
+         if _should_link:
+             apk = ctx.actions.declare_file(ctx.label.name + "_files/library.ap_")
+@@ -1611,7 +1672,8 @@
+                 host_javabase = host_javabase,
+                 resource_apks = resource_apks,
+             )
+-            resources_ctx[_RESOURCES_APK] = apk
++            if not hasattr(ctx.fragments.android, "output_library_linked_resources") or ctx.fragments.android.output_library_linked_resources:
++                resources_ctx[_RESOURCES_APK] = apk
+
+             java_info = JavaInfo(
+                 output_jar = out_class_jar,
+@@ -1716,6 +1778,7 @@
+                 order = "postorder",
+             ),
+             packages_to_r_txts = packages_to_r_txts,
++            transitive_package_aware_r_txts = depset(),
+             transitive_resource_apks = depset(
+                 resource_apks,
+                 transitive = transitive_resource_apks,
+@@ -1790,6 +1853,11 @@
+                 order = "postorder",
+             ),
+             packages_to_r_txts = packages_to_r_txts,
++            transitive_package_aware_r_txts = depset(
++                [out_package_aware_r_txt] if out_package_aware_r_txt else [],
++                transitive = transitive_package_aware_r_txts,
++                order = "postorder",
++            ),
+             transitive_resource_apks = depset(
+                 resource_apks,
+                 transitive = transitive_resource_apks,
