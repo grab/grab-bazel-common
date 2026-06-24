@@ -16,7 +16,7 @@
      },
  )
  
-@@ -795,19 +797,28 @@
+@@ -795,19 +797,33 @@
      final_class_jar_name = ctx.label.name + "_migrated/" + ctx.label.name + "_final_resources.jar"
  
      compile_class_jar = ctx.actions.declare_file(nonfinal_class_jar_name)
@@ -28,10 +28,15 @@
 -            output_class_jar = ctx.actions.declare_file(final_class_jar_name)
 +    # Check whether non-transitive R mode is active via either the Starlark
 +    # flag or the native flag.
++    _native_link_res = (
++        ctx.fragments.android.link_library_resources
++        if hasattr(ctx.fragments.android, "link_library_resources")
++        else True
++    )
 +    _link_res = (
-+        ctx.attr._link_library_resources[BuildSettingInfo].value
++        _native_link_res and ctx.attr._link_library_resources[BuildSettingInfo].value
 +        if hasattr(ctx.attr, "_link_library_resources")
-+        else (ctx.fragments.android.link_library_resources if hasattr(ctx.fragments.android, "link_library_resources") else True)
++        else _native_link_res
 +    )
 +
 +    if not _link_res:
@@ -52,7 +57,7 @@
              use_r_package = use_r_package,
              resources_nodes = depset(transitive = direct_resources_nodes + transitive_resources_nodes),
              transitive_r_txts = transitive_r_txts,
-@@ -816,23 +827,44 @@
+@@ -816,23 +832,44 @@
              host_javabase = host_javabase,
          )
      else:
@@ -113,7 +118,7 @@
      packaged_resources_ctx[_PACKAGED_CLASS_JAR] = output_class_jar
  
      java_info = JavaInfo(
-@@ -1303,8 +1335,11 @@
+@@ -1303,8 +1340,11 @@
          _STARLARK_PROCESSED_MANIFEST: None,
          _STARLARK_R_TXT: None,
          _STARLARK_PROCESSED_RESOURCES: [],
@@ -125,7 +130,7 @@
      if resource_files and not manifest:
          _log.error(_MANIFEST_MISSING_ERROR % ctx.label)
  
-@@ -1318,6 +1353,7 @@
+@@ -1318,6 +1358,7 @@
      transitive_resources_files = []
      transitive_manifests = []
      transitive_r_txts = []
@@ -133,7 +138,7 @@
      packages_to_r_txts_depset = dict()
      transitive_resource_apks = []
  
-@@ -1334,6 +1370,8 @@
+@@ -1334,6 +1375,8 @@
          transitive_resources_files.append(dep.transitive_resource_files)
          transitive_manifests.append(dep.transitive_manifests)
          transitive_r_txts.append(dep.transitive_r_txts)
@@ -142,24 +147,37 @@
          for pkg, r_txts in dep.packages_to_r_txts.items():
              packages_to_r_txts_depset.setdefault(pkg, []).append(r_txts)
          transitive_resource_apks.append(dep.transitive_resource_apks)
-@@ -1470,8 +1508,9 @@
+@@ -1470,8 +1513,19 @@
          )
  
-         _should_link = (
+-        _should_link = (
 -            not hasattr(ctx.attr, "_link_library_resources") or
-             ctx.attr._link_library_resources[BuildSettingInfo].value
+-            ctx.attr._link_library_resources[BuildSettingInfo].value
+-        )
++        _native_should_link = (
++            ctx.fragments.android.link_library_resources
++            if hasattr(ctx.fragments.android, "link_library_resources")
++            else True
++        )
++        _should_link = (
++            _native_should_link and ctx.attr._link_library_resources[BuildSettingInfo].value
 +            if hasattr(ctx.attr, "_link_library_resources")
-+            else ctx.fragments.android.link_library_resources
-         )
++            else _native_should_link
++        )
++        _use_package_aware_rtxt = (
++            ctx.fragments.android.use_package_aware_rtxt
++            if hasattr(ctx.fragments.android, "use_package_aware_rtxt")
++            else False
++        )
  
          merged_assets = ctx.actions.declare_file(ctx.label.name + "_files/assets.zip")
-@@ -1560,26 +1599,32 @@
+@@ -1560,26 +1614,32 @@
          out_aapt2_r_txt = ctx.actions.declare_file(
              ctx.label.name + "_symbols/R.aapt2.txt",
          )
 +        out_package_aware_r_txt = ctx.actions.declare_file(
 +            ctx.label.name + "_symbols/package_aware_R.txt",
-+        ) if not _should_link else None
++        ) if _use_package_aware_rtxt else None
          _busybox.merge_compiled(
              ctx,
              out_class_jar = out_class_jar,
@@ -191,7 +209,7 @@
                  order = "postorder",
              ),
              android_jar = android_jar,
-@@ -1587,6 +1632,7 @@
+@@ -1587,6 +1647,7 @@
              host_javabase = host_javabase,
          )
          resources_ctx[_MERGED_MANIFEST] = processed_manifest
@@ -199,7 +217,7 @@
  
          if _should_link:
              apk = ctx.actions.declare_file(ctx.label.name + "_files/library.ap_")
-@@ -1611,7 +1657,8 @@
+@@ -1611,7 +1672,8 @@
                  host_javabase = host_javabase,
                  resource_apks = resource_apks,
              )
@@ -209,7 +227,7 @@
  
              java_info = JavaInfo(
                  output_jar = out_class_jar,
-@@ -1716,6 +1763,7 @@
+@@ -1716,6 +1778,7 @@
                  order = "postorder",
              ),
              packages_to_r_txts = packages_to_r_txts,
@@ -217,7 +235,7 @@
              transitive_resource_apks = depset(
                  resource_apks,
                  transitive = transitive_resource_apks,
-@@ -1790,6 +1838,11 @@
+@@ -1790,6 +1853,11 @@
                  order = "postorder",
              ),
              packages_to_r_txts = packages_to_r_txts,

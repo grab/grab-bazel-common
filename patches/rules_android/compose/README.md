@@ -8,19 +8,18 @@ native Android customization for this: `--androidx_compose_ui_version=<version>`
 created `META-INF/androidx.compose.ui_ui.version` during APK assembly.
 
 In Bazel 8, APK assembly lives in rules_android Starlark, so this behavior needs
-to live with the externalized Android rules rather than in Bazel core.
+rules_android to consume the native Android configuration fragment instead of
+being implemented directly in Bazel core.
 
-- `inject_compose_ui_version.patch` — adds a rules_android string build setting
-  at `//rules/flags:androidx_compose_ui_version`, wires it into
-  `android_binary`, and injects `META-INF/androidx.compose.ui_ui.version` into
-  the final APK when the value is non-empty.
+- `inject_compose_ui_version.patch` — injects
+  `META-INF/androidx.compose.ui_ui.version` into the final APK when the native
+  `--androidx_compose_ui_version=<version>` value is non-empty. It also keeps a
+  transitional rules_android string build setting at
+  `//rules/flags:androidx_compose_ui_version` as a fallback for repos that have
+  not rebuilt Bazel with the native flag yet.
 
-Consumers that want the old Bazel 7 command-line spelling can add:
+Consumers should use the Bazel 7 command-line spelling:
 
 ```bazelrc
-common --flag_alias=androidx_compose_ui_version=@rules_android//rules/flags:androidx_compose_ui_version
 common --androidx_compose_ui_version=1.8.3
 ```
-
-TODO: Wire an equivalent Bazel-level flag again so consumers can eventually
-remove the `--flag_alias` bridge and keep only the old Bazel 7 flag spelling.

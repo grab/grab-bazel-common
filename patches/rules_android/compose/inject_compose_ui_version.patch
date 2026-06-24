@@ -25,8 +25,13 @@ diff --git a/rules/apk_packaging.bzl b/rules/apk_packaging.bzl
  _PROVIDERS = "providers"
  _IMPLICIT_OUTPUTS = "implicit_outputs"
  _OUTPUT_GROUPS = "output_groups"
-@@ -255,3 +258,17 @@ def _build_apk(
-+    compose_ui_version = (
+@@ -255,3 +258,22 @@ def _build_apk(
++    native_compose_ui_version = (
++        ctx.fragments.android.androidx_compose_ui_version
++        if hasattr(ctx.fragments.android, "androidx_compose_ui_version")
++        else ""
++    )
++    compose_ui_version = native_compose_ui_version or (
 +        ctx.attr._androidx_compose_ui_version[BuildSettingInfo].value
 +        if hasattr(ctx.attr, "_androidx_compose_ui_version")
 +        else ""
