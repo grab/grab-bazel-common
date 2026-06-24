@@ -1,0 +1,175 @@
+--- a/src/tools/java/com/google/devtools/build/android/resources/ResourceSymbols.java	2026-03-22 18:02:31.371129817 +0700
++++ b/src/tools/java/com/google/devtools/build/android/resources/ResourceSymbols.java	2026-03-22 19:29:47.131789645 +0700
+@@ -228,13 +228,168 @@
+             finalFields,
+             /* annotateTransitiveFields= */ false,
+             rPackageId);
++
++    // Track packages that fail ASM due to 64K limit
++    java.util.List<String> oversizedPackages = new java.util.ArrayList<>();
++
+     for (String packageName : libMap.keySet()) {
+-      classWriter.write(packageName, ResourceSymbols.merge(libMap.get(packageName)).values);
++      try {
++        // Per-package filtering: only this package's own field names are emitted.
++        // RClassGenerator.write(String, FieldInitializers) resolves real aapt2-
++        // linked resource IDs from classWriter's initializers (the full merged R.txt)
++        // via FieldInitializers.filter() — the values in symbolsToWrite are only used
++        // as a name filter, never as values — so each field carries the real aapt2 ID,
++        // not a placeholder zero.
++        classWriter.write(packageName, ResourceSymbols.merge(libMap.get(packageName)).values);
++      } catch (org.objectweb.asm.ClassTooLargeException e) {
++        oversizedPackages.add(packageName);
++      }
+     }
+     if (appPackageName != null) {
+-      // Unlike the R.java generation, we also write the app's R.class file so that the class
+-      // jar file can be complete (aapt doesn't generate it for us).
+-      classWriter.write(appPackageName);
++      try {
++        classWriter.write(appPackageName);
++      } catch (org.objectweb.asm.ClassTooLargeException e) {
++        oversizedPackages.add(appPackageName);
++      }
+     }
++
++    // For packages that exceeded 64K, fall back to generating one .java
++    // file per inner class (R$id.java, R$string.java, etc.) and compiling
++    // each independently. This avoids the 64K constant pool limit per class.
++    if (!oversizedPackages.isEmpty()) {
++      java.util.logging.Logger.getLogger(ResourceSymbols.class.getName())
++          .warning("R classes too large for ASM in " + oversizedPackages.size()
++              + " package(s), falling back to split javac: " + oversizedPackages);
++      Path srcDir = classesOut.resolveSibling("r_java_src");
++      for (String packageName : oversizedPackages) {
++        writeSplitRJava(packageName, srcDir, values, finalFields);
++      }
++      // Compile all generated .java files
++      java.util.List<String> javaSources = new java.util.ArrayList<>();
++      try (java.util.stream.Stream<Path> walk = java.nio.file.Files.walk(srcDir)) {
++        walk.filter(p -> p.toString().endsWith(".java"))
++            .forEach(p -> javaSources.add(p.toString()));
++      }
++      if (!javaSources.isEmpty()) {
++        javax.tools.JavaCompiler compiler = javax.tools.ToolProvider.getSystemJavaCompiler();
++        if (compiler == null) {
++          throw new IOException("System Java compiler not available for R class fallback");
++        }
++        java.util.List<String> options = java.util.Arrays.asList(
++            "-source", "8", "-target", "8",
++            "-d", classesOut.toString()
++        );
++        javax.tools.StandardJavaFileManager fileManager =
++            compiler.getStandardFileManager(null, null, null);
++        Iterable<? extends javax.tools.JavaFileObject> compilationUnits =
++            fileManager.getJavaFileObjectsFromStrings(javaSources);
++        javax.tools.JavaCompiler.CompilationTask task =
++            compiler.getTask(null, fileManager, null, options, null, compilationUnits);
++        if (!task.call()) {
++          throw new IOException("Failed to compile split R.java files with javac");
++        }
++        fileManager.close();
++      }
++    }
+   }
++
++  /**
++   * Writes separate .java files for each R inner class to avoid the 64K
++   * constant pool limit. Produces:
++   *   R.java       - outer class with inner class references
++   *   R_id.java    - public class with id fields (not an inner class)
++   *   R_string.java - public class with string fields
++   *   etc.
++   *
++   * The R.java outer class has:
++   *   public static final class id extends R_id {}
++   * This way existing code referencing R.id.field_name still works —
++   * the field is inherited from R_id.
++   */
++  private static void writeSplitRJava(
++      String packageName,
++      Path srcDir,
++      FieldInitializers allValues,
++      boolean finalFields)
++      throws IOException {
++    String packageDir = packageName.replace('.', '/');
++    Path packagePath = srcDir.resolve(packageDir);
++    java.nio.file.Files.createDirectories(packagePath);
++
++    // Collect resource types that have entries
++    java.util.List<Map.Entry<com.android.resources.ResourceType, Collection<FieldInitializer>>>
++        entries = new java.util.ArrayList<>();
++    for (Map.Entry<com.android.resources.ResourceType, Collection<FieldInitializer>> entry : allValues) {
++      entries.add(entry);
++    }
++
++    // Max fields per class to stay under 64K constant pool limit.
++    // Each field needs ~3-5 constant pool entries; 10000 fields ≈ 40K entries.
++    int MAX_FIELDS_PER_CLASS = 10000;
++
++    // Write split files per resource type, chunking large types
++    java.util.Map<String, java.util.List<String>> typeToChunkClasses = new java.util.LinkedHashMap<>();
++    for (Map.Entry<com.android.resources.ResourceType, Collection<FieldInitializer>> entry : entries) {
++      String typeName = entry.getKey().getName();
++      java.util.List<FieldInitializer> fields = new java.util.ArrayList<>(entry.getValue());
++      java.util.List<String> chunkClasses = new java.util.ArrayList<>();
++
++      if (fields.size() <= MAX_FIELDS_PER_CLASS) {
++        // Single class for this type
++        String className = "R_" + typeName;
++        chunkClasses.add(className);
++        Path javaFile = packagePath.resolve(className + ".java");
++        try (java.io.BufferedWriter writer = java.nio.file.Files.newBufferedWriter(javaFile, java.nio.charset.StandardCharsets.UTF_8)) {
++          writer.write(String.format("package %s;\n", packageName));
++          writer.write(String.format("public class %s {\n", className));
++          for (FieldInitializer fieldInit : fields) {
++            fieldInit.writeInitSource(writer, finalFields);
++          }
++          writer.write("}\n");
++        }
++      } else {
++        // Split into chunks
++        int chunkIndex = 0;
++        for (int i = 0; i < fields.size(); i += MAX_FIELDS_PER_CLASS) {
++          int end = Math.min(i + MAX_FIELDS_PER_CLASS, fields.size());
++          String className = "R_" + typeName + "_" + chunkIndex;
++          chunkClasses.add(className);
++          Path javaFile = packagePath.resolve(className + ".java");
++          try (java.io.BufferedWriter writer = java.nio.file.Files.newBufferedWriter(javaFile, java.nio.charset.StandardCharsets.UTF_8)) {
++            writer.write(String.format("package %s;\n", packageName));
++            if (chunkIndex == 0) {
++              // First chunk is the base class
++              writer.write(String.format("public class %s {\n", className));
++            } else {
++              // Subsequent chunks extend the previous one (inheritance chain)
++              String prevClassName = "R_" + typeName + "_" + (chunkIndex - 1);
++              writer.write(String.format("public class %s extends %s {\n", className, prevClassName));
++            }
++            for (int j = i; j < end; j++) {
++              fields.get(j).writeInitSource(writer, finalFields);
++            }
++            writer.write("}\n");
++          }
++          chunkIndex++;
++        }
++      }
++      typeToChunkClasses.put(typeName, chunkClasses);
++    }
++
++    // Write R.java — each inner class extends the last chunk (which
++    // inherits all previous chunks via the chain)
++    Path rJavaFile = packagePath.resolve("R.java");
++    try (java.io.BufferedWriter writer = java.nio.file.Files.newBufferedWriter(rJavaFile, java.nio.charset.StandardCharsets.UTF_8)) {
++      writer.write(String.format("package %s;\n", packageName));
++      writer.write("public final class R {\n");
++      for (Map.Entry<String, java.util.List<String>> entry : typeToChunkClasses.entrySet()) {
++        String typeName = entry.getKey();
++        java.util.List<String> chunks = entry.getValue();
++        // Extend the last chunk — it inherits all fields from the chain
++        String lastChunk = chunks.get(chunks.size() - 1);
++        writer.write(String.format("    public static final class %s extends %s {}\n", typeName, lastChunk));
++      }
++      writer.write("}\n");
++    }
++  }
+ }
