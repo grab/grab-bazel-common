@@ -4,7 +4,7 @@ Making aar_import actually work for our SDKs. Default aar_import is too minimal,
 
 - `aar_import_export_r_java.patch` — always export R java (was gated by an ACL). Consumers of AAR SDKs need transitive R access to compile.
 - `aar_import_transitive_r_txt.patch` — add R-generation-only transitive symbol aliases for aar_import. Pre-compiled AAR bytecode may reference dependency R fields at runtime, but we must not push those deps through `merge_compiled` because some Maven AARs do not have `symbols.zip`.
-- `fix_aar_import_databinding_info.patch` — extract `data-binding/` dir + manifest package from AAR, propagate via DataBindingV2Info. Without this, consumers with databinding can't find AAR `@BindingAdapter`s (like `android:onClick`), fails with "Cannot find a setter".
+- `fix_aar_import_databinding_info.patch` — extracts `data-binding/` metadata and the manifest package from AARs, then propagates them through `DataBindingV2Info`. Without this, consumers with databinding cannot find AAR `@BindingAdapter`s, for example `android:onClick`, and fail with "Cannot find a setter". The extraction is folded into `AarResourcesExtractor` instead of separate unzip shell actions, so resource/assets/databinding extraction can run through the existing JSON worker path with multiplex worker metadata. The action must use `--flagfile` because Bazel's worker strategy only accepts worker actions with a single flagfile argument. The JSON worker wrapper also echoes Bazel's optional `requestId`, which is required when the action runs as a multiplex worker.
 - `native_databinding_package_info.patch` — bridge for `--android_databinding_package_info` native flag so aar_import package can be overridden at build time.
 
 ## `aar_import_transitive_r_txt.patch`
