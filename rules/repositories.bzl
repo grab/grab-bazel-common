@@ -40,6 +40,7 @@ def _android():
             "@grab_bazel_common//patches/rules_android/desugar:skip_binary_r_jar_desugaring_impl.patch",
             "@grab_bazel_common//patches/rules_android/desugar:skip_binary_r_jar_desugaring_flags.patch",
             "@grab_bazel_common//patches/rules_android/compose:inject_compose_ui_version.patch",
+            "@grab_bazel_common//patches/rules_android/infra:resource_extractor_without_deploy_jar.patch",
             "@grab_bazel_common//patches/rules_android/resources:fix_resource_priority_ordering.patch",
             "@grab_bazel_common//patches/rules_android/aar_import:fix_aar_import_databinding_info.patch",
             "@grab_bazel_common//patches/rules_android/databinding:fix_databinding_providers.patch",

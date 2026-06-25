@@ -1,0 +1,121 @@
+diff --git a/rules/android_binary/attrs.bzl b/rules/android_binary/attrs.bzl
+--- a/rules/android_binary/attrs.bzl
++++ b/rules/android_binary/attrs.bzl
+@@ -252,6 +252,9 @@ ATTRS = _attrs.replace(
+             _androidx_compose_ui_version = attr.label(
+                 default = "//rules/flags:androidx_compose_ui_version",
+             ),
++            _resource_extractor_without_deploy_jar = attr.label(
++                default = "//rules/flags:resource_extractor_without_deploy_jar",
++            ),
+             _rewrite_resources_through_optimizer = attr.bool(
+                 default = False,
+                 doc = """
+diff --git a/rules/android_binary/impl.bzl b/rules/android_binary/impl.bzl
+--- a/rules/android_binary/impl.bzl
++++ b/rules/android_binary/impl.bzl
+@@ -429,14 +429,57 @@ def _process_dex(ctx, validation_ctx, packaged_resources_ctx, manifest_ctx, deplo
+     else:
+         final_classes_dex_zip = classes_dex_zip
+         final_proguard_output_map = postprocessing_output_map if postprocessing_output_map else proguard_output_map
++    java_resource_jar = binary_jar if ctx.fragments.android.get_java_resources_from_optimized_jar else deploy_jar
++    if _resource_extractor_without_deploy_jar(ctx) and not is_instrumentation(ctx):
++        java_resource_jar = _build_resource_zip_with_runtime_jars(ctx, deploy_ctx)
+
+     dex_info = AndroidDexInfo(
+         deploy_jar = deploy_jar,
+         filtered_deploy_jar = deploy_ctx.filtered_deploy_jar,
+         final_classes_dex_zip = final_classes_dex_zip,
+         final_proguard_output_map = final_proguard_output_map,
+-        java_resource_jar = binary_jar if ctx.fragments.android.get_java_resources_from_optimized_jar else deploy_jar,
++        java_resource_jar = java_resource_jar,
+     )
+     providers.append(AndroidPreDexJarInfo(pre_dex_jar = binary_jar))
+
+@@ -457,6 +500,39 @@ def _process_dex(ctx, validation_ctx, packaged_resources_ctx, manifest_ctx, deplo
+         ),
+     )
+
++def _resource_extractor_without_deploy_jar(ctx):
++    native_value = (
++        ctx.fragments.android.resource_extractor_without_deploy_jar
++        if hasattr(ctx.fragments.android, "resource_extractor_without_deploy_jar")
++        else False
++    )
++    starlark_value = (
++        ctx.attr._resource_extractor_without_deploy_jar[BuildSettingInfo].value
++        if hasattr(ctx.attr, "_resource_extractor_without_deploy_jar")
++        else False
++    )
++    return native_value or starlark_value
++
++def _build_resource_zip_with_runtime_jars(ctx, deploy_ctx):
++    java_resource_jar = ctx.actions.declare_file(ctx.label.name + "_files/java_resources.jar")
++
++    args = ctx.actions.args()
++    args.add("--output_resources", java_resource_jar)
++    args.add_all(deploy_ctx.runtime_jars_for_resource_extraction, before_each = "--input_jar")
++
++    ctx.actions.run(
++        executable = get_android_toolchain(ctx).shuffle_jars.files_to_run,
++        outputs = [java_resource_jar],
++        inputs = deploy_ctx.runtime_jars_for_resource_extraction,
++        arguments = [args],
++        mnemonic = "ResourceExtractorRuntime",
++        progress_message = "Extracting resources from runtime jars for %{label}",
++        use_default_shell_env = True,
++        toolchain = ANDROID_TOOLCHAIN_TYPE,
++    )
++    return java_resource_jar
++
+ def _process_deploy_jar(ctx, validation_ctx, stamp_ctx, manifest_ctx, packaged_resources_ctx, jvm_ctx, build_info_ctx, proto_ctx, **_unused_ctxs):
+     if validation_ctx.use_r8:
+         return ProviderInfo(
+@@ -560,6 +636,7 @@ def _process_deploy_jar(ctx, validation_ctx, stamp_ctx, manifest_ctx, packaged_re
+             binary_runtime_jars = binary_runtime_jars,
+             transitive_runtime_jars_for_archive = transitive_runtime_jars_for_archive,
+             deploy_jar = deploy_jar,
++            runtime_jars_for_resource_extraction = runtime_jars,
+             desugar_dict = desugar_dict,
+             filtered_deploy_jar = filtered_deploy_jar,
+             one_version_enforcement_output = one_version_enforcement_output,
+diff --git a/rules/flags/additional_flags.bzl b/rules/flags/additional_flags.bzl
+--- a/rules/flags/additional_flags.bzl
++++ b/rules/flags/additional_flags.bzl
+@@ -59,4 +59,14 @@ def additional_flags():
+         name = "androidx_compose_ui_version",
+         build_setting_default = "",
+         visibility = ["//visibility:public"],
+     )
++
++    # When true, android_binary extracts APK Java resources directly from
++    # runtime jars instead of the large, frequently changing *_deploy.jar. This
++    # mirrors Bazel 7's --experimental_resource_extractor_without_deploy_jar
++    # behavior.
++    bool_flag(
++        name = "resource_extractor_without_deploy_jar",
++        build_setting_default = False,
++        visibility = ["//visibility:public"],
++    )
+diff --git a/src/tools/java/com/google/devtools/build/android/ziputils/DexMapper.java b/src/tools/java/com/google/devtools/build/android/ziputils/DexMapper.java
+--- a/src/tools/java/com/google/devtools/build/android/ziputils/DexMapper.java
++++ b/src/tools/java/com/google/devtools/build/android/ziputils/DexMapper.java
+@@ -20,6 +20,8 @@ import com.google.common.base.Predicates;
+ import com.google.common.collect.ImmutableList;
+ import com.google.devtools.build.android.AndroidOptionsUtils;
++import java.nio.file.Files;
++import java.nio.file.Path;
+ import java.util.List;
+
+ /**
+@@ -43,6 +45,10 @@ public class DexMapper {
+     String resourceFile = options.outputResources;
+
+     try {
++      if (outputs.isEmpty()) {
++        final Path tmpFile = Files.createTempFile("tmp", ".jar");
++        outputs = ImmutableList.<String>builder().add(tmpFile.toString()).build();
++      }
+       // Always drop desugaring metadata, which we check elsewhere and don't want in final APKs
+       // (see b/65645388).
+       Predicate<String> inputFilter = Predicates.not(Predicates.equalTo("META-INF/desugar_deps"));
