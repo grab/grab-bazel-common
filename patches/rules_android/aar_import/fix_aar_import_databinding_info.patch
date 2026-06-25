@@ -1,83 +1,89 @@
 diff --git a/rules/aar_import/impl.bzl b/rules/aar_import/impl.bzl
-index 527c5a5..77ec637 100644
+index 527c5a5..725bf77 100644
 --- a/rules/aar_import/impl.bzl
 +++ b/rules/aar_import/impl.bzl
-@@ -14,5 +14,5 @@
+@@ -13,7 +13,7 @@
+ # limitations under the License.
  """Implementation."""
-
+ 
 -load("//providers:providers.bzl", "AndroidLintRulesInfo", "AndroidNativeLibsInfo")
 +load("//providers:providers.bzl", "AndroidLintRulesInfo", "AndroidNativeLibsInfo", "DataBindingV2Info")
  load(
      "//rules:acls.bzl",
-@@ -92,4 +92,56 @@ def extract_single_file(
-     )
-
-+def _extract_data_binding(ctx, aar, unzip_tool):
-+    """Extracts the data-binding directory from an AAR if present.
-+
-+    AARs compiled with data binding contain a 'data-binding/' directory with
-+    setter_store.json and br.bin files. These need to be propagated via
-+    DataBindingV2Info so that consuming android_library targets can find
-+    binding adapters (e.g. android:onClick -> setOnClickListener).
-+    """
-+    data_binding_dir = _create_aar_tree_artifact(ctx, "data-binding")
-+    ctx.actions.run_shell(
-+        tools = [unzip_tool],
-+        inputs = [aar],
-+        outputs = [data_binding_dir],
-+        command = """
-+            mkdir -p {out_dir}
-+            if {unzip} -l {aar} | grep -q 'data-binding/'; then
-+                {unzip} -q -j {aar} 'data-binding/*' -d {out_dir} 2>/dev/null || true
-+            fi
-+        """.format(
-+            unzip = unzip_tool.executable.path,
-+            aar = aar.path,
-+            out_dir = data_binding_dir.path,
-+        ),
-+        mnemonic = "AarDataBindingExtractor",
-+        progress_message = "Extracting data-binding info from %s" % aar.basename,
-+        toolchain = ANDROID_TOOLCHAIN_TYPE,
-+    )
-+    return data_binding_dir
-+
-+def _extract_db_package(ctx, aar, unzip_tool):
-+    """Extracts the Java package from an AAR's AndroidManifest.xml for data binding mapper registration."""
-+    pkg_file = create_aar_artifact(ctx, "db_package.txt")
-+    ctx.actions.run_shell(
-+        tools = [unzip_tool],
-+        inputs = [aar],
-+        outputs = [pkg_file],
-+        command = """
-+            if {unzip} -l {aar} 2>/dev/null | grep -q 'data-binding/'; then
-+                {unzip} -p {aar} AndroidManifest.xml 2>/dev/null | sed -n 's/.*package="\\([^"]*\\)".*/\\1/p' | head -1 > {out}
-+            fi
-+            [ -s {out} ] || touch {out}
-+        """.format(
-+            unzip = unzip_tool.executable.path,
-+            aar = aar.path,
-+            out = pkg_file.path,
-+        ),
-+        mnemonic = "AarDataBindingPkgExtract",
-+        progress_message = "Extracting data-binding package from %s" % aar.basename,
-+        toolchain = ANDROID_TOOLCHAIN_TYPE,
-+    )
-+    return pkg_file
-+
- def _extract_resources(
+     _acls = "acls",
+@@ -95,19 +95,36 @@ def _extract_resources(
          ctx,
-@@ -576,4 +628,43 @@ def impl(ctx):
+         out_resources_dir,
+         out_assets_dir,
++        out_data_binding_dir,
++        out_db_package_file,
+         aar,
+         aar_resources_extractor_tool):
+     args = ctx.actions.args()
+     args.add("--input_aar", aar)
+     args.add("--output_res_dir", out_resources_dir.path)
+     args.add("--output_assets_dir", out_assets_dir.path)
++    args.add("--output_databinding_dir", out_data_binding_dir.path)
++    args.add("--output_databinding_package_file", out_db_package_file.path)
++    args.set_param_file_format("multiline")
++    args.use_param_file("--flagfile=%s", use_always = True)
+     ctx.actions.run(
+         executable = aar_resources_extractor_tool,
+         arguments = [args],
+         inputs = [aar],
+-        outputs = [out_resources_dir, out_assets_dir],
++        outputs = [
++            out_resources_dir,
++            out_assets_dir,
++            out_data_binding_dir,
++            out_db_package_file,
++        ],
++        execution_requirements = {
++            "requires-worker-protocol": "json",
++            "supports-multiplex-workers": "1",
++            "supports-workers": "1",
++            "worker-key-mnemonic": "AarResourcesExtractor",
++        },
+         mnemonic = "AarResourcesExtractor",
+-        progress_message = "Extracting resources and assets from %s" % aar.basename,
++        progress_message = "Extracting resources, assets, and data-binding info from %s" % aar.basename,
+         toolchain = None,
+     )
+ 
+@@ -142,10 +157,14 @@ def _process_resources(
+     # Extract resources and assets, if they exist.
+     resources = _create_aar_tree_artifact(ctx, "resources")
+     assets = _create_aar_tree_artifact(ctx, "assets")
++    data_binding_dir = _create_aar_tree_artifact(ctx, "data-binding")
++    db_package_file = create_aar_artifact(ctx, "db_package.txt")
+     _extract_resources(
+         ctx,
+         resources,
+         assets,
++        data_binding_dir,
++        db_package_file,
+         aar,
+         aar_resources_extractor_tool,
+     )
+@@ -181,6 +200,9 @@ def _process_resources(
+ </manifest>
+ """ % package)
+ 
++    resources_ctx = dict(resources_ctx)
++    resources_ctx["data_binding_dir"] = data_binding_dir
++    resources_ctx["db_package_file"] = db_package_file
+     return struct(**resources_ctx)
+ 
+ def _extract_jars(
+@@ -575,6 +597,41 @@ def impl(ctx):
+     )
      providers.extend(lint_providers)
-
-+    # Extract data-binding metadata from the AAR and propagate it as
-+    # DataBindingV2Info so that consuming android_library targets with
-+    # enable_data_binding=True can find binding adapters (setter_store.json)
-+    # from AAR dependencies (e.g. databinding_adapters).
-+    # Without this, ProcessDataBinding AP cannot find @BindingAdapter definitions
-+    # that are only available in AARs (e.g. android:onClick -> setOnClickListener),
-+    # causing "Cannot find a setter" errors for lambda expressions.
-+    data_binding_dir = _extract_data_binding(ctx, aar, unzip_tool)
-+    db_package_file = _extract_db_package(ctx, aar, unzip_tool)
+ 
++    # Propagate AAR data-binding metadata so consuming android_library targets
++    # with enable_data_binding=True can find @BindingAdapter definitions from
++    # AAR dependencies.
++    data_binding_dir = resources_ctx.data_binding_dir
++    db_package_file = resources_ctx.db_package_file
 +    db_dep_infos = _utils.collect_providers(
 +        DataBindingV2Info,
 +        ctx.attr.deps,
@@ -110,3 +116,192 @@ index 527c5a5..77ec637 100644
 +
      validation_outputs.append(_validate_rule(
          ctx,
+         aar = aar,
+diff --git a/tools/android/aar_resources_extractor.py b/tools/android/aar_resources_extractor.py
+index 0319e98..571d372 100644
+--- a/tools/android/aar_resources_extractor.py
++++ b/tools/android/aar_resources_extractor.py
+@@ -23,6 +23,7 @@ In the future, this script may be extended to also extract assets.
+ """
+ 
+ import os
++import re
+ import zipfile
+ 
+ from absl import app
+@@ -42,6 +43,11 @@ flags.DEFINE_string("output_databinding_br_dir", None,
+                     "Output directory for databinding br files")
+ flags.DEFINE_string("output_databinding_setter_store_dir", None,
+                     "Output directory for databinding setter_store.json files")
++flags.DEFINE_string("output_databinding_dir", None,
++                    "Output directory for all flattened data-binding files")
++flags.DEFINE_string("output_databinding_package_file", None,
++                    "Output file for the AAR manifest package when data-binding "
++                    "metadata is present")
+ 
+ 
+ def ExtractResources(aar, output_res_dir):
+@@ -83,6 +89,39 @@ def ExtractDatabinding(aar, file_suffix, output_databinding_dir):
+       ExtractOneFile(aar, name, output_databinding_dir_abs)
+ 
+ 
++def ExtractFlattenedDatabinding(aar, output_databinding_dir):
++  """Extracts all data-binding metadata files from an `aar`, flattening names."""
++  aar_contains_no_databinding = True
++  output_databinding_dir_abs = os.path.abspath(output_databinding_dir)
++  for name in aar.namelist():
++    if name.startswith("data-binding/") and not name.endswith("/"):
++      WriteFileWithJunctions(
++          os.path.join(output_databinding_dir_abs, os.path.basename(name)),
++          aar.read(name))
++      aar_contains_no_databinding = False
++  if aar_contains_no_databinding:
++    EnsureDir(output_databinding_dir_abs)
++
++
++def ExtractDatabindingPackage(aar, output_package_file):
++  """Writes the AAR manifest package when data-binding metadata is present."""
++  package_name = b""
++  if any(name.startswith("data-binding/") for name in aar.namelist()):
++    try:
++      manifest = aar.read("AndroidManifest.xml").decode("utf-8", "ignore")
++      match = re.search(r'package="([^"]*)"', manifest)
++      if match:
++        package_name = match.group(1).encode("utf-8")
++    except KeyError:
++      package_name = b""
++  WriteFileWithJunctions(output_package_file, package_name)
++
++
++def EnsureDir(dirname):
++  if not os.path.exists(dirname):
++    os.makedirs(dirname)
++
++
+ def WriteFileWithJunctions(filename, content):
+   """Writes file including creating any junctions or directories necessary."""
+   def _WriteFile(filename):
+@@ -98,7 +137,7 @@ def WriteFileWithJunctions(filename, content):
+       # `filename` would no longer be valid.
+       _WriteFile(filename)
+   else:
+-    os.makedirs(os.path.dirname(filename))
++    EnsureDir(os.path.dirname(filename))
+     _WriteFile(filename)
+ 
+ 
+@@ -141,6 +180,10 @@ def main(unused_argv):
+     if FLAGS.output_databinding_setter_store_dir is not None:
+       ExtractDatabinding(aar, "setter_store.json",
+                          FLAGS.output_databinding_setter_store_dir)
++    if FLAGS.output_databinding_dir is not None:
++      ExtractFlattenedDatabinding(aar, FLAGS.output_databinding_dir)
++    if FLAGS.output_databinding_package_file is not None:
++      ExtractDatabindingPackage(aar, FLAGS.output_databinding_package_file)
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/tools/android/aar_resources_extractor_test.py b/tools/android/aar_resources_extractor_test.py
+index 8c50816..d6df5b1 100644
+--- a/tools/android/aar_resources_extractor_test.py
++++ b/tools/android/aar_resources_extractor_test.py
+@@ -130,6 +130,66 @@ class AarResourcesExtractorTest(unittest.TestCase):
+     with open("out_dir/setter_store/" + setter_store_filepath, "r") as f:
+       self.assertEqual("setter store data", f.read())
+ 
++  def testFlattenedDatabindingAndPackage(self):
++    aar = zipfile.ZipFile(io.BytesIO(), "w")
++
++    br_filepath = (
++        "data-binding/com.android.databinding.library.baseAdapters--br.bin")
++    setter_store_filepath = (
++        "data-binding/" +
++        "com.android.databinding.library.baseAdapters--setter_store.json")
++
++    aar.writestr("AndroidManifest.xml",
++                 '<manifest package="com.android.databinding.library"/>')
++    aar.writestr(br_filepath, "br data")
++    aar.writestr(setter_store_filepath, "setter store data")
++
++    os.makedirs("out_dir")
++    aar_resources_extractor.ExtractFlattenedDatabinding(
++        aar, "out_dir/data-binding")
++    aar_resources_extractor.ExtractDatabindingPackage(
++        aar, "out_dir/db_package.txt")
++
++    expected_databinding = [
++        _HostPath(
++            "out_dir/data-binding/" +
++            "com.android.databinding.library.baseAdapters--br.bin"),
++        _HostPath(
++            "out_dir/data-binding/" +
++            "com.android.databinding.library.baseAdapters--setter_store.json"),
++        _HostPath("out_dir/db_package.txt"),
++    ]
++    self.assertCountEqual(expected_databinding, self.DirContents("out_dir"))
++
++    with open(
++        "out_dir/data-binding/" +
++        "com.android.databinding.library.baseAdapters--br.bin", "r") as f:
++      self.assertEqual("br data", f.read())
++
++    with open(
++        "out_dir/data-binding/" +
++        "com.android.databinding.library.baseAdapters--setter_store.json",
++        "r") as f:
++      self.assertEqual("setter store data", f.read())
++
++    with open("out_dir/db_package.txt", "r") as f:
++      self.assertEqual("com.android.databinding.library", f.read())
++
++  def testNoFlattenedDatabindingStillCreatesOutputs(self):
++    aar = zipfile.ZipFile(io.BytesIO(), "w")
++    aar.writestr("AndroidManifest.xml", '<manifest package="com.example"/>')
++    aar.writestr("res/values/values.xml", "some values")
++
++    os.makedirs("out_dir")
++    aar_resources_extractor.ExtractFlattenedDatabinding(
++        aar, "out_dir/data-binding")
++    aar_resources_extractor.ExtractDatabindingPackage(
++        aar, "out_dir/db_package.txt")
++
++    self.assertTrue(os.path.isdir("out_dir/data-binding"))
++    with open("out_dir/db_package.txt", "r") as f:
++      self.assertEqual("", f.read())
++
+ 
+ if __name__ == "__main__":
+   unittest.main()
+diff --git a/tools/android/json_worker_wrapper.py b/tools/android/json_worker_wrapper.py
+index ca8e9f7..d5420c7 100644
+--- a/tools/android/json_worker_wrapper.py
++++ b/tools/android/json_worker_wrapper.py
+@@ -37,23 +37,26 @@ def wrap_worker(flags, main, app_run):
+ 
+       args = [sys.argv[0]] + work_request["arguments"]
+       flags(args)
+-      _wrap_result(main, args)
++      _wrap_result(main, args, work_request.get("requestId"))
+   else:
+     flags(sys.argv)
+     app_run(main)
+ 
+ 
+-def _wrap_result(main, args):
++def _wrap_result(main, args, request_id=None):
+   """Execute main function and return worker response.
+ 
+   Args:
+     main: The main function to execute.
+     args: A non-empty list of the command line arguments including program name.
++    request_id: Optional multiplex worker request ID.
+   """
+   response = {
+       "exitCode": 0,
+       "output": "",
+   }
++  if request_id is not None:
++    response["requestId"] = request_id
+   main(args)
+   sys.stdout.write(json.dumps(response))
+   sys.stdout.flush()
