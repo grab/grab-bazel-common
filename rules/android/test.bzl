@@ -56,6 +56,7 @@ def android_unit_test(
         test_runtime_deps = [
             ":" + runtime_resources_name,
             "@grab_bazel_common//rules/android:mock_android_jar",
+            "@grab_bazel_common//rules/android/databinding:unit_test_mapper",
             "@maven//:org_jetbrains_kotlin_kotlin_reflect",
         ],
         resources = resources,

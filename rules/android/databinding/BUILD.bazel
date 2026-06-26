@@ -1,0 +1,13 @@
+java_library(
+    name = "unit_test_mapper",
+    srcs = [
+        "DataBinderMapperImpl.java",
+        "DataBindingComponent.java",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@grab_bazel_common//tools/android:android_sdk",
+        "@maven//:androidx_databinding_databinding_common",
+        "@maven//:androidx_databinding_databinding_runtime",
+    ],
+)
