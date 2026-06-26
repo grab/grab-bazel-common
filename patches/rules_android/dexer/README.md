@@ -46,3 +46,9 @@ Patches for the D8 dex archive builder.
   bytes, dropping `META-INF/metadata/synthetic-contexts.map` entries for that class. Which jar
   sees the cache miss depends on action scheduling, so two clean builds can produce different
   dex archive bytes and downstream cache keys even when the build inputs are identical.
+- `clean_dex_splitter_output_dir.patch` — clears the declared `dexsplits/<target>` tree
+  artifact before `DexFileSplitter` creates `N.shard.zip` files. The splitter opens shard zips
+  with `CREATE_NEW`; if a retry or interrupted build leaves stale shard files in the output tree,
+  a later run can fail near the end with `FileAlreadyExistsException`. Cleaning the declared
+  output directory before writing also prevents stale higher-numbered shard files from being
+  merged into the final APK.
