@@ -32,7 +32,7 @@ diff --git a/rules/android_binary/impl.bzl b/rules/android_binary/impl.bzl
      )
      providers.append(AndroidPreDexJarInfo(pre_dex_jar = binary_jar))
 
-@@ -457,6 +500,39 @@ def _process_dex(ctx, validation_ctx, packaged_resources_ctx, manifest_ctx, deplo
+@@ -457,6 +500,41 @@ def _process_dex(ctx, validation_ctx, packaged_resources_ctx, manifest_ctx, deplo
          ),
      )
 
@@ -53,6 +53,8 @@ diff --git a/rules/android_binary/impl.bzl b/rules/android_binary/impl.bzl
 +    java_resource_jar = ctx.actions.declare_file(ctx.label.name + "_files/java_resources.jar")
 +
 +    args = ctx.actions.args()
++    args.set_param_file_format("shell")
++    args.use_param_file("@%s", use_always = True)
 +    args.add("--output_resources", java_resource_jar)
 +    args.add_all(deploy_ctx.runtime_jars_for_resource_extraction, before_each = "--input_jar")
 +
@@ -100,20 +102,26 @@ diff --git a/rules/flags/additional_flags.bzl b/rules/flags/additional_flags.bzl
 diff --git a/src/tools/java/com/google/devtools/build/android/ziputils/DexMapper.java b/src/tools/java/com/google/devtools/build/android/ziputils/DexMapper.java
 --- a/src/tools/java/com/google/devtools/build/android/ziputils/DexMapper.java
 +++ b/src/tools/java/com/google/devtools/build/android/ziputils/DexMapper.java
-@@ -20,6 +20,8 @@ import com.google.common.base.Predicates;
+@@ -20,6 +20,9 @@ import com.google.common.base.Predicates;
  import com.google.common.collect.ImmutableList;
  import com.google.devtools.build.android.AndroidOptionsUtils;
 +import java.nio.file.Files;
 +import java.nio.file.Path;
++import java.nio.file.Paths;
  import java.util.List;
 
  /**
-@@ -43,6 +45,10 @@ public class DexMapper {
+@@ -43,6 +46,15 @@ public class DexMapper {
      String resourceFile = options.outputResources;
 
      try {
 +      if (outputs.isEmpty()) {
-+        final Path tmpFile = Files.createTempFile("tmp", ".jar");
++        final Path tmpDir = resourceFile != null ? Paths.get(resourceFile).getParent() : null;
++        final Path tmpFile =
++            tmpDir != null
++                ? Files.createTempFile(tmpDir, "tmp", ".jar")
++                : Files.createTempFile("tmp", ".jar");
++        tmpFile.toFile().deleteOnExit();
 +        outputs = ImmutableList.<String>builder().add(tmpFile.toString()).build();
 +      }
        // Always drop desugaring metadata, which we check elsewhere and don't want in final APKs
