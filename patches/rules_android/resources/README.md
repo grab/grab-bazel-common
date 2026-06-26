@@ -47,6 +47,8 @@ Selected root files: 0
 Misc resource pipeline fixes.
 
 - `android_resource_processor_bazel_paths.patch` — databinding needs absolute path for `resInput`. Default passes relative, AP chokes on it in the Bazel sandbox.
+- `disable_instrumentation_min_sdk_floor.patch` — match Bazel 7 instrumentation APK manifests by skipping rules_android's min-SDK floor bump for android_binary(instruments = ...), preventing an injected `<uses-sdk>`.
+- `disable_instrumentation_mergee_manifests.patch` — match Bazel 7's `--experimental_disable_instrumentation_manifest_merge` behavior by skipping dependency manifest mergees for instrumentation APKs while preserving resource packaging.
 - `fix_resource_priority_ordering.patch` — flip `preorder` → `postorder` on resource depsets and reverse dep iteration. aapt2 is last-wins for resource conflicts; this makes first-declared dep win (what BUILD authors expect — `deps = [a, b]` means a's resources beat b's).
 - `normalize_databinding_compiled_resources_timestamps.patch` — normalizes copied databinding processed resource file mtimes to `1980-01-01 00:00`. Without this, the compiled resources zip can differ across clean builds even when inputs are semantically identical, which then changes downstream action outputs/cache keys.
 - `canonicalize_manifest_merger_log_paths.patch` — strips absolute Bazel execroot prefixes from `manifest_merger_log.txt`. The merged manifest itself is stable, but the log is also an output artifact; without this, same-key `MergeManifests` actions can produce byte-different logs across clean builds with different output roots.
