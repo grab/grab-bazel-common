@@ -70,6 +70,7 @@ def _android():
             "@grab_bazel_common//patches/rules_android/package_aware_rtxt:fix_exports_package_aware_rtxt.patch",
             "@grab_bazel_common//patches/rules_android/aar_import:aar_import_transitive_r_txt.patch",
             "@grab_bazel_common//patches/rules_android/r_class_overflow:merge_primary_library_symbols.patch",
+            "@grab_bazel_common//patches/rules_android/non_transitive_r:nonzero_compile_r_for_aar_import_unit_tests.patch",
             "@grab_bazel_common//patches/rules_android/workers:gen_base_classes_worker_java.patch",
             "@grab_bazel_common//patches/rules_android/workers:gen_base_classes_worker_lib.patch",
             "@grab_bazel_common//patches/rules_android/workers:databinding_exec_worker_binary.patch",

@@ -3,5 +3,6 @@ exports_files([
     "fix_binary_r_class_generation.patch",
     "generate_binary_r_primary_only_busybox.patch",
     "generate_binary_r_primary_only_rclass.patch",
+    "nonzero_compile_r_for_aar_import_unit_tests.patch",
     "skip_library_resource_linking.patch",
 ])

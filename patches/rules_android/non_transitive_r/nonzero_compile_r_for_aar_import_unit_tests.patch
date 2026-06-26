@@ -1,0 +1,68 @@
+diff --git a/src/tools/java/com/google/devtools/build/android/RClassGeneratorAction.java b/src/tools/java/com/google/devtools/build/android/RClassGeneratorAction.java
+--- a/src/tools/java/com/google/devtools/build/android/RClassGeneratorAction.java
++++ b/src/tools/java/com/google/devtools/build/android/RClassGeneratorAction.java
+@@ -169,6 +169,12 @@ public class RClassGeneratorAction {
+         // For now, assuming not used for libraries and setting final access for fields.
+         Multimap<String, ResourceSymbols> emissionLibMap =
+             options.primaryOnly ? ArrayListMultimap.create() : libSymbolMap;
++        if (options.primaryOnly && !options.finalFields) {
++          // Skipped-linking aar_import compile R jars are also present at JVM
++          // unit-test runtime. Give those non-final fields usable placeholders.
++          fullSymbolValues =
++              ResourceSymbols.from(fullSymbolValues.asInitializers().withNonZeroPlaceholderIds());
++        }
+         fullSymbolValues.writeClassesTo(
+             emissionLibMap, appPackageName, classOutPath, options.finalFields, rPackageId);
+         logger.fine(
+diff --git a/src/tools/java/com/google/devtools/build/android/resources/FieldInitializers.java b/src/tools/java/com/google/devtools/build/android/resources/FieldInitializers.java
+--- a/src/tools/java/com/google/devtools/build/android/resources/FieldInitializers.java
++++ b/src/tools/java/com/google/devtools/build/android/resources/FieldInitializers.java
+@@ -80,6 +80,30 @@ public class FieldInitializers
+     return copyOf(merged);
+   }
+ 
++  public FieldInitializers withNonZeroPlaceholderIds() {
++    final Map<ResourceType, Collection<FieldInitializer>> rewritten =
++        new EnumMap<>(ResourceType.class);
++
++    for (Map.Entry<ResourceType, Collection<FieldInitializer>> entry : initializers.entrySet()) {
++      ImmutableList.Builder<FieldInitializer> fields = ImmutableList.builder();
++      int fieldIndex = 1;
++      for (FieldInitializer initializer : entry.getValue()) {
++        if (initializer instanceof IntFieldInitializer
++            && ((IntFieldInitializer) initializer).getValue() == 0) {
++          int placeholderValue =
++              0x7f000000 | ((entry.getKey().ordinal() + 1) << 16) | (fieldIndex & 0xffff);
++          fields.add(((IntFieldInitializer) initializer).withValue(placeholderValue));
++        } else {
++          fields.add(initializer);
++        }
++        fieldIndex++;
++      }
++      rewritten.put(entry.getKey(), fields.build());
++    }
++
++    return copyOf(rewritten);
++  }
++
+   private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+     Set<Object> seen = ConcurrentHashMap.newKeySet();
+     return t -> seen.add(keyExtractor.apply(t));
+diff --git a/src/tools/java/com/google/devtools/build/android/resources/IntFieldInitializer.java b/src/tools/java/com/google/devtools/build/android/resources/IntFieldInitializer.java
+--- a/src/tools/java/com/google/devtools/build/android/resources/IntFieldInitializer.java
++++ b/src/tools/java/com/google/devtools/build/android/resources/IntFieldInitializer.java
+@@ -50,6 +50,14 @@ public final class IntFieldInitializer implements FieldInitializer {
+     return new IntFieldInitializer(dependencyInfo, visibility, fieldName, value);
+   }
+ 
++  public int getValue() {
++    return value;
++  }
++
++  public IntFieldInitializer withValue(int value) {
++    return of(dependencyInfo, visibility, fieldName, value);
++  }
++
+   @Override
+   public boolean writeFieldDefinition(
+       ClassWriter cw, boolean isFinal, boolean annotateTransitiveFields, RPackageId rPackageId) {
