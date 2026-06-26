@@ -1,3 +1,4 @@
 exports_files([
     "cache_dexbuilder_synthetic_context.patch",
+    "clean_dex_splitter_output_dir.patch",
 ])

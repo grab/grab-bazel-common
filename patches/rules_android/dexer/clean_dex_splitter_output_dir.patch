@@ -1,0 +1,36 @@
+diff --git a/src/tools/java/com/google/devtools/build/android/dexer/DexFileSplitter.java b/src/tools/java/com/google/devtools/build/android/dexer/DexFileSplitter.java
+--- a/src/tools/java/com/google/devtools/build/android/dexer/DexFileSplitter.java
++++ b/src/tools/java/com/google/devtools/build/android/dexer/DexFileSplitter.java
+@@ -33,6 +33,7 @@ import com.google.devtools.build.android.Converters.CompatPathConverter;
+ import java.io.Closeable;
+ import java.io.IOException;
+ import java.io.InputStream;
++import java.nio.file.DirectoryStream;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.StandardOpenOption;
+@@ -230,9 +231,23 @@ class DexFileSplitter implements Closeable {
+     // Expected 0 args, but got 1.
+     checkArgument(!Files.isRegularFile(outputDirectory), "Must be a directory: ", outputDirectory);
+     this.maxNumberOfIdxPerDex = maxNumberOfIdxPerDex;
+     this.outputDirectory = outputDirectory;
++    clearOutputDirectory(outputDirectory);
+     startShard();
+   }
+ 
++  private static void clearOutputDirectory(Path outputDirectory) throws IOException {
++    if (!Files.exists(outputDirectory)) {
++      Files.createDirectories(outputDirectory);
++      return;
++    }
++
++    try (DirectoryStream<Path> entries = Files.newDirectoryStream(outputDirectory)) {
++      for (Path entry : entries) {
++        Files.delete(entry);
++      }
++    }
++  }
++
+   private void nextShard() throws IOException {
+     // Eagerly tell the last shard that it's done so it can finish writing the zip file and release
+     // resources as soon as possible, without blocking the start of the next shard.
