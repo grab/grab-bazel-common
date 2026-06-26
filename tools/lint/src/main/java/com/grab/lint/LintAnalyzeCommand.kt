@@ -28,10 +28,11 @@ class LintAnalyzeCommand : LintBaseCommand() {
             "--analyze-only" // Only do analyze
         )).toTypedArray()
         LintCli().run(cliArgs)
-        postProcessPartialResults()
+        postProcessPartialResults(workingDir)
     }
 
-    private fun postProcessPartialResults() {
+    private fun postProcessPartialResults(workingDir: Path) {
+        val sanitizer = Sanitizer(tmpPath = workingDir)
         Files.walk(partialResults.toPath())
             .filter { it.isRegularFile() }
             .collect(Collectors.toList())
@@ -39,9 +40,9 @@ class LintAnalyzeCommand : LintBaseCommand() {
             .forEach { path ->
                 if ("lint-definite-all.xml" in path.name) {
                     Files.delete(path)
-                } /*else {
-                    Sanitizer(tmpPath = workingDir).sanitize(path.toFile())
-                }*/
+                } else {
+                    sanitizer.sanitize(path.toFile())
+                }
             }
     }
 }
