@@ -56,7 +56,9 @@ class LintReportCommand : LintBaseCommand() {
         val elapsed = measureTimeMillis {
             runLint(workingDir, projectXml, tmpBaseline, lintResultXml)
         }
-        tmpBaseline.copyTo(updatedBaseline)
+        val sanitizer = Sanitizer(tmpPath = workingDir)
+        sanitizer.sanitize(tmpBaseline, updatedBaseline)
+        sanitizer.sanitize(lintResultXml)
         LintResults(
             name = name,
             lintResultsFile = lintResultXml,
