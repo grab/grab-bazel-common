@@ -76,6 +76,7 @@ def _android():
             "@grab_bazel_common//patches/rules_android/workers:databinding_exec_worker_toolchain.patch",
             "@grab_bazel_common//patches/rules_android/workers:generate_databinding_base_classes_worker.patch",
             "@grab_bazel_common//patches/rules_android/databinding:filter_transitive_databinding_artifacts.patch",
+            "@grab_bazel_common//patches/rules_android/instrumentation:preserve_test_class_overrides.patch",
             "@grab_bazel_common//patches/rules_android/dexer:cache_dexbuilder_synthetic_context.patch",
             "@grab_bazel_common//patches/rules_android/dexer:clean_dex_splitter_output_dir.patch",
             "@grab_bazel_common//patches/rules_android/resources:canonicalize_manifest_merger_log_paths.patch",
