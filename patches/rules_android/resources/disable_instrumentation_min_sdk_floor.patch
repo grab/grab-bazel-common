@@ -1,0 +1,14 @@
+--- a/rules/android_binary/impl.bzl
++++ b/rules/android_binary/impl.bzl
+@@ -76,7 +76,11 @@
+ def _process_manifest(ctx, **unused_ctxs):
+     manifest_ctx = _resources.bump_min_sdk(
+         ctx,
+         manifest = ctx.file.manifest,
+         manifest_values = ctx.attr.manifest_values,
+         min_sdk_version = ctx.attr.min_sdk_version,
++        # Native Bazel 7 instrumentation APKs did not declare <uses-sdk>.
++        # Keep that behavior for android_binary(instruments = ...) instead of
++        # letting rules_android inject its depot-floor minSdkVersion.
++        floor = 0 if ctx.attr.instruments else _min_sdk_version.DEPOT_FLOOR,
+     )

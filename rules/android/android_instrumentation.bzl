@@ -31,8 +31,13 @@ def android_instrumentation_binary(
     package_name = custom_package
     if "applicationId" in manifest_values:
         package_name = manifest_values["applicationId"]
-
     test_manifest = name + "_manifest"
+    instrumentation_manifest_values = {
+        key: value
+        for key, value in manifest_values.items()
+        if key not in ["minSdkVersion", "targetSdkVersion"]
+    }
+
     generate_manifest_xml(
         name = test_manifest,
         output = name + ".AndroidTestManifest.xml",
@@ -71,7 +76,7 @@ def android_instrumentation_binary(
         debug_key = debug_key,
         testonly = True,
         manifest = test_manifest,
-        manifest_values = manifest_values,
+        manifest_values = instrumentation_manifest_values,
         resource_files = resource_files,
         visibility = [
             "//visibility:public",

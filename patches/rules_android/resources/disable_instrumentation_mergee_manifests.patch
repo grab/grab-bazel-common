@@ -1,0 +1,16 @@
+--- a/rules/resources.bzl
++++ b/rules/resources.bzl
+@@ -641,6 +641,13 @@
+             if node_info.exports_manifest
+         ])
+
++    # Match native Bazel's --experimental_disable_instrumentation_manifest_merge
++    # behavior for android_binary(instruments = ...): avoid merging production
++    # dependency manifests into the instrumentation APK, but keep dependency
++    # resources/assets available to the normal resource packaging path.
++    if instruments:
++        mergee_manifests = depset([])
++
+     if not acls.in_shared_library_resource_linking_allowlist(str(ctx.label)):
+         # to_list() safe to use as we expect this to be an empty depset in the non-error case
+         all_res_apks = depset(
