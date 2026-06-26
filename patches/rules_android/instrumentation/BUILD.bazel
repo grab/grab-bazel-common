@@ -1,0 +1,3 @@
+exports_files([
+    "preserve_test_class_overrides.patch",
+])
