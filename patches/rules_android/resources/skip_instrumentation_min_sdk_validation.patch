@@ -1,0 +1,15 @@
+--- a/rules/android_binary/impl.bzl
++++ b/rules/android_binary/impl.bzl
+@@ -140,7 +140,11 @@
+     manifest_validation_output = _resources.validate_manifest(
+         ctx,
+         manifest = packaged_resources_ctx.processed_manifest,
+-        min_sdk_version = manifest_ctx.processed_min_sdk_version,
++        # android_binary(instruments = ...) intentionally keeps <uses-sdk> out
++        # of the final instrumentation manifest for Bazel 7 parity. Still
++        # passing min_sdk_version to native.android_binary is needed for
++        # desugar/dex, so skip only this manifest-level validation in that case.
++        min_sdk_version = 0 if ctx.attr.instruments else manifest_ctx.processed_min_sdk_version,
+         manifest_validation_tool = get_android_toolchain(ctx).manifest_validation_tool.files_to_run,
+         toolchain_type = ANDROID_TOOLCHAIN_TYPE,
+     )
