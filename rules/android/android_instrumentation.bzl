@@ -68,6 +68,14 @@ def android_instrumentation_binary(
         deps = deps,
     )
 
+    min_sdk_version_value = min_sdk_version
+    if min_sdk_version_value == None:
+        manifest_min_sdk = manifest_values.get("minSdkVersion") if manifest_values else None
+        if manifest_min_sdk == None:
+            min_sdk_version_value = 24
+        else:
+            min_sdk_version_value = int(manifest_min_sdk)
+
     # TODO: Migrate to android_library
     native.android_binary(
         name = name,
@@ -77,6 +85,9 @@ def android_instrumentation_binary(
         testonly = True,
         manifest = test_manifest,
         manifest_values = instrumentation_manifest_values,
+        # Keep the manifest values stripped for instrumentation parity, but still pass
+        # min_sdk_version so desugar/dex use the same API context as the app under test.
+        min_sdk_version = min_sdk_version_value,
         resource_files = resource_files,
         visibility = [
             "//visibility:public",
