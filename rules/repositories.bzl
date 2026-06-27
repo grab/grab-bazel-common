@@ -44,6 +44,7 @@ def _android():
             "@grab_bazel_common//patches/rules_android/resources:fix_resource_priority_ordering.patch",
             "@grab_bazel_common//patches/rules_android/resources:disable_instrumentation_mergee_manifests.patch",
             "@grab_bazel_common//patches/rules_android/resources:disable_instrumentation_min_sdk_floor.patch",
+            "@grab_bazel_common//patches/rules_android/resources:skip_instrumentation_min_sdk_validation.patch",
             "@grab_bazel_common//patches/rules_android/aar_import:fix_aar_import_databinding_info.patch",
             "@grab_bazel_common//patches/rules_android/databinding:fix_databinding_providers.patch",
             "@grab_bazel_common//patches/rules_android/databinding:fix_databinding_data_binding.patch",

@@ -5,5 +5,6 @@ exports_files([
     "disable_instrumentation_mergee_manifests.patch",
     "fix_resource_priority_ordering.patch",
     "normalize_databinding_compiled_resources_timestamps.patch",
+    "skip_instrumentation_min_sdk_validation.patch",
     "sort_resource_source_table.patch",
 ])
