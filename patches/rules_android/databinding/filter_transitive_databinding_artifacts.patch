@@ -35,27 +35,50 @@ index fe5cef1..941c526 100644
 
  def _copy_annotation_file(ctx, output_dir, annotation_template):
      annotation_out = ctx.actions.declare_file(
-@@ -57,7 +59,230 @@ def _copy_annotation_file(ctx, output_dir, annotation_template):
+@@ -57,7 +59,252 @@ def _copy_annotation_file(ctx, output_dir, annotation_template):
      _utils.copy_file(ctx, annotation_template, annotation_out)
      return annotation_out
 
 -def _gen_sources(ctx, output_dir, java_package, deps, layout_info, data_binding_exec):
++def _trie_create():
++    return {"children": {}, "is_end_of_word": False}
++
++def _trie_insert(trie, word):
++    node = trie
++    for char in word.elems():
++        if char not in node["children"]:
++            node["children"][char] = {"children": {}, "is_end_of_word": False}
++        node = node["children"][char]
++    node["is_end_of_word"] = True
++
++def _trie_search_prefix(trie, word):
++    node = trie
++    for char in word.elems():
++        if node["is_end_of_word"]:
++            return True
++        if char not in node["children"]:
++            return False
++        node = node["children"][char]
++    return node["is_end_of_word"]
++
 +def _direct_dependency_filter(ctx):
-+    direct_labels = {}
++    direct_labels_trie = _trie_create()
 +    maven_substrings = {}
++    has_direct_tags = False
 +    if hasattr(ctx.attr, "tags"):
 +        for tag in ctx.attr.tags:
 +            if tag.startswith(_DIRECT_TAG_PREFIX):
-+                direct_labels["//" + tag[len(_DIRECT_TAG_PREFIX):]] = True
++                _trie_insert(direct_labels_trie, "//" + tag[len(_DIRECT_TAG_PREFIX):])
++                has_direct_tags = True
 +            elif tag.startswith(_MAVEN_TAG_PREFIX):
 +                maven_substrings[tag[len(_MAVEN_TAG_PREFIX):]] = True
++                has_direct_tags = True
 +
-+    has_direct_tags = bool(direct_labels) or bool(maven_substrings)
 +    if not has_direct_tags:
 +        return struct(
 +            enabled = False,
 +            filter_external = False,
-+            direct_labels = direct_labels,
++            direct_labels_trie = direct_labels_trie,
 +            maven_substrings = maven_substrings,
 +        )
 +
@@ -75,7 +98,7 @@ index fe5cef1..941c526 100644
 +    return struct(
 +        enabled = enabled,
 +        filter_external = filter_external,
-+        direct_labels = direct_labels,
++        direct_labels_trie = direct_labels_trie,
 +        maven_substrings = maven_substrings,
 +    )
 +
@@ -91,13 +114,12 @@ index fe5cef1..941c526 100644
 +        return owner_label[1:]
 +    return owner_label.replace("@@", "@")
 +
-+def _matches_direct_label(dep_target_label, direct_labels):
++def _matches_direct_label(dep_target_label, direct_labels_trie):
 +    internal_target_name = dep_target_label.replace(":_", ":")
-+    for direct_label in direct_labels:
-+        if (dep_target_label.startswith(direct_label) or
-+            internal_target_name.startswith(direct_label)):
-+            return True
-+    return False
++    return (
++        _trie_search_prefix(direct_labels_trie, dep_target_label) or
++        _trie_search_prefix(direct_labels_trie, internal_target_name)
++    )
 +
 +def _matches_maven_label(dep_target_label, maven_substrings):
 +    for maven_substring in maven_substrings:
@@ -141,7 +163,7 @@ index fe5cef1..941c526 100644
 +        return True
 +
 +    return (
-+        _matches_direct_label(dep_target_label, direct_filter.direct_labels) or
++        _matches_direct_label(dep_target_label, direct_filter.direct_labels_trie) or
 +        _matches_maven_label(dep_target_label, direct_filter.maven_substrings)
 +    )
 +
